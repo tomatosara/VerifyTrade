@@ -1,0 +1,24 @@
+generator client {
+	provider = "prisma-client-js"
+}
+
+
+datasource db {
+	provider = "postgresql"
+	url = env("DATABASE_URL")
+}
+
+
+model VerificationTx {
+	id String @id @default(uuid())
+	createdAt DateTime @default(now())
+	updatedAt DateTime @updatedAt
+
+
+	transactionId String @unique
+	kind String
+	ref String?
+	status String // pending/success/failed
+	resultJson Json?
+	hash String?
+}

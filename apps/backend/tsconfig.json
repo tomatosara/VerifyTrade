@@ -1,0 +1,14 @@
+{
+  "extends": "../../packages/tsconfig/node.json",
+  "compilerOptions": {
+    "module": "ESNext",
+    "moduleResolution": "NodeNext",
+    "outDir": "dist",
+    "rootDir": "src",
+    "baseUrl": ".",
+    "paths": { "@zkp/shared/*": ["../../packages/shared/src/*"] }
+  },
+  "include": ["src"],
+  "exclude": ["node_modules","dist"],
+  "references": [{ "path": "../../packages/shared" }]
+}
