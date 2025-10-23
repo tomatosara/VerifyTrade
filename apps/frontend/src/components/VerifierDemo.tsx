@@ -1,13 +1,12 @@
-/* apps/frontend/src/components/VerifierDemo.tsx */
 import { useState, useMemo } from 'react'
 import { api } from '@/lib/api'
 import { useCountdown } from '@/hooks/useCountdown'
 import { usePolling } from '@/hooks/usePolling'
+import CredentialQr from '@/components/CredentialQr'  
 
 const EXPIRY = 300 // 5 分鐘
 
 export default function VerifierDemo() {
-  /* ---------- state ---------- */
   const [ref, setRef] = useState('')
   const [tx, setTx] = useState<string | null>(null)
   const [qr, setQr] = useState<string | null>(null)
@@ -16,7 +15,6 @@ export default function VerifierDemo() {
   const [error, setError] = useState<string | null>(null)
   const [startedAt, setStartedAt] = useState<number | null>(null)
 
-  /* ---------- 倒數 ---------- */
   const left = useCountdown(
     useMemo(
       () =>
@@ -28,7 +26,6 @@ export default function VerifierDemo() {
   )
   const canPoll = !!tx && left > 0 && !result
 
-  /* ---------- 產生 QR ---------- */
   async function onGenerate() {
     setError(null)
     setResult(null)
@@ -46,7 +43,6 @@ export default function VerifierDemo() {
     }
   }
 
-  /* ---------- 輪詢結果 ---------- */
   usePolling(
     async () => {
       if (!tx) return
@@ -57,10 +53,8 @@ export default function VerifierDemo() {
     canPoll
   )
 
-  /* ---------- JSX ---------- */
   return (
     <div className='space-y-4'>
-      {/* 輸入 ref 與按鈕 */}
       <div className='flex items-center gap-2'>
         <input
           value={ref}
@@ -76,37 +70,29 @@ export default function VerifierDemo() {
         </button>
       </div>
 
-      {/* 錯誤訊息 */}
       {error && <div className='text-red-600'>錯誤：{error}</div>}
 
-      {/* QR 與倒數 */}
       {tx && (
-        <div className='p-3 border rounded'>
+        <div className='p-3 border rounded space-y-2'>
           <div>
             <b>transactionId：</b>
             <code>{tx}</code>
           </div>
           <div className='text-sm text-gray-500 truncate'>
-            <b>DeepLink：</b>
-            {authUri || '(無)'}
+            <b>DeepLink：</b> {authUri || '(無)'}
           </div>
-          <div className='mt-2'>
-            {qr ? (
-              <img src={qr} alt='QR' width={240} />
-            ) : (
-              <em>未回傳 QR</em>
-            )}
-          </div>
+
+          {/* ✅ 改用 CredentialQr */}
+          <CredentialQr qrCode={qr || undefined} deepLink={authUri || undefined} />
+
           <div className='mt-2 text-sm'>
             QR 有效剩餘：<b>{left}s</b>
           </div>
         </div>
       )}
 
-      {/* 輪詢提示 */}
       {canPoll && <div className='text-gray-600'>輪詢中…（每 3 秒）</div>}
 
-      {/* 驗證結果 */}
       {result && (
         <pre className='bg-gray-50 border rounded p-3 overflow-auto max-h-96 text-sm'>
           {JSON.stringify(result, null, 2)}

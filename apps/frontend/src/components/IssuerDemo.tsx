@@ -11,19 +11,32 @@ export default function IssuerDemo() {
   "fields":[{"ename":"name","content":"asdsad"}]
 }`)
 
-// const [body, setBody] = useState(`{
-//   "vcUid":"00000000_ttt123",
-//   "issuanceDate":"20251015",
-//   "expiredDate":"20251115",
-//   "fields":[{"ename":"ad_birthday","content":"20030802"}]
-// }`)
+  const [body1, setBody1] = useState(`{
+    "vcUid":"00000000_ttt123",
+    "issuanceDate":"20251015",
+    "expiredDate":"20251115",
+    "fields":[{"ename":"ad_birthday","content":"20030802"}]
+  }`)
   const [resp, setResp] = useState<any>(null)
   const [error, setError] = useState<string|null>(null)
 
   async function onSend(path: '/issuer/qrcode-data' | '/issuer/qrcode-nodata') {
+    console.log('Sending to', path)
     setError(null); setResp(null)
     try {
       const payload = JSON.parse(body)
+      const { data } = await api.post(path, payload)
+      setResp(data)
+    } catch (e:any) {
+      setError(e?.response?.data?.message || e.message)
+    }
+  }
+
+    async function onSend1(path: '/issuer/qrcode-data' | '/issuer/qrcode-nodata') {
+      console.log('onSend1 called');
+    setError(null); setResp(null)
+    try {
+      const payload = JSON.parse(body1)
       const { data } = await api.post(path, payload)
       setResp(data)
     } catch (e:any) {
@@ -55,15 +68,31 @@ export default function IssuerDemo() {
         </button>
       </div>
 
+
+      <textarea
+        rows={10}
+        value={body1}
+        onChange={e => setBody1(e.target.value)}
+        className="w-full border rounded p-2 font-mono text-sm"
+      />
+
+      <div className="flex gap-2">
+        <button
+          onClick={() => onSend1('/issuer/qrcode-data')}
+          className="bg-emerald-600 text-white px-4 py-2 rounded"
+        >
+          送出 /issuer/qrcode-data
+        </button>
+        <button
+          onClick={() => onSend1('/issuer/qrcode-nodata')}
+          className="bg-indigo-600 text-white px-4 py-2 rounded"
+        >
+          送出 /issuer/qrcode-nodata
+        </button>
+      </div>
+
       {error && <div className="text-red-600">錯誤：{error}</div>}
-      {/* {resp && (
-        <pre className="bg-gray-50 border rounded p-3 overflow-auto max-h-96 text-sm">
-          {JSON.stringify(resp,null,2)}
-        </pre>
-      )} */}
-      {resp && (
-  <CredentialQr qrCode={resp.qrCode} deepLink={resp.deepLink} />
-)}
+      {resp && (<CredentialQr qrCode={resp.qrCode} deepLink={resp.deepLink} /> )}
     </div>
   )
 }

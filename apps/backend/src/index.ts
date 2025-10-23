@@ -2,7 +2,7 @@
 import 'dotenv/config'
 import express from 'express'
 import cors from 'cors'
-import helmet from 'helmet'
+import helmet, { crossOriginResourcePolicy } from 'helmet'
 import rateLimit from 'express-rate-limit'
 import morgan from 'morgan'
 import axios from 'axios'
@@ -49,8 +49,10 @@ app.get('/health', (_req, res) => {
 })
 
 // ========== 驗證端：產生 QR ==========
+//00000000_ttt123
 app.post('/verifier/qrcode', async (req, res) => {
   const parsed = VerifierQrcodeRequest.safeParse(req.body)
+  console.log('Parsed Result:', parsed);
   if (!parsed.success) return res.status(400).json({ code: 400, message: 'Invalid body' })
   const { ref } = parsed.data
 
@@ -62,7 +64,7 @@ app.post('/verifier/qrcode', async (req, res) => {
     data: { transactionId, kind: 'verifier', ref, status: 'pending' }
   })
 
-  return res.json({ transactionId, qrcodeImage: data?.qrcodeImage, authUri: data?.authUri })
+  return res.status(201).json({ transactionId, qrcodeImage: data?.qrcodeImage, authUri: data?.authUri })
 })
 
 // ========== 驗證端：查結果 ==========

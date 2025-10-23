@@ -1,0 +1,30 @@
+services:
+  postgres:
+    image: postgres:15.4
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${DB_USER}
+      POSTGRES_PASSWORD: ${DB_PASS}
+      POSTGRES_DB: verifier
+    volumes:
+      - db-data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    networks: [verifier_backend_network]
+
+#   backend:
+#     build: ./apps/backend          # 你的 Dockerfile 在這
+#     env_file:
+#       - ./apps/backend/.env        # 把 DATABASE_URL 放這
+#     depends_on:
+#       - postgres
+#     ports:
+#       - "4000:4000"
+    # networks: [verifier_backend_network]
+
+volumes:
+  db-data:
+
+networks:
+  verifier_backend_network:
+    driver: bridge
