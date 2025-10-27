@@ -1,22 +1,13 @@
-function App() {
+import { BrowserRouter, Routes, Route } from "react-router-dom";
+import Home from "./pages/home";
+
+export default function App() {
   return (
-    <div style={{ textAlign: "center", marginTop: "100px" }}>
-      <h1>零知識防詐交易平台</h1>
-      <p>這是我使用 Rolldown 啟動的第一個前端專案 🚀</p>
-      <button
-        style={{
-          padding: "10px 20px",
-          fontSize: "16px",
-          backgroundColor: "#10B981",
-          color: "white",
-          borderRadius: "8px",
-          border: "none",
-        }}
-      >
-        開始驗證
-      </button>
+    <div className="bg-sky-200 text-blue-600 text-4xl font-bold text-center p-10">
+      🎨 Tailwind + TypeScript 測試成功！
     </div>
   );
 }
 
-export default App;
+
+
