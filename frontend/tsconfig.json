@@ -66,5 +66,5 @@
       "@/*": ["src/*"]
     }
   },
-  "include": ["src", "vite.config.ts"] // ✅ 確保 vite.config.ts 也被包含
+  "include": ["src", "vite.config.ts", "src/components/navbar.tsx"] // ✅ 確保 vite.config.ts 也被包含
 }

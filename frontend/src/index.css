@@ -1,1 +1,51 @@
 @import "tailwindcss";
+@import "tw-animate-css";
+
+@custom-variant dark (&:is(.dark *));
+
+/* 🎨 主題色調整 */
+@theme {
+  --color-primary: #F15B6C;      /* 珊瑚紅 */
+  --color-secondary: #246BCE;    /* 科技藍 */
+  --color-accent: #FF8E8E;       /* 柔亮紅橘，可作 hover */
+  --color-background: #FDF8F8;   /* 淺粉白背景 */
+  --color-text: #2B2B2B;         /* 穩重黑灰 */
+}
+
+@layer base {
+  body {
+    font-family: 'Inter', 'Noto Sans TC', sans-serif;
+    background-color: var(--color-background);
+    color: var(--color-text);
+  }
+}
+
+/* 🎯 Swiper arrows */
+.swiper-button-prev,
+.swiper-button-next {
+  color: white;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 45px;
+  height: 45px;
+}
+
+.swiper-button-prev {
+  left: 5% !important;    /* 🧭 從左邊進來 10% */
+}
+
+.swiper-button-next {
+  right: 5% !important;   /* 🧭 從右邊進來 10% */
+}
+
+/* 📍 控制 Swiper 點點 (pagination) 位置 */
+.swiper-pagination {
+  bottom: 3% !important; /* 桌機時稍微靠下 */
+}
+
+@media (max-width: 768px) {
+  .swiper-pagination {
+    bottom: 3% !important; /* 手機更貼底 */
+  }
+}
+
