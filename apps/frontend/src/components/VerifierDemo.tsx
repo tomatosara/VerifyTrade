@@ -1,3 +1,4 @@
+// apps/frontend/src/components/VerifierDemo.tsx
 import { useState, useMemo } from 'react'
 import { api } from '@/lib/api'
 import { useCountdown } from '@/hooks/useCountdown'
@@ -7,7 +8,8 @@ import CredentialQr from '@/components/CredentialQr'
 const EXPIRY = 300 // 5 分鐘
 
 export default function VerifierDemo() {
-  const [ref, setRef] = useState('')
+  // ✅ 預設使用身分證 VC 代碼
+  const [ref, setRef] = useState('00000000_id_card123')
   const [tx, setTx] = useState<string | null>(null)
   const [qr, setQr] = useState<string | null>(null)
   const [authUri, setAuthUri] = useState<string | null>(null)
@@ -43,6 +45,24 @@ export default function VerifierDemo() {
     }
   }
 
+  // ✅ 一鍵身分證登入（走新後端捷徑）
+  async function onIdCardLogin() {
+    setError(null)
+    setResult(null)
+    setTx(null)
+    setQr(null)
+    setAuthUri(null)
+    try {
+      const { data } = await api.post('/login/id-card/qrcode', {})
+      setTx(data.transactionId)
+      setQr(data.qrcodeImage)
+      setAuthUri(data.authUri)
+      setStartedAt(Date.now())
+    } catch (e: any) {
+      setError(e?.response?.data?.message || e.message)
+    }
+  }
+
   usePolling(
     async () => {
       if (!tx) return
@@ -55,7 +75,7 @@ export default function VerifierDemo() {
 
   return (
     <div className='space-y-4'>
-      <div className='flex items-center gap-2'>
+      <div className='flex items-center gap-2 flex-wrap'>
         <input
           value={ref}
           onChange={(e) => setRef(e.target.value)}
@@ -67,6 +87,20 @@ export default function VerifierDemo() {
           className='bg-sky-600 text-white px-4 py-2 rounded'
         >
           產生驗證 QR
+        </button>
+
+        {/* ✅ 快速選單 */}
+        <button
+          onClick={() => setRef('00000000_id_card123')}
+          className='bg-gray-200 px-3 py-2 rounded'
+        >
+          使用身分證 VC 代碼
+        </button>
+        <button
+          onClick={onIdCardLogin}
+          className='bg-amber-600 text-white px-3 py-2 rounded'
+        >
+          一鍵用身分證登入
         </button>
       </div>
 
@@ -82,7 +116,6 @@ export default function VerifierDemo() {
             <b>DeepLink：</b> {authUri || '(無)'}
           </div>
 
-          {/* ✅ 改用 CredentialQr */}
           <CredentialQr qrCode={qr || undefined} deepLink={authUri || undefined} />
 
           <div className='mt-2 text-sm'>

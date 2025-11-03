@@ -48,23 +48,61 @@ app.get('/health', (_req, res) => {
   res.json({ ok: true, ts: new Date().toISOString() })
 })
 
+
+// ✅ 允許的 VC 代碼（白名單）
+const ALLOWED_REFS = new Set(
+  (process.env.ALLOWED_REFS?.split(',') ?? [
+    '00000000_ttt123',
+    '00000000_fff123',
+    '00000000_id_card123',   // ⬅️ 身分證 VC
+  ]).map((s) => s.trim())
+);
+
+// 小工具：共用產 QR 程式
+async function generateVerifierQrcodeByRef(ref: string) {
+  if (!ALLOWED_REFS.has(ref)) {
+    const err: any = new Error(`ref ${ref} not allowed`);
+    err.status = 400;
+    throw err;
+  }
+  const transactionId = uuidv4();
+  const url = `/api/oidvp/qrcode?ref=${encodeURIComponent(ref)}&transactionId=${encodeURIComponent(transactionId)}`;
+  const { data } = await axiosVerifier.get(url);
+
+  await prisma.verificationTx.create({
+    data: { transactionId, kind: 'verifier', ref, status: 'pending' }
+  });
+
+  return { transactionId, qrcodeImage: data?.qrcodeImage, authUri: data?.authUri };
+}
+
+
 // ========== 驗證端：產生 QR ==========
-//00000000_ttt123
+// 原本的
 app.post('/verifier/qrcode', async (req, res) => {
   const parsed = VerifierQrcodeRequest.safeParse(req.body)
   console.log('Parsed Result:', parsed);
   if (!parsed.success) return res.status(400).json({ code: 400, message: 'Invalid body' })
   const { ref } = parsed.data
 
-  const transactionId = uuidv4()
-  const url = `/api/oidvp/qrcode?ref=${encodeURIComponent(ref)}&transactionId=${encodeURIComponent(transactionId)}`
-  const { data } = await axiosVerifier.get(url)
+  try {
+    const payload = await generateVerifierQrcodeByRef(ref);
+    return res.status(201).json(payload);
+  } catch (e: any) {
+    const status = e.status || 500;
+    return res.status(status).json({ code: String(status), message: e.message });
+  }
+})
 
-  await prisma.verificationTx.create({
-    data: { transactionId, kind: 'verifier', ref, status: 'pending' }
-  })
-
-  return res.status(201).json({ transactionId, qrcodeImage: data?.qrcodeImage, authUri: data?.authUri })
+// ✅ 新增：身分證登入專用捷徑
+app.post('/login/id-card/qrcode', async (_req, res) => {
+  try {
+    const payload = await generateVerifierQrcodeByRef('00000000_id_card123');
+    return res.status(201).json(payload);
+  } catch (e: any) {
+    const status = e.status || 500;
+    return res.status(status).json({ code: String(status), message: e.message });
+  }
 })
 
 // ========== 驗證端：查結果 ==========
