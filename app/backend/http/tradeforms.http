@@ -1,0 +1,60 @@
+### Create trade form as User 1
+POST http://localhost:3000/api/v1/tradeforms
+Authorization: Bearer {{user1_token}}
+Idempotency-Key: create-{{uid}}
+Content-Type: application/json
+
+{
+  "title": "USDT OTC",
+  "description": "P2P swap",
+  "amount": "1000.00"
+}
+
+### Fetch trade form as counterparty before VC verification (minimal payload)
+GET http://localhost:3000/api/v1/tradeforms/{{trade_uid}}
+Authorization: Bearer {{user2_token}}
+
+### Verify VC as User 2
+POST http://localhost:3000/api/v1/tradeforms/{{trade_uid}}/verify-vc
+Authorization: Bearer {{user2_token}}
+Idempotency-Key: verify-{{uid}}
+Content-Type: application/json
+
+{
+  "credential": {
+    "kycApproved": true
+  }
+}
+
+### Confirm as User 2
+POST http://localhost:3000/api/v1/tradeforms/{{trade_uid}}/confirm
+Authorization: Bearer {{user2_token}}
+Idempotency-Key: confirm-user2-{{uid}}
+Content-Type: application/json
+
+{
+  "role": "user2"
+}
+
+### Confirm as User 1
+POST http://localhost:3000/api/v1/tradeforms/{{trade_uid}}/confirm
+Authorization: Bearer {{user1_token}}
+Idempotency-Key: confirm-user1-{{uid}}
+Content-Type: application/json
+
+{
+  "role": "user1"
+}
+
+### Platform finalizes trade
+POST http://localhost:3000/api/v1/tradeforms/{{trade_uid}}/finalize
+Authorization: Bearer {{platform_token}}
+Idempotency-Key: finalize-{{uid}}
+
+### Fetch audit log as participant
+GET http://localhost:3000/api/v1/tradeforms/{{trade_uid}}/audit
+Authorization: Bearer {{user1_token}}
+
+### List my trade forms
+GET http://localhost:3000/api/v1/me/tradeforms?page=1&page_size=10
+Authorization: Bearer {{user1_token}}

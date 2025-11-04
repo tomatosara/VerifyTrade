@@ -1,0 +1,12 @@
+{
+  "name": "verifytrade-monorepo",
+  "private": true,
+  "version": "0.1.0",
+  "packageManager": "pnpm@10.20.0",
+  "pnpm": {
+    "overrides": {
+      "glob": "^10.3.12",
+      "rimraf": "^5.0.5"
+    }
+  }
+}

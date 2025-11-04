@@ -1,0 +1,32 @@
+{
+  "entryFile": "src/server.ts",
+  "controllerPathGlobs": [
+    "src/modules/**/controller/*.controller.ts"
+  ],
+  "noImplicitAdditionalProperties": "throw-on-extras",
+  "spec": {
+    "outputDirectory": ".",
+    "specFileBaseName": "openapi",
+    "specVersion": 3,
+    "basePath": "/api/v1",
+    "schemes": [
+      "https",
+      "http"
+    ],
+    "tags": [
+      {
+        "name": "tradeforms",
+        "description": "Trade form lifecycle"
+      }
+    ],
+    "name": "VerifyTrade API",
+    "description": "Digital identity trading platform API",
+    "version": "1.0.0"
+  },
+  "routes": {
+    "routesDir": "src/http",
+    "basePath": "/api/v1",
+    "middleware": "express",
+    "authenticationModule": "src/http/authentication.ts"
+  }
+}

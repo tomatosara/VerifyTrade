@@ -1,0 +1,44 @@
+import { NextFunction, Request, Response } from 'express';
+import { ForbiddenError, UnauthorizedError } from '@utils/errors';
+import { verifyJwt } from './jwt';
+
+function extractToken(req: Request): string | null {
+  const header = req.headers.authorization;
+  if (!header) {
+    return null;
+  }
+
+  const [scheme, token] = header.split(' ');
+  if (!scheme || scheme.toLowerCase() !== 'bearer' || !token) {
+    return null;
+  }
+
+  return token;
+}
+
+export function requireAuth(req: Request, _res: Response, next: NextFunction): void {
+  const token = extractToken(req);
+  if (!token) {
+    throw new UnauthorizedError();
+  }
+
+  try {
+    const claims = verifyJwt(token);
+    req.user = {
+      id: claims.sub,
+      role: claims.role
+    };
+    next();
+  } catch (error) {
+    throw new UnauthorizedError();
+  }
+}
+
+export function requirePlatformRole(req: Request, res: Response, next: NextFunction): void {
+  requireAuth(req, res, () => {
+    if (req.user?.role !== 'platform') {
+      throw new ForbiddenError('Platform role required');
+    }
+    next();
+  });
+}

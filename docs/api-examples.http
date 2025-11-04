@@ -1,0 +1,44 @@
+@host = http://localhost:3000
+@token = {{auth_token}}
+
+### Generate a development JWT (disabled in production)
+POST {{host}}/api/v1/auth/dev-token
+Content-Type: application/json
+
+{
+  "userId": "4b9fd3ab-cc8f-4d2f-b23d-2c2c7c7ac3a9",
+  "role": "user",
+  "email": "trader@example.com",
+  "name": "Local Trader"
+}
+
+### Create a trade form
+POST {{host}}/api/v1/tradeforms
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "title": "USDT OTC escrow",
+  "description": "P2P escrow with VC verification",
+  "amount": "1000.00"
+}
+
+### Verify a counterparty credential
+POST {{host}}/api/v1/tradeforms/{{trade_uid}}/verify-vc
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "credential": {
+    "type": "VerifiableCredential",
+    "issuer": "did:example:issuer",
+    "credentialSubject": {
+      "id": "did:example:counterparty"
+    }
+  }
+}
+
+### List your trade forms (filters optional)
+GET {{host}}/api/v1/me/tradeforms?status=pending&page=1&page_size=20
+Authorization: Bearer {{token}}
+Accept: application/json

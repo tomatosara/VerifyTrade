@@ -1,0 +1,1292 @@
+{
+	"openapi": "3.0.0",
+	"components": {
+		"examples": {},
+		"headers": {},
+		"parameters": {},
+		"requestBodies": {},
+		"responses": {},
+		"schemas": {
+			"TradeFormStatus": {
+				"type": "string",
+				"enum": [
+					"draft",
+					"pending",
+					"verified",
+					"confirmed",
+					"cancelled",
+					"failed",
+					"done"
+				]
+			},
+			"ErrorResponse": {
+				"properties": {
+					"error": {
+						"type": "string"
+					},
+					"details": {},
+					"requestId": {
+						"type": "string"
+					}
+				},
+				"required": [
+					"error"
+				],
+				"type": "object",
+				"additionalProperties": false
+			},
+			"CreateTradeFormDto": {
+				"properties": {
+					"title": {
+						"type": "string"
+					},
+					"description": {
+						"type": "string"
+					},
+					"amount": {
+						"type": "string"
+					}
+				},
+				"required": [
+					"title",
+					"description"
+				],
+				"type": "object",
+				"additionalProperties": false
+			},
+			"TradeFormStatusValue": {
+				"type": "string",
+				"enum": [
+					"draft",
+					"pending",
+					"verified",
+					"confirmed",
+					"cancelled",
+					"failed",
+					"done"
+				]
+			},
+			"Record_string.unknown_": {
+				"properties": {},
+				"additionalProperties": {},
+				"type": "object",
+				"description": "Construct a type with a set of properties K of type T"
+			},
+			"AuditEventView": {
+				"properties": {
+					"id": {
+						"type": "string"
+					},
+					"tradeUid": {
+						"type": "string"
+					},
+					"actorId": {
+						"type": "string"
+					},
+					"action": {
+						"type": "string",
+						"enum": [
+							"create",
+							"verifyVC",
+							"confirm",
+							"cancel",
+							"finalize",
+							"fail",
+							"retry"
+						]
+					},
+					"at": {
+						"type": "string",
+						"format": "date-time"
+					},
+					"details": {
+						"allOf": [
+							{
+								"$ref": "#/components/schemas/Record_string.unknown_"
+							}
+						],
+						"nullable": true
+					}
+				},
+				"required": [
+					"id",
+					"tradeUid",
+					"actorId",
+					"action",
+					"at"
+				],
+				"type": "object",
+				"additionalProperties": false
+			},
+			"TradeFormView": {
+				"properties": {
+					"uid": {
+						"type": "string"
+					},
+					"title": {
+						"type": "string"
+					},
+					"description": {
+						"type": "string"
+					},
+					"amount": {
+						"type": "string",
+						"nullable": true
+					},
+					"status": {
+						"$ref": "#/components/schemas/TradeFormStatusValue"
+					},
+					"creatorId": {
+						"type": "string"
+					},
+					"counterpartyId": {
+						"type": "string",
+						"nullable": true
+					},
+					"meta": {
+						"$ref": "#/components/schemas/Record_string.unknown_"
+					},
+					"createdAt": {
+						"type": "string",
+						"format": "date-time"
+					},
+					"updatedAt": {
+						"type": "string",
+						"format": "date-time"
+					},
+					"auditLog": {
+						"items": {
+							"$ref": "#/components/schemas/AuditEventView"
+						},
+						"type": "array"
+					}
+				},
+				"required": [
+					"uid",
+					"title",
+					"status",
+					"creatorId",
+					"meta",
+					"createdAt",
+					"updatedAt",
+					"auditLog"
+				],
+				"type": "object",
+				"additionalProperties": false
+			},
+			"TradeFormMinimalView": {
+				"properties": {
+					"uid": {
+						"type": "string"
+					},
+					"status": {
+						"$ref": "#/components/schemas/TradeFormStatusValue"
+					}
+				},
+				"required": [
+					"uid",
+					"status"
+				],
+				"type": "object",
+				"additionalProperties": false
+			},
+			"VerifyVcDto": {
+				"properties": {
+					"credential": {
+						"$ref": "#/components/schemas/Record_string.unknown_"
+					}
+				},
+				"type": "object",
+				"additionalProperties": false
+			},
+			"ConfirmDto": {
+				"properties": {
+					"role": {
+						"type": "string",
+						"enum": [
+							"user1",
+							"user2"
+						]
+					}
+				},
+				"required": [
+					"role"
+				],
+				"type": "object",
+				"additionalProperties": false
+			},
+			"CancelDto": {
+				"properties": {
+					"reason": {
+						"type": "string"
+					}
+				},
+				"type": "object",
+				"additionalProperties": false
+			},
+			"FinalizeResult": {
+				"properties": {
+					"status": {
+						"$ref": "#/components/schemas/TradeFormStatus"
+					},
+					"meta": {
+						"$ref": "#/components/schemas/Record_string.unknown_"
+					},
+					"error": {
+						"type": "string"
+					}
+				},
+				"required": [
+					"status",
+					"meta"
+				],
+				"type": "object",
+				"additionalProperties": false
+			},
+			"TradeFormListItemView": {
+				"allOf": [
+					{
+						"$ref": "#/components/schemas/TradeFormView"
+					},
+					{
+						"properties": {
+							"shareUrl": {
+								"type": "string"
+							}
+						},
+						"required": [
+							"shareUrl"
+						],
+						"type": "object"
+					}
+				]
+			},
+			"Paged_TradeFormListItemView_": {
+				"properties": {
+					"data": {
+						"items": {
+							"$ref": "#/components/schemas/TradeFormListItemView"
+						},
+						"type": "array"
+					},
+					"page": {
+						"type": "number",
+						"format": "double"
+					},
+					"pageSize": {
+						"type": "number",
+						"format": "double"
+					},
+					"total": {
+						"type": "number",
+						"format": "double"
+					}
+				},
+				"required": [
+					"data",
+					"page",
+					"pageSize",
+					"total"
+				],
+				"type": "object",
+				"additionalProperties": false
+			},
+			"TradeFormListResponse": {
+				"$ref": "#/components/schemas/Paged_TradeFormListItemView_"
+			},
+			"TradeFormListQueryParams": {
+				"properties": {
+					"status": {
+						"$ref": "#/components/schemas/TradeFormStatusValue"
+					},
+					"created_from": {
+						"type": "string"
+					},
+					"created_to": {
+						"type": "string"
+					},
+					"page": {
+						"type": "number",
+						"format": "double"
+					},
+					"page_size": {
+						"type": "number",
+						"format": "double"
+					}
+				},
+				"type": "object",
+				"additionalProperties": false
+			},
+			"UserRole": {
+				"type": "string",
+				"enum": [
+					"user",
+					"platform"
+				]
+			},
+			"DevTokenResponse": {
+				"properties": {
+					"token": {
+						"type": "string"
+					},
+					"expiresIn": {
+						"type": "string"
+					},
+					"role": {
+						"$ref": "#/components/schemas/UserRole"
+					}
+				},
+				"required": [
+					"token",
+					"expiresIn",
+					"role"
+				],
+				"type": "object",
+				"additionalProperties": false
+			},
+			"DevTokenError": {
+				"properties": {
+					"error": {
+						"type": "string"
+					},
+					"requestId": {
+						"type": "string"
+					}
+				},
+				"required": [
+					"error"
+				],
+				"type": "object",
+				"additionalProperties": false
+			},
+			"DevTokenRequest": {
+				"properties": {
+					"userId": {
+						"type": "string"
+					},
+					"role": {
+						"$ref": "#/components/schemas/UserRole"
+					},
+					"email": {
+						"type": "string"
+					},
+					"name": {
+						"type": "string"
+					}
+				},
+				"required": [
+					"userId"
+				],
+				"type": "object",
+				"additionalProperties": false
+			}
+		},
+		"securitySchemes": {}
+	},
+	"info": {
+		"title": "VerifyTrade API",
+		"version": "1.0.0",
+		"description": "Digital identity trading platform API",
+		"contact": {}
+	},
+	"paths": {
+		"/tradeforms": {
+			"post": {
+				"operationId": "createTradeForm",
+				"responses": {
+					"201": {
+						"description": "Created",
+						"content": {
+							"application/json": {
+								"schema": {
+									"properties": {
+										"shareUrl": {
+											"type": "string"
+										},
+										"status": {
+											"$ref": "#/components/schemas/TradeFormStatus"
+										},
+										"uid": {
+											"type": "string"
+										}
+									},
+									"required": [
+										"shareUrl",
+										"status",
+										"uid"
+									],
+									"type": "object"
+								},
+								"examples": {
+									"Example 1": {
+										"value": {
+											"uid": "dQ7rFZc1o7g0uX9A1c2b",
+											"status": "pending",
+											"shareUrl": "https://app.example.com/join/dQ7rFZc1o7g0uX9A1c2b"
+										}
+									}
+								}
+							}
+						}
+					},
+					"401": {
+						"description": "Unauthorized",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/ErrorResponse"
+								}
+							}
+						}
+					},
+					"422": {
+						"description": "Validation error",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/ErrorResponse"
+								}
+							}
+						}
+					}
+				},
+				"tags": [
+					"TradeForm"
+				],
+				"security": [
+					{
+						"bearerAuth": []
+					}
+				],
+				"parameters": [],
+				"requestBody": {
+					"required": true,
+					"content": {
+						"application/json": {
+							"schema": {
+								"$ref": "#/components/schemas/CreateTradeFormDto"
+							}
+						}
+					}
+				}
+			}
+		},
+		"/tradeforms/{uid}": {
+			"get": {
+				"operationId": "getTradeForm",
+				"responses": {
+					"200": {
+						"description": "Ok",
+						"content": {
+							"application/json": {
+								"schema": {
+									"anyOf": [
+										{
+											"$ref": "#/components/schemas/TradeFormView"
+										},
+										{
+											"$ref": "#/components/schemas/TradeFormMinimalView"
+										}
+									]
+								},
+								"examples": {
+									"Example 1": {
+										"value": {
+											"uid": "dQ7rFZc1o7g0uX9A1c2b",
+											"title": "USDT OTC escrow",
+											"description": "P2P escrow with VC verification",
+											"amount": "1000.00",
+											"status": "verified",
+											"creatorId": "35ad1c74-53f5-4fc2-849e-2e120a6a6ba9",
+											"counterpartyId": "1fb3ac97-3a92-49aa-8bdb-051a1aec2ae9",
+											"meta": {},
+											"createdAt": "2024-06-01T12:00:00.000Z",
+											"updatedAt": "2024-06-01T12:30:00.000Z",
+											"auditLog": [
+												{
+													"id": "5a9d0bf4-4135-4ca8-8b46-25b8d0f32c4f",
+													"tradeUid": "dQ7rFZc1o7g0uX9A1c2b",
+													"actorId": "35ad1c74-53f5-4fc2-849e-2e120a6a6ba9",
+													"action": "create",
+													"at": "2024-06-01T12:00:00.000Z",
+													"details": {
+														"title": "USDT OTC escrow"
+													}
+												}
+											]
+										}
+									}
+								}
+							}
+						}
+					},
+					"401": {
+						"description": "Unauthorized",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/ErrorResponse"
+								}
+							}
+						}
+					},
+					"404": {
+						"description": "Not Found",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/ErrorResponse"
+								}
+							}
+						}
+					},
+					"410": {
+						"description": "Expired",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/ErrorResponse"
+								}
+							}
+						}
+					}
+				},
+				"tags": [
+					"TradeForm"
+				],
+				"security": [
+					{
+						"bearerAuth": []
+					}
+				],
+				"parameters": [
+					{
+						"in": "path",
+						"name": "uid",
+						"required": true,
+						"schema": {
+							"type": "string"
+						}
+					}
+				]
+			}
+		},
+		"/tradeforms/{uid}/verify-vc": {
+			"post": {
+				"operationId": "verifyTradeFormCredential",
+				"responses": {
+					"200": {
+						"description": "Ok",
+						"content": {
+							"application/json": {
+								"schema": {
+									"properties": {
+										"reason": {
+											"type": "string"
+										},
+										"status": {
+											"$ref": "#/components/schemas/TradeFormStatus"
+										},
+										"valid": {
+											"type": "boolean"
+										}
+									},
+									"required": [
+										"status",
+										"valid"
+									],
+									"type": "object"
+								},
+								"examples": {
+									"Example 1": {
+										"value": {
+											"valid": true,
+											"status": "verified"
+										}
+									}
+								}
+							}
+						}
+					},
+					"401": {
+						"description": "Unauthorized",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/ErrorResponse"
+								}
+							}
+						}
+					},
+					"404": {
+						"description": "Not Found",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/ErrorResponse"
+								}
+							}
+						}
+					},
+					"409": {
+						"description": "Conflict",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/ErrorResponse"
+								}
+							}
+						}
+					}
+				},
+				"tags": [
+					"TradeForm"
+				],
+				"security": [
+					{
+						"bearerAuth": []
+					}
+				],
+				"parameters": [
+					{
+						"in": "path",
+						"name": "uid",
+						"required": true,
+						"schema": {
+							"type": "string"
+						}
+					}
+				],
+				"requestBody": {
+					"required": true,
+					"content": {
+						"application/json": {
+							"schema": {
+								"$ref": "#/components/schemas/VerifyVcDto"
+							}
+						}
+					}
+				}
+			}
+		},
+		"/tradeforms/{uid}/confirm": {
+			"post": {
+				"operationId": "confirmTradeForm",
+				"responses": {
+					"200": {
+						"description": "Ok",
+						"content": {
+							"application/json": {
+								"schema": {
+									"properties": {
+										"finalizeTriggered": {
+											"type": "boolean"
+										},
+										"status": {
+											"$ref": "#/components/schemas/TradeFormStatus"
+										}
+									},
+									"required": [
+										"finalizeTriggered",
+										"status"
+									],
+									"type": "object"
+								},
+								"examples": {
+									"Example 1": {
+										"value": {
+											"status": "confirmed",
+											"finalizeTriggered": true
+										}
+									}
+								}
+							}
+						}
+					},
+					"401": {
+						"description": "Unauthorized",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/ErrorResponse"
+								}
+							}
+						}
+					},
+					"403": {
+						"description": "Forbidden",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/ErrorResponse"
+								}
+							}
+						}
+					},
+					"404": {
+						"description": "Not Found",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/ErrorResponse"
+								}
+							}
+						}
+					},
+					"409": {
+						"description": "Conflict",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/ErrorResponse"
+								}
+							}
+						}
+					}
+				},
+				"tags": [
+					"TradeForm"
+				],
+				"security": [
+					{
+						"bearerAuth": []
+					}
+				],
+				"parameters": [
+					{
+						"in": "path",
+						"name": "uid",
+						"required": true,
+						"schema": {
+							"type": "string"
+						}
+					}
+				],
+				"requestBody": {
+					"required": true,
+					"content": {
+						"application/json": {
+							"schema": {
+								"$ref": "#/components/schemas/ConfirmDto"
+							}
+						}
+					}
+				}
+			}
+		},
+		"/tradeforms/{uid}/cancel": {
+			"post": {
+				"operationId": "cancelTradeForm",
+				"responses": {
+					"200": {
+						"description": "Ok",
+						"content": {
+							"application/json": {
+								"schema": {
+									"properties": {
+										"status": {
+											"$ref": "#/components/schemas/TradeFormStatus"
+										}
+									},
+									"required": [
+										"status"
+									],
+									"type": "object"
+								},
+								"examples": {
+									"Example 1": {
+										"value": {
+											"status": "cancelled"
+										}
+									}
+								}
+							}
+						}
+					},
+					"401": {
+						"description": "Unauthorized",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/ErrorResponse"
+								}
+							}
+						}
+					},
+					"403": {
+						"description": "Forbidden",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/ErrorResponse"
+								}
+							}
+						}
+					},
+					"404": {
+						"description": "Not Found",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/ErrorResponse"
+								}
+							}
+						}
+					},
+					"409": {
+						"description": "Conflict",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/ErrorResponse"
+								}
+							}
+						}
+					}
+				},
+				"tags": [
+					"TradeForm"
+				],
+				"security": [
+					{
+						"bearerAuth": []
+					}
+				],
+				"parameters": [
+					{
+						"in": "path",
+						"name": "uid",
+						"required": true,
+						"schema": {
+							"type": "string"
+						}
+					}
+				],
+				"requestBody": {
+					"required": true,
+					"content": {
+						"application/json": {
+							"schema": {
+								"$ref": "#/components/schemas/CancelDto"
+							}
+						}
+					}
+				}
+			}
+		},
+		"/tradeforms/{uid}/finalize": {
+			"post": {
+				"operationId": "finalizeTradeForm",
+				"responses": {
+					"200": {
+						"description": "Ok",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/FinalizeResult"
+								},
+								"examples": {
+									"Example 1": {
+										"value": {
+											"status": "done",
+											"meta": {
+												"finalizedBy": "platform"
+											}
+										}
+									}
+								}
+							}
+						}
+					},
+					"401": {
+						"description": "Unauthorized",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/ErrorResponse"
+								}
+							}
+						}
+					},
+					"403": {
+						"description": "Forbidden",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/ErrorResponse"
+								}
+							}
+						}
+					},
+					"404": {
+						"description": "Not Found",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/ErrorResponse"
+								}
+							}
+						}
+					},
+					"409": {
+						"description": "Conflict",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/ErrorResponse"
+								}
+							}
+						}
+					}
+				},
+				"tags": [
+					"TradeForm",
+					"Internal"
+				],
+				"security": [
+					{
+						"bearerAuth": []
+					}
+				],
+				"parameters": [
+					{
+						"in": "path",
+						"name": "uid",
+						"required": true,
+						"schema": {
+							"type": "string"
+						}
+					}
+				]
+			}
+		},
+		"/tradeforms/{uid}/finalize/retry": {
+			"post": {
+				"operationId": "retryFinalizeTradeForm",
+				"responses": {
+					"200": {
+						"description": "Ok",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/FinalizeResult"
+								},
+								"examples": {
+									"Example 1": {
+										"value": {
+											"status": "failed",
+											"meta": {
+												"finalizedBy": "platform",
+												"retry": true
+											},
+											"error": "Chain configuration missing"
+										}
+									}
+								}
+							}
+						}
+					},
+					"401": {
+						"description": "Unauthorized",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/ErrorResponse"
+								}
+							}
+						}
+					},
+					"403": {
+						"description": "Forbidden",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/ErrorResponse"
+								}
+							}
+						}
+					},
+					"404": {
+						"description": "Not Found",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/ErrorResponse"
+								}
+							}
+						}
+					}
+				},
+				"tags": [
+					"TradeForm",
+					"Internal"
+				],
+				"security": [
+					{
+						"bearerAuth": []
+					}
+				],
+				"parameters": [
+					{
+						"in": "path",
+						"name": "uid",
+						"required": true,
+						"schema": {
+							"type": "string"
+						}
+					}
+				]
+			}
+		},
+		"/tradeforms/{uid}/audit": {
+			"get": {
+				"operationId": "getTradeFormAuditLog",
+				"responses": {
+					"200": {
+						"description": "Ok",
+						"content": {
+							"application/json": {
+								"schema": {
+									"items": {
+										"$ref": "#/components/schemas/AuditEventView"
+									},
+									"type": "array"
+								},
+								"examples": {
+									"Example 1": {
+										"value": [
+											{
+												"id": "5a9d0bf4-4135-4ca8-8b46-25b8d0f32c4f",
+												"tradeUid": "dQ7rFZc1o7g0uX9A1c2b",
+												"actorId": "35ad1c74-53f5-4fc2-849e-2e120a6a6ba9",
+												"action": "create",
+												"at": "2024-06-01T12:00:00.000Z",
+												"details": {
+													"title": "USDT OTC escrow"
+												}
+											}
+										]
+									}
+								}
+							}
+						}
+					},
+					"401": {
+						"description": "Unauthorized",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/ErrorResponse"
+								}
+							}
+						}
+					},
+					"403": {
+						"description": "Forbidden",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/ErrorResponse"
+								}
+							}
+						}
+					},
+					"404": {
+						"description": "Not Found",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/ErrorResponse"
+								}
+							}
+						}
+					}
+				},
+				"tags": [
+					"Audit"
+				],
+				"security": [
+					{
+						"bearerAuth": []
+					}
+				],
+				"parameters": [
+					{
+						"in": "path",
+						"name": "uid",
+						"required": true,
+						"schema": {
+							"type": "string"
+						}
+					}
+				]
+			}
+		},
+		"/me/tradeforms": {
+			"get": {
+				"operationId": "listMyTradeForms",
+				"responses": {
+					"200": {
+						"description": "Ok",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/TradeFormListResponse"
+								},
+								"examples": {
+									"Example 1": {
+										"value": {
+											"data": [
+												{
+													"uid": "dQ7rFZc1o7g0uX9A1c2b",
+													"title": "USDT OTC escrow",
+													"description": "P2P escrow with VC verification",
+													"amount": "1000.00",
+													"status": "pending",
+													"creatorId": "35ad1c74-53f5-4fc2-849e-2e120a6a6ba9",
+													"counterpartyId": null,
+													"meta": {},
+													"createdAt": "2024-06-01T12:00:00.000Z",
+													"updatedAt": "2024-06-01T12:00:00.000Z",
+													"auditLog": [],
+													"shareUrl": "https://app.example.com/join/dQ7rFZc1o7g0uX9A1c2b"
+												}
+											],
+											"page": 1,
+											"pageSize": 20,
+											"total": 1
+										}
+									}
+								}
+							}
+						}
+					},
+					"401": {
+						"description": "Unauthorized",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/ErrorResponse"
+								}
+							}
+						}
+					}
+				},
+				"tags": [
+					"TradeForm"
+				],
+				"security": [
+					{
+						"bearerAuth": []
+					}
+				],
+				"parameters": [
+					{
+						"in": "query",
+						"name": "status",
+						"required": false,
+						"schema": {
+							"$ref": "#/components/schemas/TradeFormStatusValue"
+						}
+					},
+					{
+						"in": "query",
+						"name": "created_from",
+						"required": false,
+						"schema": {
+							"type": "string"
+						}
+					},
+					{
+						"in": "query",
+						"name": "created_to",
+						"required": false,
+						"schema": {
+							"type": "string"
+						}
+					},
+					{
+						"in": "query",
+						"name": "page",
+						"required": false,
+						"schema": {
+							"format": "double",
+							"type": "number"
+						}
+					},
+					{
+						"in": "query",
+						"name": "page_size",
+						"required": false,
+						"schema": {
+							"format": "double",
+							"type": "number"
+						}
+					}
+				]
+			}
+		},
+		"/auth/dev-token": {
+			"post": {
+				"operationId": "generateDevToken",
+				"responses": {
+					"201": {
+						"description": "Token generated",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/DevTokenResponse"
+								},
+								"examples": {
+									"Example 1": {
+										"value": {
+											"token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
+											"expiresIn": "1h",
+											"role": "user"
+										}
+									}
+								}
+							}
+						}
+					},
+					"403": {
+						"description": "Disabled in production",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/DevTokenError"
+								}
+							}
+						}
+					}
+				},
+				"tags": [
+					"Auth"
+				],
+				"security": [],
+				"parameters": [],
+				"requestBody": {
+					"required": true,
+					"content": {
+						"application/json": {
+							"schema": {
+								"$ref": "#/components/schemas/DevTokenRequest"
+							}
+						}
+					}
+				}
+			}
+		}
+	},
+	"servers": [
+		{
+			"url": "/api/v1"
+		}
+	],
+	"tags": [
+		{
+			"name": "tradeforms",
+			"description": "Trade form lifecycle"
+		}
+	]
+}
