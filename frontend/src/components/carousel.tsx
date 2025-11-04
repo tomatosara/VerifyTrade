@@ -20,7 +20,7 @@ export default function Carousel() {
       bgImageMobile: "/images/trust-bg-mobile.jpg",
       buttonText: "建立表單",
       buttonLink: "/newform",
-      buttonColor: "bg-[var(--color-secondary)] hover:bg-[#4B9CFF] text-white",
+      buttonColor: "bg-[var(--color-secondary)] hover:bg-[var(--color-secondary)] text-white",
     },
     {
       bgImage: "/images/security-bg-desktop.jpg",
