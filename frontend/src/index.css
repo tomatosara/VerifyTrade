@@ -40,7 +40,7 @@
 
 /* 📍 控制 Swiper 點點 (pagination) 位置 */
 .swiper-pagination {
-  bottom: 3% !important; /* 桌機時稍微靠下 */
+  bottom: 5% !important; /* 桌機時稍微靠下 */
 }
 
 @media (max-width: 768px) {

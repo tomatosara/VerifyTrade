@@ -9,8 +9,8 @@ import { Link } from "react-router-dom";
 export default function Carousel() {
   const slides = [
     {
-      bgImage: "/images/verify-bg-desktop.jpg",
-      bgImageMobile: "/images/verify-bg-mobile.jpg",
+      bgImage: "/image/shake-hand.png",
+      bgImageMobile: "/image/shake-hand.png",
       buttonText: "立即登入",
       buttonLink: "/login",
       buttonColor: "bg-[var(--color-primary)] hover:bg-[var(--color-secondary)] text-white",
@@ -38,7 +38,7 @@ export default function Carousel() {
       pagination={{ clickable: true }}
       autoplay={{ delay: 8000 }}
       loop
-      className="relative h-[90vh] md:h-[70vh] w-full"
+      className="relative h-[75vh] md:h-[65vh] w-full"
     >
       {slides.map((slide, i) => (
         <SwiperSlide key={i}>
@@ -59,10 +59,10 @@ export default function Carousel() {
               flex
               w-full
               justify-center       /* 手機置中 */
-              bottom-[15%]         /* 手機：按鈕更靠下 */
+              bottom-[13%]         /* 手機：按鈕更靠下 */
               md:justify-end       /* 桌機靠右 */
-              md:bottom-[25%]      /* 桌機往上 */
-              md:right-[18%]       /* 桌機右邊留白 */
+              md:bottom-[20%]      /* 桌機往上 */
+              md:right-[15%]       /* 桌機右邊留白 */
             "
           >
             <Link to={slide.buttonLink}>
