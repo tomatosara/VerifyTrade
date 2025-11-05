@@ -146,7 +146,7 @@ export default function RentTemplate({
                             確定條件
                         </button>
                     ) : !initiatorVerified ? (
-                        <p className="text-green-600 text-center">
+                        <p className="text-[var(--color-secondary)] font-semibold text-lg text-center">
                             建立方請開啟數位憑證皮夾 App 掃描 QR Code
                         </p>
                     ) : null}
@@ -260,9 +260,9 @@ export default function RentTemplate({
                                 確定送出
                             </button>
                         ) : (
-                            <p className="text-[var(--color-secondary)] font-semibold mt-6 leading-relaxed">
-                                🎉 交易內容已鎖定<br />
-                                請房客使用交易序號進入表單，<br />
+                            <p className="text-[var(--color-secondary)] text-lg font-semibold mt-2 leading-relaxed">
+                                交易內容已鎖定<br />
+                                請確認方使用交易序號進入表單，<br />
                                 並掃描 QR Code 完成身分驗證。
                             </p>
                         )}

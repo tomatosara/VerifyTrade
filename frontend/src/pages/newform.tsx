@@ -2,6 +2,8 @@ import { useState } from "react";
 import { QRCode } from "@/components/ui/qr-code";
 import RentTemplate from "@/components/templates/rent.template";
 import P2PTemplate from "@/components/templates/p2p.template";
+import { Copy, Check } from "lucide-react"; // ✅ icon 套件
+
 
 export default function NewForm() {
   const [template, setTemplate] = useState<"rent" | "p2p" | "">("");
@@ -10,6 +12,7 @@ export default function NewForm() {
   const [transactionLocked, setTransactionLocked] = useState(false);
   const [receiverVerified, setReceiverVerified] = useState(false);
   const [initiatorConfirmed, setInitiatorConfirmed] = useState(false);
+  const [copied, setCopied] = useState(false);
 
   const generateTradeId = () => {
     const id = Math.random().toString(36).substring(2, 10).toUpperCase();
@@ -18,13 +21,37 @@ export default function NewForm() {
 
   const transactionSuccess = initiatorVerified && receiverVerified;
 
+  const handleCopy = () => {
+    navigator.clipboard.writeText(tradeId);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000); // 2 秒後自動消失
+  };
+
   return (
-    <div className="min-h-screen bg-gray-50 flex justify-center items-center py-10 px-4">
+    <div className="min-h-screen bg-gray-50 flex justify-center items-center py-8 px-4">
       <div className="w-full max-w-5xl bg-white border border-gray-300 rounded-2xl shadow-lg p-8 space-y-8">
 
-        {/* 🎉 交易成功提示 */}
+
+        {initiatorConfirmed && !initiatorVerified && (
+          <div className="bg-yellow-50 border border-yellow-300 text-black py-4 px-6 rounded-xl text-center font-semibold text-lg shadow-inner">
+            建立方請開啟數位憑證皮夾 App 掃描 QR Code
+          </div>
+        )}
+
+        {initiatorVerified && !transactionLocked && (
+          <div className="bg-yellow-50 border border-yellow-300 text-black py-4 px-6 rounded-xl text-center font-semibold text-lg shadow-inner">
+            請繼續完成下方表單內容
+          </div>
+        )}
+
+        {transactionLocked && !transactionSuccess && (
+          <div className="bg-yellow-50 border border-yellow-300 text-black py-4 px-6 rounded-xl text-center font-semibold text-lg shadow-inner">
+            等待對方確認交易內容，請掃描 QR Code 以完成身分驗證 <br/> 注意！掃描 QR Code 代表您已閱讀並同意交易內容。
+          </div>
+        )}
+
         {transactionSuccess && (
-          <div className="bg-green-50 border border-green-300 text-green-700 py-4 px-6 rounded-xl text-center font-semibold text-lg">
+          <div className="bg-yellow-50 border border-yellow-300 text-black py-4 px-6 rounded-xl text-center font-semibold text-lg shadow-inner">
             雙方驗證完成，交易成立！
           </div>
         )}
@@ -39,22 +66,38 @@ export default function NewForm() {
         {/* 已鎖定顯示交易序號 */}
         {transactionLocked && (
           <section className="text-center">
-            <h2 className="text-2xl font-semibold mb-4 text-gray-800">
-              交易序號
-            </h2>
-            <div className="flex justify-center items-center gap-2">
-              <span className="font-mono text-2xl bg-gray-100 px-4 py-2 rounded">
-                {tradeId}
-              </span>
-              <button
-                onClick={() => navigator.clipboard.writeText(tradeId)}
-                className="text-sm bg-[var(--color-secondary)] text-white px-3 py-1 rounded hover:bg-[#4B9CFF]"
+            <h2 className="text-2xl font-semibold mb-4 text-gray-800">交易序號</h2>
+
+            <div className="flex justify-center">
+              <div
+                className={`flex items-center justify-between gap-2 font-mono text-2xl bg-gray-100 px-4 py-2 rounded-xl w-fit transition ${copied ? "ring-2 ring-[var(--color-primary)]" : ""
+                  }`}
               >
-                複製
-              </button>
+                <span>{tradeId}</span>
+
+                <button
+                  onClick={handleCopy}
+                  className="p-2 rounded-full hover:bg-gray-200 transition relative"
+                  title="複製交易序號"
+                >
+                  {copied ? (
+                    <Check className="w-5 h-5 text-[var(--color-primary)]" />
+                  ) : (
+                    <Copy className="w-5 h-5 text-gray-600" />
+                  )}
+
+                  {/* ✅ 已複製提示文字 */}
+                  {copied && (
+                    <span className="absolute -top-8 text-xs text-gray-600 bg-white whitespace-nowrap border border-gray-200 rounded-md px-3 py-2 shadow-sm">
+                      已複製！
+                    </span>
+                  )}
+                </button>
+              </div>
             </div>
           </section>
         )}
+
 
         {/* 選擇模板 */}
         {!template && (
@@ -107,7 +150,7 @@ export default function NewForm() {
                 {!initiatorConfirmed ? (
                   <p className="text-gray-400">等待填寫雙方身分驗證條件...</p>
                 ) : initiatorVerified ? (
-                  <p className="text-green-600 font-medium">✅ 驗證完成</p>
+                  <p className="text-[var(--color-primary)] text-lg font-medium">驗證完成！</p>
                 ) : (
                   <>
                     <QRCode value="https://verify.initiator" size="lg" />
@@ -126,7 +169,7 @@ export default function NewForm() {
                 <h3 className="font-semibold mb-3 text-gray-700">確認方驗證</h3>
                 {transactionLocked ? (
                   receiverVerified ? (
-                    <p className="text-green-600 font-medium">✅ 驗證完成</p>
+                    <p className="text-[var(--color-primary)] text-lg font-medium">驗證完成！</p>
                   ) : (
                     <>
                       <QRCode value="https://verify.receiver" size="lg" />
@@ -177,16 +220,33 @@ export default function NewForm() {
         {transactionLocked && (
           <section className="text-center">
             <h2 className="text-lg font-semibold mb-4 text-gray-800">交易序號</h2>
-            <div className="flex justify-center items-center gap-2">
-              <span className="font-mono text-lg bg-gray-100 px-4 py-2 rounded">
-                {tradeId}
-              </span>
-              <button
-                onClick={() => navigator.clipboard.writeText(tradeId)}
-                className="text-sm bg-[var(--color-secondary)] text-white px-3 py-1 rounded hover:bg-[#4B9CFF]"
+
+            <div className="flex justify-center">
+              <div
+                className={`flex items-center justify-between gap-2 font-mono text-lg bg-gray-100 px-4 py-2 rounded-xl w-fit transition ${copied ? "ring-2 ring-[var(--color-primary)]" : ""
+                  }`}
               >
-                複製
-              </button>
+                <span>{tradeId}</span>
+
+                <button
+                  onClick={handleCopy}
+                  className="p-2 rounded-full hover:bg-gray-200 transition relative"
+                  title="複製交易序號"
+                >
+                  {copied ? (
+                    <Check className="w-5 h-5 text-[var(--color-primary)]" />
+                  ) : (
+                    <Copy className="w-5 h-5 text-gray-600" />
+                  )}
+
+                  {/* ✅ 已複製提示文字 */}
+                  {copied && (
+                    <span className="absolute -top-8 text-xs text-gray-600 bg-white whitespace-nowrap border border-gray-200 rounded-md px-3 py-2 shadow-sm">
+                      已複製！
+                    </span>
+                  )}
+                </button>
+              </div>
             </div>
           </section>
         )}
