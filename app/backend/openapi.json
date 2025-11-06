@@ -359,65 +359,62 @@
 				"type": "object",
 				"additionalProperties": false
 			},
-			"UserRole": {
-				"type": "string",
-				"enum": [
-					"user",
-					"platform"
-				]
-			},
-			"DevTokenResponse": {
+			"LoginResponse": {
 				"properties": {
-					"token": {
+					"accessToken": {
 						"type": "string"
 					},
 					"expiresIn": {
 						"type": "string"
-					},
-					"role": {
-						"$ref": "#/components/schemas/UserRole"
 					}
 				},
 				"required": [
-					"token",
-					"expiresIn",
-					"role"
+					"accessToken",
+					"expiresIn"
 				],
 				"type": "object",
 				"additionalProperties": false
 			},
-			"DevTokenError": {
+			"LoginByVerifierRequest": {
 				"properties": {
-					"error": {
-						"type": "string"
-					},
-					"requestId": {
+					"transactionId": {
 						"type": "string"
 					}
 				},
 				"required": [
-					"error"
+					"transactionId"
 				],
 				"type": "object",
 				"additionalProperties": false
 			},
-			"DevTokenRequest": {
+			"RefreshResponse": {
 				"properties": {
-					"userId": {
+					"accessToken": {
 						"type": "string"
 					},
-					"role": {
-						"$ref": "#/components/schemas/UserRole"
-					},
-					"email": {
-						"type": "string"
-					},
-					"name": {
+					"expiresIn": {
 						"type": "string"
 					}
 				},
 				"required": [
-					"userId"
+					"accessToken",
+					"expiresIn"
+				],
+				"type": "object",
+				"additionalProperties": false
+			},
+			"LogoutResponse": {
+				"properties": {
+					"success": {
+						"type": "boolean",
+						"enum": [
+							true
+						],
+						"nullable": false
+					}
+				},
+				"required": [
+					"success"
 				],
 				"type": "object",
 				"additionalProperties": false
@@ -1458,35 +1455,16 @@
 				]
 			}
 		},
-		"/auth/dev-token": {
+		"/auth/login-by-verifier": {
 			"post": {
-				"operationId": "generateDevToken",
+				"operationId": "loginByVerifier",
 				"responses": {
-					"201": {
-						"description": "Token generated",
+					"200": {
+						"description": "Logged in",
 						"content": {
 							"application/json": {
 								"schema": {
-									"$ref": "#/components/schemas/DevTokenResponse"
-								},
-								"examples": {
-									"Example 1": {
-										"value": {
-											"token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
-											"expiresIn": "1h",
-											"role": "user"
-										}
-									}
-								}
-							}
-						}
-					},
-					"403": {
-						"description": "Disabled in production",
-						"content": {
-							"application/json": {
-								"schema": {
-									"$ref": "#/components/schemas/DevTokenError"
+									"$ref": "#/components/schemas/LoginResponse"
 								}
 							}
 						}
@@ -1502,11 +1480,76 @@
 					"content": {
 						"application/json": {
 							"schema": {
-								"$ref": "#/components/schemas/DevTokenRequest"
+								"$ref": "#/components/schemas/LoginByVerifierRequest"
 							}
 						}
 					}
 				}
+			}
+		},
+		"/auth/refresh": {
+			"post": {
+				"operationId": "refreshAccessToken",
+				"responses": {
+					"200": {
+						"description": "Ok",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/RefreshResponse"
+								}
+							}
+						}
+					}
+				},
+				"tags": [
+					"Auth"
+				],
+				"security": [],
+				"parameters": []
+			}
+		},
+		"/auth/logout": {
+			"post": {
+				"operationId": "logout",
+				"responses": {
+					"200": {
+						"description": "Ok",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/LogoutResponse"
+								}
+							}
+						}
+					}
+				},
+				"tags": [
+					"Auth"
+				],
+				"security": [],
+				"parameters": []
+			}
+		},
+		"/auth/me": {
+			"get": {
+				"operationId": "Me",
+				"responses": {
+					"200": {
+						"description": "Ok",
+						"content": {
+							"application/json": {
+								"schema": {}
+							}
+						}
+					}
+				},
+				"security": [
+					{
+						"jwt": []
+					}
+				],
+				"parameters": []
 			}
 		}
 	},

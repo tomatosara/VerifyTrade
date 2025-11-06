@@ -7,10 +7,11 @@ export type SeedProfile = 'dev' | 'test';
 export interface UserSeed {
   key: string;
   id: string;
-  email: string;
+  idNumber: string;
+  birthday: string;
+  address: string;
   name: string;
   role: UserRole;
-  passwordHash: string | null;
   createdAt: Date;
   updatedAt: Date;
 }

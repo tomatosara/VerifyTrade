@@ -6,7 +6,7 @@ export class VerificationTx {
   id!: string;
 
   @Index({ unique: true })
-  @Column({ type: 'varchar', length: 64 })   // << 明確指定
+  @Column({ type: 'varchar', length: 64 }) 
   transactionId!: string;
 
   @Column({ type: 'varchar', default: 'verifier' })

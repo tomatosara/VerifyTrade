@@ -2,8 +2,13 @@ import type { Request, Response } from 'express';
 import { UnauthorizedError } from '@utils/errors';
 import { verifyJwt } from '@modules/auth/jwt';
 
-export async function expressAuthentication(request: Request, name: string, _scopes?: string[], _response?: Response) {
-  if (name !== 'bearerAuth') {
+export async function expressAuthentication(
+  request: Request,
+  name: string,
+  _scopes?: string[],
+  _response?: Response
+) {
+  if (name !== 'jwt') {
     throw new UnauthorizedError(`Unsupported security scheme: ${name}`);
   }
 
@@ -18,9 +23,12 @@ export async function expressAuthentication(request: Request, name: string, _sco
   }
 
   const claims = verifyJwt(token);
-  request.user = {
-    id: claims.sub,
-    role: claims.role
+
+  (request as any).user = {
+    idNumber: claims.idNumber,
+    name: claims.name,
+    role: claims.role,
+    birthday: claims.birthday
   };
 
   return request.user;

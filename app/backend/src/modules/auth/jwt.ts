@@ -1,47 +1,27 @@
-import jwt from 'jsonwebtoken';
-import { appConfig } from '@config/app';
-import type { UserRole } from './entity/user.entity';
+// src/modules/auth/jwt.ts
+import jwt, { SignOptions } from 'jsonwebtoken';
 
-export interface JwtClaims {
-  sub: string;
-  role: UserRole;
-  email?: string;
-  name?: string;
-  iss?: string;
-  aud?: string;
+const DEFAULT_SECRET = process.env.JWT_SECRET || 'dev-secret';
+
+export function signJwt(
+  payload: Record<string, any>,
+  opts?: { expiresIn?: SignOptions['expiresIn']; secret?: string } // ← 用現成型別
+): string {
+  const options: SignOptions = {};
+  if (opts?.expiresIn !== undefined) {
+    options.expiresIn = opts.expiresIn as SignOptions['expiresIn'];
+  }
+  const secret = (opts?.secret ?? DEFAULT_SECRET) as string;
+  return jwt.sign(payload, secret, options);
 }
 
-const jwtOptions = {
-  issuer: appConfig.jwtIssuer,
-  audience: appConfig.jwtAudience,
-  expiresIn: '1h'
-} as const;
-
-export function signJwt(claims: JwtClaims): string {
-  return jwt.sign(claims, appConfig.jwtSecret, jwtOptions);
-}
-
-export function signPlatformJwt(claims: JwtClaims): string {
-  return jwt.sign(claims, appConfig.platformJwtSecret, jwtOptions);
-}
-
-export function verifyJwt(token: string): JwtClaims {
+export function verifyJwt<T extends object = any>(
+  token: string,
+  secret?: string
+): T | null {
   try {
-    return jwt.verify(token, appConfig.jwtSecret, {
-      issuer: appConfig.jwtIssuer,
-      audience: appConfig.jwtAudience
-    }) as JwtClaims;
-  } catch (err) {
-    if (appConfig.platformJwtSecret !== appConfig.jwtSecret) {
-      try {
-        return jwt.verify(token, appConfig.platformJwtSecret, {
-          issuer: appConfig.jwtIssuer,
-          audience: appConfig.jwtAudience
-        }) as JwtClaims;
-      } catch {
-        throw err;
-      }
-    }
-    throw err;
+    return jwt.verify(token, secret ?? DEFAULT_SECRET) as T;
+  } catch {
+    return null;
   }
 }

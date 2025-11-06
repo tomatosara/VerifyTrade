@@ -41,6 +41,7 @@
         "http/*"
       ],
       "@types/*": ["types/*"],
+      "@migrations/*": ["migrations/*"]
     }
   },
   "include": [

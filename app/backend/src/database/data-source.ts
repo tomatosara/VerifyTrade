@@ -22,7 +22,7 @@ const defaultOptions: Options = {
   type: 'postgres',
   url: dbConfig.databaseUrl,
   logging: false,
-  synchronize: true,
+  synchronize: false,
   entities: [entitiesGlob],
   migrations: [migrationsGlob],
   subscribers: [subscribersGlob],

@@ -24,7 +24,7 @@ interface RunSeedOptions {
 
 interface SeededUserInfo {
   id: string;
-  email: string;
+  idNumber: string;
   name: string;
   role: UserEntity['role'];
 }
@@ -208,38 +208,32 @@ export async function runSeed(options: RunSeedOptions = {}): Promise<RunSeedResu
       const confirmationRepo = manager.getRepository(TradeConfirmationEntity);
 
       const userSeeds = buildUserSeeds(profile);
-      await userRepo.upsert(userSeeds, ['email']);
+      // ===== 取代 email → idNumber =====
+      await userRepo.upsert(userSeeds, ['idNumber']);
 
       const persistedUsers = await userRepo.find({
         where: {
-          email: In(userSeeds.map((user) => user.email))
-        }
+          idNumber: In(userSeeds.map((u) => u.idNumber)),
+        },
       });
 
-      const persistedByEmail = new Map(persistedUsers.map((user) => [user.email, user]));
+      const persistedById = new Map(persistedUsers.map((u) => [u.idNumber!, u]));
 
       const resolvedUsers: UserSeed[] = userSeeds.map((seed) => {
-        const entity = persistedByEmail.get(seed.email);
-        if (!entity) {
-          throw new Error(`Failed to resolve seeded user with email ${seed.email}`);
-        }
+        const entity = persistedById.get(seed.idNumber);
+        if (!entity) throw new Error(`Failed to resolve seeded user ${seed.idNumber}`);
 
         return {
           ...seed,
           id: entity.id,
-          name: entity.name,
           role: entity.role,
           createdAt: entity.createdAt,
           updatedAt: entity.updatedAt,
-          passwordHash: entity.passwordHash ?? null
         };
       });
 
-      usersByKey = Object.fromEntries(
-        resolvedUsers.map((user) => [
-          user.key,
-          { id: user.id, email: user.email, name: user.name, role: user.role }
-        ])
+      const usersByKey = Object.fromEntries(
+        resolvedUsers.map((u) => [u.key, { id: u.id, idNumber: u.idNumber, role: u.role }]),
       );
 
       const tradeSeeds = buildTradeSeeds(profile, faker, resolvedUsers);
@@ -318,19 +312,16 @@ export async function runSeed(options: RunSeedOptions = {}): Promise<RunSeedResu
           alice: signJwt({
             sub: alice.id,
             role: alice.role,
-            email: alice.email,
             name: alice.name
           }),
           bob: signJwt({
             sub: bob.id,
             role: bob.role,
-            email: bob.email,
             name: bob.name
           }),
           platform: signPlatformJwt({
             sub: platform.id,
             role: platform.role,
-            email: platform.email,
             name: platform.name
           })
         };
