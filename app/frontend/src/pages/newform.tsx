@@ -46,8 +46,8 @@ export default function NewForm() {
 
         {transactionLocked && !transactionSuccess && (
           <div className="bg-yellow-50 border border-yellow-300 text-black py-4 px-6 rounded-xl text-center font-semibold text-lg shadow-inner">
-            交易內容已鎖定。請確認方使用交易序號進入表單並掃描 QR Code 完成身分驗證。<br/> 
-            注意：掃描 QR Code 代表您已閱讀並同意交易內容。
+            交易內容已鎖定。請確認方使用交易序號進入表單並開啟數位憑證皮夾掃描 QR Code 完成身分驗證。<br/> 
+            注意！掃描 QR Code 代表您已閱讀並同意交易內容。
           </div>
         )}
 
@@ -116,9 +116,9 @@ export default function NewForm() {
                   setInitiatorConfirmed(false);
                   setTradeId("");
                 }}
-                className="px-6 py-2 rounded-full bg-[var(--color-primary)] text-white hover:bg-[var(--color-secondary)]"
+                className="px-12 py-12 rounded-2xl bg-[var(--color-primary)] text-white text-2xl hover:bg-[var(--color-accent)]"
               >
-                🏠 租約模板
+                🏠 租約
               </button>
               <button
                 onClick={() => {
@@ -129,9 +129,9 @@ export default function NewForm() {
                   setInitiatorConfirmed(false);
                   setTradeId("");
                 }}
-                className="px-6 py-2 rounded-full bg-[var(--color-secondary)] text-white hover:bg-[#4B9CFF]"
+                className="px-8 py-8 rounded-2xl bg-[var(--color-secondary)] text-white text-2xl hover:bg-[#0d97ff]"
               >
-                💰 P2P 模板
+                💰 網路交易
               </button>
             </div>
           </section>
@@ -213,6 +213,7 @@ export default function NewForm() {
             transactionLocked={transactionLocked}
             setTransactionLocked={setTransactionLocked}
             generateTradeId={generateTradeId}
+            initiatorConfirmed={initiatorConfirmed}
             setInitiatorConfirmed={setInitiatorConfirmed}
           />
         )}
