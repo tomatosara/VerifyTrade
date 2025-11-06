@@ -1,4 +1,7 @@
 import { useState } from "react";
+import { useEffect } from "react";
+import { Trash2 } from "lucide-react";
+
 
 export default function RentTemplate({
     tradeId,
@@ -13,6 +16,9 @@ export default function RentTemplate({
     const [initiator, setInitiator] = useState({ name: "", method: "" });
     const [receiver, setReceiver] = useState({ name: "", method: "" });
     const [formData, setFormData] = useState({ address: "", rent: "", duration: "" });
+    const [initiatorExtraList, setInitiatorExtraList] = useState([""]);
+    const [receiverExtraList, setReceiverExtraList] = useState([""]);
+
 
     // 通用輸入樣式
     const inputClass = (disabled = false) =>
@@ -27,16 +33,26 @@ export default function RentTemplate({
             ? "bg-gray-100 cursor-not-allowed text-gray-500"
             : "bg-white focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]"}`;
 
+    // ✅ 放在這裡：不是 return 裡面
+    useEffect(() => {
+        if (initiatorConfirmed && !initiatorVerified) {
+            window.scrollTo({ top: 0, behavior: "smooth" });
+        }
+    }, [initiatorConfirmed, initiatorVerified]);
+
+
     return (
         <>
             {/* 一、身份驗證區 */}
             <section className="border-b border-gray-200 pb-8">
-                <h2 className="text-lg font-semibold text-gray-800 mb-6 text-center">雙方條件</h2>
+                <h2 className="text-lg font-semibold text-gray-800 mb-6 text-center">身分驗證</h2>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
                     {/* 建立方 */}
                     <div className="bg-gray-50 p-6 rounded-xl shadow-inner">
                         <h3 className="font-semibold text-[var(--color-primary)] mb-4">建立方條件</h3>
+
+                        {/* 姓名輸入 */}
                         <input
                             placeholder="姓名"
                             className={inputClass(initiatorConfirmed)}
@@ -44,6 +60,8 @@ export default function RentTemplate({
                             onChange={(e) => setInitiator({ ...initiator, name: e.target.value })}
                             disabled={initiatorConfirmed}
                         />
+
+                        {/* 主身分選擇 */}
                         <select
                             className={selectClass(initiatorConfirmed)}
                             value={initiator.method}
@@ -54,11 +72,55 @@ export default function RentTemplate({
                             <option value="vc">房東</option>
                             <option value="nid">房客</option>
                         </select>
+
+                        {/* 其他身分條件（可動態新增） */}
+                        {initiatorExtraList.map((item, index) => (
+                            <div key={index} className="mt-3 flex items-center gap-2">
+                                <select
+                                    className={selectClass(initiatorConfirmed)}
+                                    value={item}
+                                    onChange={(e) => {
+                                        const updated = [...initiatorExtraList];
+                                        updated[index] = e.target.value;
+                                        setInitiatorExtraList(updated);
+                                    }}
+                                    disabled={initiatorConfirmed}
+                                >
+                                    <option value="">其他身分條件</option>
+                                    <option value="student">學生</option>
+                                    <option value="employee">員工</option>
+                                </select>
+
+                                {/* 🗑 刪除按鈕（選用） */}
+                                {!initiatorConfirmed && initiatorExtraList.length > 1 && (
+                                    <button
+                                        onClick={() => {
+                                            const updated = initiatorExtraList.filter((_, i) => i !== index);
+                                            setInitiatorExtraList(updated);
+                                        }}
+                                        className="flex items-center justify-center w-8 h-8 rounded hover:bg-gray-100 transition"
+                                    >
+                                        <Trash2 className="w-5 h-5 text-gray-400" />
+                                    </button>
+                                )}
+                            </div>
+                        ))}
+
+                        {/* ➕ 新增其他身分條件 */}
+                        {!initiatorConfirmed && (
+                            <button
+                                onClick={() => setInitiatorExtraList([...initiatorExtraList, ""])}
+                                className="mt-3 flex items-center justify-center w-full border border-dashed border-[var(--color-primary)] text-[var(--color-primary)] py-2 rounded-lg hover:bg-[var(--color-primary)] hover:text-white transition"
+                            >
+                                ＋ 新增其他身分條件
+                            </button>
+                        )}
                     </div>
 
                     {/* 確認方 */}
                     <div className="bg-gray-50 p-6 rounded-xl shadow-inner">
                         <h3 className="font-semibold text-[var(--color-secondary)] mb-4">確認方條件</h3>
+
                         <input
                             placeholder="姓名"
                             className={inputClass(initiatorConfirmed)}
@@ -66,6 +128,7 @@ export default function RentTemplate({
                             onChange={(e) => setReceiver({ ...receiver, name: e.target.value })}
                             disabled={initiatorConfirmed}
                         />
+
                         <select
                             className={selectClass(initiatorConfirmed)}
                             value={receiver.method}
@@ -76,9 +139,51 @@ export default function RentTemplate({
                             <option value="vc">房東</option>
                             <option value="nid">房客</option>
                         </select>
+
+                        {receiverExtraList.map((item, index) => (
+                            <div key={index} className="mt-3 flex items-center gap-2">
+                                <select
+                                    className={selectClass(initiatorConfirmed)}
+                                    value={item}
+                                    onChange={(e) => {
+                                        const updated = [...receiverExtraList];
+                                        updated[index] = e.target.value;
+                                        setReceiverExtraList(updated);
+                                    }}
+                                    disabled={initiatorConfirmed}
+                                >
+                                    <option value="">其他身分條件</option>
+                                    <option value="student">學生</option>
+                                    <option value="employee">員工</option>
+                                </select>
+
+                                {!initiatorConfirmed && receiverExtraList.length > 1 && (
+                                    <button
+                                        onClick={() => {
+                                            const updated = receiverExtraList.filter((_, i) => i !== index);
+                                            setReceiverExtraList(updated);
+                                        }}
+                                        className="flex items-center justify-center w-8 h-8 rounded hover:bg-gray-100 transition"
+                                    >
+                                        <Trash2 className="w-5 h-5 text-gray-400" />
+                                    </button>
+                                )}
+                            </div>
+                        ))}
+
+                        {!initiatorConfirmed && (
+                            <button
+                                onClick={() => setReceiverExtraList([...receiverExtraList, ""])}
+                                className="mt-3 flex items-center justify-center w-full border border-dashed border-[var(--color-secondary)] text-[var(--color-secondary)] py-2 rounded-lg hover:bg-[var(--color-secondary)] hover:text-white transition"
+                            >
+                                ＋ 新增其他身分條件
+                            </button>
+                        )}
                     </div>
                 </div>
             </section>
+
+
 
             {/* 二、物件驗證 */}
             <section>
@@ -249,22 +354,18 @@ export default function RentTemplate({
 
                     {/* ✅ 最後的送出按鈕 */}
                     <section className="text-center pb-6">
-                        {!transactionLocked ? (
+                        {!transactionLocked && (
                             <button
                                 onClick={() => {
                                     generateTradeId();
                                     setTransactionLocked(true);
+                                    // ✅ 自動滾到頁面最上方
+                                    window.scrollTo({ top: 0, behavior: "smooth" });
                                 }}
                                 className="mt-6 w-[60%] md:w-[30%] bg-[var(--color-primary)] text-white py-3 rounded-full hover:bg-[var(--color-secondary)] transition"
                             >
                                 確定送出
                             </button>
-                        ) : (
-                            <p className="text-[var(--color-secondary)] text-lg font-semibold mt-2 leading-relaxed">
-                                交易內容已鎖定<br />
-                                請確認方使用交易序號進入表單，<br />
-                                並掃描 QR Code 完成身分驗證。
-                            </p>
                         )}
                     </section>
                 </>

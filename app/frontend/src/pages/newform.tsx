@@ -46,7 +46,8 @@ export default function NewForm() {
 
         {transactionLocked && !transactionSuccess && (
           <div className="bg-yellow-50 border border-yellow-300 text-black py-4 px-6 rounded-xl text-center font-semibold text-lg shadow-inner">
-            等待對方確認交易內容，請掃描 QR Code 以完成身分驗證 <br/> 注意！掃描 QR Code 代表您已閱讀並同意交易內容。
+            交易內容已鎖定。請確認方使用交易序號進入表單並掃描 QR Code 完成身分驗證。<br/> 
+            注意：掃描 QR Code 代表您已閱讀並同意交易內容。
           </div>
         )}
 
@@ -148,7 +149,7 @@ export default function NewForm() {
               <div className="flex flex-col items-center justify-center border-2 border-dashed border-gray-300 rounded-lg p-6 min-h-[240px]">
                 <h3 className="font-semibold mb-3 text-gray-700">建立方驗證</h3>
                 {!initiatorConfirmed ? (
-                  <p className="text-gray-400">等待填寫雙方身分驗證條件...</p>
+                  <p className="text-gray-400">等待填寫雙方驗證條件...</p>
                 ) : initiatorVerified ? (
                   <p className="text-[var(--color-primary)] text-lg font-medium">驗證完成！</p>
                 ) : (
@@ -214,41 +215,6 @@ export default function NewForm() {
             generateTradeId={generateTradeId}
             setInitiatorConfirmed={setInitiatorConfirmed}
           />
-        )}
-
-        {/* 完成區（再次顯示交易序號） */}
-        {transactionLocked && (
-          <section className="text-center">
-            <h2 className="text-lg font-semibold mb-4 text-gray-800">交易序號</h2>
-
-            <div className="flex justify-center">
-              <div
-                className={`flex items-center justify-between gap-2 font-mono text-lg bg-gray-100 px-4 py-2 rounded-xl w-fit transition ${copied ? "ring-2 ring-[var(--color-primary)]" : ""
-                  }`}
-              >
-                <span>{tradeId}</span>
-
-                <button
-                  onClick={handleCopy}
-                  className="p-2 rounded-full hover:bg-gray-200 transition relative"
-                  title="複製交易序號"
-                >
-                  {copied ? (
-                    <Check className="w-5 h-5 text-[var(--color-primary)]" />
-                  ) : (
-                    <Copy className="w-5 h-5 text-gray-600" />
-                  )}
-
-                  {/* ✅ 已複製提示文字 */}
-                  {copied && (
-                    <span className="absolute -top-8 text-xs text-gray-600 bg-white whitespace-nowrap border border-gray-200 rounded-md px-3 py-2 shadow-sm">
-                      已複製！
-                    </span>
-                  )}
-                </button>
-              </div>
-            </div>
-          </section>
         )}
       </div>
     </div>
