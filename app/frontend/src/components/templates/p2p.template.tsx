@@ -17,7 +17,6 @@ export default function P2PTemplate({
   const [initiatorExtraList, setInitiatorExtraList] = useState([""]);
   const [receiverExtraList, setReceiverExtraList] = useState([""]);
 
-  // 通用樣式
   const inputClass = (disabled = false) =>
     `border border-gray-300 rounded-lg w-full px-3 py-2 mb-3 text-gray-800 ${disabled
       ? "bg-gray-100 cursor-not-allowed text-gray-500"
@@ -30,7 +29,6 @@ export default function P2PTemplate({
       : "bg-white focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]"
     }`;
 
-  // 建立方確認後自動滾到最上方
   useEffect(() => {
     if (initiatorConfirmed && !initiatorVerified) {
       window.scrollTo({ top: 0, behavior: "smooth" });
@@ -40,7 +38,7 @@ export default function P2PTemplate({
   return (
     <>
       {/* 一、身份驗證區 */}
-      <section className="border-b border-gray-200 pb-8">
+      <section className="pb-2">
         <h2 className="text-lg font-semibold text-gray-800 mb-6 text-center">身分驗證</h2>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
@@ -48,7 +46,6 @@ export default function P2PTemplate({
           <div className="bg-gray-50 p-6 rounded-xl shadow-inner">
             <h3 className="font-semibold text-[var(--color-primary)] mb-4">建立方條件</h3>
 
-            {/* 姓名 */}
             <input
               placeholder="姓名"
               className={inputClass(initiatorConfirmed)}
@@ -57,7 +54,6 @@ export default function P2PTemplate({
               disabled={initiatorConfirmed}
             />
 
-            {/* 主身分 */}
             <select
               className={selectClass(initiatorConfirmed)}
               value={initiator.method}
@@ -69,7 +65,6 @@ export default function P2PTemplate({
               <option value="nid">買家</option>
             </select>
 
-            {/* 其他身分條件 */}
             {initiatorExtraList.map((item, index) => (
               <div key={index} className="mt-3 flex items-center gap-2">
                 <select
@@ -179,15 +174,12 @@ export default function P2PTemplate({
             )}
           </div>
         </div>
-      </section>
 
-      {/* 二、條件確認按鈕 */}
-      <section>
         <div className="flex justify-center mt-6">
           {!initiatorConfirmed ? (
             <button
               onClick={() => setInitiatorConfirmed(true)}
-              className="w-[50%] md:w-[30%] bg-[var(--color-primary)] text-white py-2 rounded-full hover:bg-[var(--color-secondary)] transition"
+              className="w-[50%] md:w-[30%] bg-[var(--color-primary)] mt-4 text-white py-2 rounded-full hover:bg-[var(--color-secondary)] transition"
             >
               確定條件
             </button>
@@ -199,12 +191,12 @@ export default function P2PTemplate({
         </div>
       </section>
 
-      {/* 三、交易內容區 */}
-      {initiatorConfirmed && initiatorVerified ? (
-        <>
-          <section className="border-t border-gray-300 mt-10 pt-10 pb-8">
-            <h3 className="text-lg font-semibold text-gray-800 mb-8 text-center">交易內容</h3>
+      {/* 二、交易內容區 */}
+      <section className="border-t border-gray-300 mt-10 pt-10 pb-8">
+        <h3 className="text-lg font-semibold text-gray-800 mb-8 text-center">交易內容</h3>
 
+        {initiatorConfirmed && initiatorVerified ? (
+          <>
             <div>
               <label className="block text-gray-700 font-medium mb-1">商品名稱</label>
               <input
@@ -271,7 +263,6 @@ export default function P2PTemplate({
               </select>
             </div>
 
-
             <div>
               <label className="block text-gray-700 font-medium mb-1">商品說明</label>
               <textarea
@@ -282,7 +273,6 @@ export default function P2PTemplate({
               ></textarea>
             </div>
 
-            {/* ✅ 把送出按鈕放在同一區塊底部 */}
             <div className="text-center mt-6">
               {!transactionLocked && (
                 <button
@@ -297,13 +287,18 @@ export default function P2PTemplate({
                 </button>
               )}
             </div>
-          </section>
-        </>
-      ) : (
-        <div className="text-center text-gray-500 py-8 border-t border-gray-200">
-          ⚠️ 請先完成身分驗證後，再繼續填寫交易內容。
-        </div>
-      )}
+          </>
+        ) : (
+
+          <div className="bg-yellow-50 border border-yellow-300 rounded-2xl shadow-inner max-w-lg mx-auto p-4 mt-10">
+            <p className="text-gray-800 leading-relaxed text-center">
+              ⚠️ 請先完成身分驗證後，再繼續填寫交易內容。
+            </p>
+
+          </div>
+
+        )}
+      </section>
     </>
   );
 }
