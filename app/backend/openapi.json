@@ -7,6 +7,38 @@
 		"requestBodies": {},
 		"responses": {},
 		"schemas": {
+			"VerifierQrcodeResponse": {
+				"properties": {
+					"transactionId": {
+						"type": "string"
+					},
+					"qrcodeImage": {
+						"type": "string"
+					},
+					"authUri": {
+						"type": "string"
+					}
+				},
+				"required": [
+					"transactionId",
+					"qrcodeImage",
+					"authUri"
+				],
+				"type": "object",
+				"additionalProperties": false
+			},
+			"VerifierResultRequest": {
+				"properties": {
+					"transactionId": {
+						"type": "string"
+					}
+				},
+				"required": [
+					"transactionId"
+				],
+				"type": "object",
+				"additionalProperties": false
+			},
 			"TradeFormStatus": {
 				"type": "string",
 				"enum": [
@@ -317,6 +349,16 @@
 				"type": "object",
 				"additionalProperties": false
 			},
+			"QrcodeDataBody": {
+				"properties": {},
+				"type": "object",
+				"additionalProperties": false
+			},
+			"QrcodeNoDataBody": {
+				"properties": {},
+				"type": "object",
+				"additionalProperties": false
+			},
 			"UserRole": {
 				"type": "string",
 				"enum": [
@@ -390,6 +432,107 @@
 		"contact": {}
 	},
 	"paths": {
+		"/verifier/qrcode": {
+			"post": {
+				"operationId": "CreateQrcode",
+				"responses": {
+					"200": {
+						"description": "Ok",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/VerifierQrcodeResponse"
+								}
+							}
+						}
+					},
+					"400": {
+						"description": "Invalid ref"
+					}
+				},
+				"description": "建立驗證 QR Code",
+				"tags": [
+					"Verifier"
+				],
+				"security": [],
+				"parameters": [],
+				"requestBody": {
+					"required": true,
+					"content": {
+						"application/json": {
+							"schema": {
+								"properties": {
+									"ref": {
+										"type": "string"
+									}
+								},
+								"required": [
+									"ref"
+								],
+								"type": "object"
+							}
+						}
+					}
+				}
+			}
+		},
+		"/verifier/result": {
+			"post": {
+				"operationId": "GetResult",
+				"responses": {
+					"200": {
+						"description": "Ok",
+						"content": {
+							"application/json": {
+								"schema": {}
+							}
+						}
+					},
+					"400": {
+						"description": "Invalid transactionId"
+					}
+				},
+				"description": "查詢驗證結果",
+				"tags": [
+					"Verifier"
+				],
+				"security": [],
+				"parameters": [],
+				"requestBody": {
+					"required": true,
+					"content": {
+						"application/json": {
+							"schema": {
+								"$ref": "#/components/schemas/VerifierResultRequest"
+							}
+						}
+					}
+				}
+			}
+		},
+		"/verifier/id-card/qrcode": {
+			"get": {
+				"operationId": "LoginIdCardQrcode",
+				"responses": {
+					"200": {
+						"description": "Ok",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/VerifierQrcodeResponse"
+								}
+							}
+						}
+					}
+				},
+				"description": "登入身分證專用 QRCode",
+				"tags": [
+					"Verifier"
+				],
+				"security": [],
+				"parameters": []
+			}
+		},
 		"/tradeforms": {
 			"post": {
 				"operationId": "createTradeForm",
@@ -1221,6 +1364,95 @@
 						"schema": {
 							"format": "double",
 							"type": "number"
+						}
+					}
+				]
+			}
+		},
+		"/Issuer/qrcode-data": {
+			"post": {
+				"operationId": "QrcodeData",
+				"responses": {
+					"201": {
+						"description": "Created",
+						"content": {
+							"application/json": {
+								"schema": {}
+							}
+						}
+					}
+				},
+				"tags": [
+					"Issuer"
+				],
+				"security": [],
+				"parameters": [],
+				"requestBody": {
+					"required": true,
+					"content": {
+						"application/json": {
+							"schema": {
+								"$ref": "#/components/schemas/QrcodeDataBody"
+							}
+						}
+					}
+				}
+			}
+		},
+		"/Issuer/qrcode-nodata": {
+			"post": {
+				"operationId": "QrcodeNoData",
+				"responses": {
+					"201": {
+						"description": "Created",
+						"content": {
+							"application/json": {
+								"schema": {}
+							}
+						}
+					}
+				},
+				"tags": [
+					"Issuer"
+				],
+				"security": [],
+				"parameters": [],
+				"requestBody": {
+					"required": true,
+					"content": {
+						"application/json": {
+							"schema": {
+								"$ref": "#/components/schemas/QrcodeNoDataBody"
+							}
+						}
+					}
+				}
+			}
+		},
+		"/Issuer/credential/nonce/{transactionId}": {
+			"get": {
+				"operationId": "GetCredentialNonce",
+				"responses": {
+					"200": {
+						"description": "Ok",
+						"content": {
+							"application/json": {
+								"schema": {}
+							}
+						}
+					}
+				},
+				"tags": [
+					"Issuer"
+				],
+				"security": [],
+				"parameters": [
+					{
+						"in": "path",
+						"name": "transactionId",
+						"required": true,
+						"schema": {
+							"type": "string"
 						}
 					}
 				]

@@ -1,17 +1,42 @@
+import React, { useEffect, useState } from "react";
 import { FlickeringGrid } from "@/components/ui/flickering-grid";
 import { BorderBeam } from "@/components/ui/border-beam";
 import { QRCode } from '@/components/ui/qr-code';
-import React from "react";
+import { fetchQrCode, QrCodeResponse } from "@/api/qr";
+
+
+// export async function loginVerify(token: string) {
+//   const data = await api.post("/api/verify-login", { token });
+//   return data;
+// }
 
 export default function Login() {
-  return (
-    <div className="relative items-center justify-center min-h-screen bg-white overflow-hidden">
-      {/* 🌈 背景特效 */}
-      <FlickeringGrid  className="absolute inset-0 opacity-70" />
+  const [qrData, setQrData] = useState<QrCodeResponse | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  useEffect(() => {
+    async function loadQr() {
+          try {
+            const data = await fetchQrCode();
+            console.log('QR Data:', data);
+            setQrData(data);
+          } catch (err: any) {
+            setError(err.message || "無法取得 QR Code");
+          } finally {
+            setLoading(false);
+          }
+        }
+        loadQr();
+  }, []);
 
-      {/* 🌟 登入框 */}
-      <div className="relative z-10 items-center justify-center w-[80%] md:w-[320px] mx-auto mt-20">
-        <div className="relative bg-white/10 backdrop-blur-xl rounded-2xl text-center shadow-lg p-10 md:p-10">
+  return (
+    <div className="relative flex items-center justify-center min-h-screen bg-white overflow-hidden">
+      {/* 背景閃爍效果 */}
+      <FlickeringGrid className="absolute inset-0 opacity-60" />
+
+      {/* 登入卡片 */}
+      <div className="relative z-10 w-[90%] md:w-[380px] lg:w-[420px]">
+        <div className="relative bg-white/80 backdrop-blur-xl rounded-3xl shadow-2xl text-center p-10 border border-gray-100">
           <BorderBeam
             duration={8}
             borderWidth={3}
@@ -19,18 +44,36 @@ export default function Login() {
             colorTo="var(--color-accent)"
           />
 
-          <h1 className="text-3xl font-bold text-[var(--color-primary)] mb-4">身分驗證登入</h1>
-          <p className="text-black/80 text-sm mb-8">
-            請使用數位憑證皮夾 <br/>
+          <h1 className="text-3xl font-bold text-[var(--color-primary)] mb-5">
+            身分驗證登入
+          </h1>
+          <p className="text-black/70 text-sm mb-8 leading-relaxed">
+            請使用數位憑證皮夾 <br />
             掃描 QR-Code 以註冊或登入
           </p>
 
-          {/* QR Code + 按鈕 */}
-          <div className="flex flex-col items-center justify-center space-y-6 w-full">
-            <QRCode value="https://www.untitledui.com/" size="lg" />
+          <div className="flex flex-col items-center justify-center w-full">
+            {loading && <p className="text-black/60">載入中...</p>}
+            {error && <p className="text-red-500">{error}</p>}
+            {qrData && (
+              <>
+                {/* ✅ 放大 QR Code + 去白邊 */}
+                <div className="p-2 bg-white rounded-xl shadow-sm">
+                  <img
+                    src={qrData.qrcodeImage}
+                    alt="QR Code"
+                    className="w-[220px] h-[220px] object-contain"
+                  />
+                </div>
+
+                <p className="text-xs text-gray-700 mt-4">
+                  交易 ID：{qrData.transactionId}
+                </p>
+              </>
+            )}
           </div>
 
-          <p className="text-black/50 text-xs mt-8 mb-6">
+          <p className="text-black/50 text-xs mt-10">
             掃描 QR-Code 後將自行跳轉
           </p>
         </div>

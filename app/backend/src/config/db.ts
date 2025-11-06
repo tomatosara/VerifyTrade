@@ -1,3 +1,4 @@
+// app/backend/src/config/db.ts
 import './env';
 import { z } from 'zod';
 
@@ -48,6 +49,13 @@ function inferConnectionInfo(urlString: string) {
     };
   }
 }
+
+console.log('Database connection info:', {
+  host: resolvedHost,
+  port: resolvedPort,
+  user: resolvedUser,
+  database: resolvedDatabase
+});
 
 export const dbConfig = {
   host: resolvedHost,
