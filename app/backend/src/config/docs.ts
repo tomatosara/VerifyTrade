@@ -1,4 +1,4 @@
-import '@config/env';
+import './env.bootstrap';
 import { z } from 'zod';
 import { appConfig } from './app';
 

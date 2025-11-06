@@ -1,12 +1,14 @@
 import {
   Body,
   Controller,
-  Example,
+  Delete,
   Get,
   Middlewares,
   OperationId,
   Path,
   Post,
+  Put,
+  Queries,
   Request,
   Response,
   Route,
@@ -14,241 +16,168 @@ import {
   SuccessResponse,
   Tags
 } from 'tsoa';
-import { requireAuth, requirePlatformRole } from '@modules/auth/requireAuth';
-import { idempotencyMiddleware } from '@middleware/idempotency';
-import { confirmRateLimit, verifyVCRateLimit } from '@middleware/rateLimit';
+import { plainToInstance } from 'class-transformer';
+import { validateOrReject, ValidationError as ClassValidatorError } from 'class-validator';
+import { TradeFormService } from '../tradeform.service';
+import { CreateTradeFormDto } from '../dto/create-trade-form.dto';
+import { UpdateTradeFormDto } from '../dto/update-trade-form.dto';
 import {
-  CancelDto,
-  CancelSchema,
-  ConfirmDto,
-  ConfirmSchema,
-  CreateTradeFormDto,
-  CreateTradeFormSchema,
-  VerifyVcDto,
-  VerifyVcSchema,
-  TradeFormMinimalView,
-  TradeFormView,
-  AuditEventView
-} from '../dto/tradeform.dto';
-import { TradeFormService } from '../service/tradeform.service';
-import type { TradeFormStatus } from '../entity/tradeform.entity';
-import type { FinalizeResult } from '../persistence/finalize';
+  TradeFormListQuery,
+  TradeFormListResponse,
+  TradeFormResponse,
+  TradeFormViewResponse
+} from '../dto/trade-form.response';
+import { TradeFormQueryDto } from '../dto/trade-form-query.dto';
+import { UnauthorizedError, ValidationError } from '@utils/errors';
+import { VerifyVcRequestDto, VerifyVcResponseDto, ConfirmTradeResponseDto } from '../dto/trade-form.actions.dto';
 import type { ErrorResponse } from '../../../http/dto/error-response';
+import { verifyVCRateLimit, confirmRateLimit } from '@middleware/rateLimit';
+import { idempotencyMiddleware } from '@middleware/idempotency';
 
 type AuthenticatedRequest = {
   user?: {
     id: string;
-    role: string;
   };
 };
 
 @Route('tradeforms')
+@Tags('TradeForm')
 export class TradeFormController extends Controller {
-  private readonly service = new TradeFormService();
+  private readonly service: TradeFormService;
 
-  @Post()
-  @Tags('TradeForm')
-  @OperationId('createTradeForm')
-  @Security('bearerAuth')
-  @SuccessResponse('201', 'Created')
-  @Middlewares([requireAuth, idempotencyMiddleware])
-  @Response<ErrorResponse>('401', 'Unauthorized')
-  @Response<ErrorResponse>('422', 'Validation error')
-  @Example<{ uid: string; status: TradeFormStatus; shareUrl: string }>({
-    uid: 'dQ7rFZc1o7g0uX9A1c2b',
-    status: 'pending',
-    shareUrl: 'https://app.example.com/join/dQ7rFZc1o7g0uX9A1c2b'
-  })
-  public async createTradeForm(
-    @Body() body: CreateTradeFormDto,
-    @Request() req: any
-  ): Promise<{ uid: string; status: TradeFormStatus; shareUrl: string }> {
-    const request = req as AuthenticatedRequest;
-    const dto = CreateTradeFormSchema.parse(body);
-    const result = await this.service.createTradeForm(dto, request.user!.id);
-    this.setStatus(201);
-    return result;
+  constructor(service: TradeFormService = new TradeFormService()) {
+    super();
+    this.service = service;
   }
 
-  @Get('{uid}')
-  @Tags('TradeForm')
+  @Post()
+  @OperationId('createTradeForm')
+  @Security('bearerAuth', [])
+  @SuccessResponse('201', 'Created')
+  @Response<ErrorResponse>('422', 'Validation error')
+  public async create(
+    @Body() body: CreateTradeFormDto,
+    @Request() req: AuthenticatedRequest
+  ): Promise<TradeFormResponse> {
+    try {
+      const result = await this.service.create(body, req.user?.id ?? null);
+      this.setStatus(201);
+      return result;
+    } catch (error) {
+      throw mapValidationError(error);
+    }
+  }
+
+  @Get()
+  @OperationId('listTradeForms')
+  @Security('bearerAuth', [])
+  public async list(
+    @Queries() query: TradeFormListQuery
+  ): Promise<TradeFormListResponse> {
+    try {
+      const dto = plainToInstance(TradeFormQueryDto, query ?? {});
+      await validateOrReject(dto, { whitelist: true });
+      return this.service.findAll(dto);
+    } catch (error) {
+      throw mapValidationError(error);
+    }
+  }
+
+  @Get('{id}')
   @OperationId('getTradeForm')
-  @Security('bearerAuth')
-  @Middlewares([requireAuth])
-  @Response<ErrorResponse>('401', 'Unauthorized')
+  @Security('bearerAuth', [])
   @Response<ErrorResponse>('404', 'Not Found')
-  @Response<ErrorResponse>('410', 'Expired')
-  @Example<TradeFormView>({
-    uid: 'dQ7rFZc1o7g0uX9A1c2b',
-    title: 'USDT OTC escrow',
-    description: 'P2P escrow with VC verification',
-    amount: '1000.00',
-    status: 'verified',
-    creatorId: '35ad1c74-53f5-4fc2-849e-2e120a6a6ba9',
-    counterpartyId: '1fb3ac97-3a92-49aa-8bdb-051a1aec2ae9',
-    meta: {},
-    createdAt: new Date('2024-06-01T12:00:00.000Z'),
-    updatedAt: new Date('2024-06-01T12:30:00.000Z'),
-    auditLog: [
-      {
-        id: '5a9d0bf4-4135-4ca8-8b46-25b8d0f32c4f',
-        tradeUid: 'dQ7rFZc1o7g0uX9A1c2b',
-        actorId: '35ad1c74-53f5-4fc2-849e-2e120a6a6ba9',
-        action: 'create',
-        at: new Date('2024-06-01T12:00:00.000Z'),
-        details: { title: 'USDT OTC escrow' }
-      }
-    ]
-  })
-  public async getTradeForm(
+  public async findOne(@Path() id: number): Promise<TradeFormResponse> {
+    return this.service.findOne(id);
+  }
+
+  @Get('uid/{uid}')
+  @OperationId('viewTradeFormByUid')
+  @Security('bearerAuth', [])
+  @Response<ErrorResponse>('404', 'Not Found')
+  public async viewByUid(
     @Path() uid: string,
-    @Request() req: any
-  ): Promise<TradeFormView | TradeFormMinimalView> {
-    const request = req as AuthenticatedRequest;
-    return this.service.getTradeForm(uid, request.user!.id);
+    @Request() req: AuthenticatedRequest
+  ): Promise<TradeFormViewResponse> {
+    return this.service.findByUidForActor(uid, req.user?.id ?? null);
+  }
+
+  @Put('{id}')
+  @OperationId('updateTradeForm')
+  @Security('bearerAuth', [])
+  public async update(
+    @Path() id: number,
+    @Body() body: UpdateTradeFormDto
+  ): Promise<TradeFormResponse> {
+    try {
+      return await this.service.update(id, body);
+    } catch (error) {
+      throw mapValidationError(error);
+    }
+  }
+
+  @Delete('{id}')
+  @OperationId('deleteTradeForm')
+  @Security('bearerAuth', [])
+  @Response<undefined>('204', 'Deleted')
+  public async remove(@Path() id: number): Promise<void> {
+    await this.service.remove(id);
+    this.setStatus(204);
   }
 
   @Post('{uid}/verify-vc')
-  @Tags('TradeForm')
-  @OperationId('verifyTradeFormCredential')
-  @Security('bearerAuth')
-  @Middlewares([requireAuth, verifyVCRateLimit, idempotencyMiddleware])
-  @Response<ErrorResponse>('401', 'Unauthorized')
+  @OperationId('verifyTradeFormVc')
+  @Security('bearerAuth', [])
+  @Middlewares([verifyVCRateLimit, idempotencyMiddleware])
   @Response<ErrorResponse>('404', 'Not Found')
-  @Response<ErrorResponse>('409', 'Conflict')
-  @Example<{ valid: boolean; status: TradeFormStatus; reason?: string }>({
-    valid: true,
-    status: 'verified'
-  })
+  @Response<ErrorResponse>(
+    '403',
+    'Forbidden – VC requirement not met or caller not allowed'
+  )
+  @Response<ErrorResponse>('409', 'Conflict – Trade is not in a verifiable state')
+  @Response<ErrorResponse>('410', 'Gone – Trade UID expired')
+  @Response<ErrorResponse>('422', 'Invalid VC proof payload')
   public async verifyVc(
     @Path() uid: string,
-    @Body() body: VerifyVcDto,
-    @Request() req: any
-  ): Promise<{ valid: boolean; status: TradeFormStatus; reason?: string }> {
-    const dto = VerifyVcSchema.parse(body ?? {});
-    const request = req as AuthenticatedRequest;
-    const result = await this.service.verifyVC(uid, request.user!.id, dto.credential);
-    return result;
+    @Body() body: VerifyVcRequestDto,
+    @Request() req: AuthenticatedRequest
+  ): Promise<VerifyVcResponseDto> {
+    if (!req.user?.id) {
+      throw new UnauthorizedError();
+    }
+    return this.service.verifyVc(uid, req.user.id, body?.vcProof);
   }
 
   @Post('{uid}/confirm')
-  @Tags('TradeForm')
   @OperationId('confirmTradeForm')
-  @Security('bearerAuth')
-  @Middlewares([requireAuth, confirmRateLimit, idempotencyMiddleware])
-  @Response<ErrorResponse>('401', 'Unauthorized')
-  @Response<ErrorResponse>('403', 'Forbidden')
+  @Security('bearerAuth', [])
+  @Middlewares([confirmRateLimit, idempotencyMiddleware])
   @Response<ErrorResponse>('404', 'Not Found')
-  @Response<ErrorResponse>('409', 'Conflict')
-  @Example<{ status: TradeFormStatus; finalizeTriggered: boolean }>({
-    status: 'confirmed',
-    finalizeTriggered: true
-  })
-  public async confirmTradeForm(
+  @Response<ErrorResponse>(
+    '403',
+    'Forbidden – Only participants may confirm; User 2 must have a valid VC'
+  )
+  @Response<ErrorResponse>('409', 'Conflict – Trade status or counterparty mismatch')
+  public async confirm(
     @Path() uid: string,
-    @Body() body: ConfirmDto,
-    @Request() req: any
-  ): Promise<{ status: TradeFormStatus; finalizeTriggered: boolean }> {
-    const dto = ConfirmSchema.parse(body);
-    const request = req as AuthenticatedRequest;
-    return this.service.confirmTradeForm(uid, request.user!.id, dto);
-  }
-
-  @Post('{uid}/cancel')
-  @Tags('TradeForm')
-  @OperationId('cancelTradeForm')
-  @Security('bearerAuth')
-  @Middlewares([requireAuth, idempotencyMiddleware])
-  @Response<ErrorResponse>('401', 'Unauthorized')
-  @Response<ErrorResponse>('403', 'Forbidden')
-  @Response<ErrorResponse>('404', 'Not Found')
-  @Response<ErrorResponse>('409', 'Conflict')
-  @Example<{ status: TradeFormStatus }>({
-    status: 'cancelled'
-  })
-  public async cancelTradeForm(
-    @Path() uid: string,
-    @Body() body: CancelDto,
-    @Request() req: any
-  ): Promise<{ status: TradeFormStatus }> {
-    const dto = CancelSchema.parse(body ?? {});
-    const request = req as AuthenticatedRequest;
-    return this.service.cancelTradeForm(uid, request.user!.id, dto);
-  }
-
-  @Post('{uid}/finalize')
-  @Tags('TradeForm', 'Internal')
-  @OperationId('finalizeTradeForm')
-  @Security('bearerAuth')
-  @Middlewares([requirePlatformRole, idempotencyMiddleware])
-  @Response<ErrorResponse>('401', 'Unauthorized')
-  @Response<ErrorResponse>('403', 'Forbidden')
-  @Response<ErrorResponse>('404', 'Not Found')
-  @Response<ErrorResponse>('409', 'Conflict')
-  @Example<FinalizeResult>({
-    status: 'done',
-    meta: {
-      finalizedBy: 'platform'
+    @Request() req: AuthenticatedRequest
+  ): Promise<ConfirmTradeResponseDto> {
+    if (!req.user?.id) {
+      throw new UnauthorizedError();
     }
-  })
-  public async finalizeTradeForm(
-    @Path() uid: string,
-    @Request() req: any
-  ): Promise<FinalizeResult> {
-    const request = req as AuthenticatedRequest;
-    return this.service.finalize(uid, request.user!.id);
+
+    return this.service.confirm(uid, req.user.id);
+  }
+}
+
+function mapValidationError(error: unknown): unknown {
+  if (Array.isArray(error) && error[0] instanceof ClassValidatorError) {
+    const details = error.map((err) => ({
+      property: err.property,
+      constraints: err.constraints
+    }));
+    return new ValidationError('Validation failed', details);
   }
 
-  @Post('{uid}/finalize/retry')
-  @Tags('TradeForm', 'Internal')
-  @OperationId('retryFinalizeTradeForm')
-  @Security('bearerAuth')
-  @Middlewares([requirePlatformRole, idempotencyMiddleware])
-  @Response<ErrorResponse>('401', 'Unauthorized')
-  @Response<ErrorResponse>('403', 'Forbidden')
-  @Response<ErrorResponse>('404', 'Not Found')
-  @Example<FinalizeResult>({
-    status: 'failed',
-    meta: {
-      finalizedBy: 'platform',
-      retry: true
-    },
-    error: 'Chain configuration missing'
-  })
-  public async retryFinalizeTradeForm(
-    @Path() uid: string,
-    @Request() req: any
-  ): Promise<FinalizeResult> {
-    const request = req as AuthenticatedRequest;
-    return this.service.retryFinalize(uid, request.user!.id);
-  }
-
-  @Get('{uid}/audit')
-  @Tags('Audit')
-  @OperationId('getTradeFormAuditLog')
-  @Security('bearerAuth')
-  @Middlewares([requireAuth])
-  @Response<ErrorResponse>('401', 'Unauthorized')
-  @Response<ErrorResponse>('403', 'Forbidden')
-  @Response<ErrorResponse>('404', 'Not Found')
-  @Example<AuditEventView[]>([
-    {
-      id: '5a9d0bf4-4135-4ca8-8b46-25b8d0f32c4f',
-      tradeUid: 'dQ7rFZc1o7g0uX9A1c2b',
-      actorId: '35ad1c74-53f5-4fc2-849e-2e120a6a6ba9',
-      action: 'create',
-      at: new Date('2024-06-01T12:00:00.000Z'),
-      details: {
-        title: 'USDT OTC escrow'
-      }
-    }
-  ])
-  public async getAuditLog(
-    @Path() uid: string,
-    @Request() req: any
-  ): Promise<AuditEventView[]> {
-    const request = req as AuthenticatedRequest;
-    return this.service.getAuditLog(uid, request.user!.id);
-  }
-
+  return error;
 }

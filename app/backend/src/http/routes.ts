@@ -6,8 +6,6 @@ import {  fetchMiddlewares, ExpressTemplateService } from '@tsoa/runtime';
 // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
 import { TradeFormController } from './../modules/tradeform/controller/tradeform.controller';
 // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
-import { MeTradeFormController } from './../modules/tradeform/controller/me-tradeform.controller';
-// WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
 import { AuthController } from './../modules/auth/controller/dev-auth.controller';
 import { expressAuthentication } from './authentication';
 // @ts-ignore - no great way to install types from subpackage
@@ -19,9 +17,96 @@ const expressAuthenticationRecasted = expressAuthentication as (req: ExRequest, 
 // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
 
 const models: TsoaRoute.Models = {
+    "TradeFormItemCondition": {
+        "dataType": "refEnum",
+        "enums": ["SECOND_HAND","LIKE_NEW","BRAND_NEW"],
+    },
+    // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+    "TradeFormChannel": {
+        "dataType": "refEnum",
+        "enums": ["IN_PERSON","CONVENIENCE_STORE_DELIVERY","POST_OFFICE","COURIER","OTHER"],
+    },
+    // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+    "TradeFormPaymentMethod": {
+        "dataType": "refEnum",
+        "enums": ["CASH_ON_DELIVERY","BANK_TRANSFER","LINE_PAY","CRYPTO"],
+    },
+    // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+    "TradeFormMatchmakingChannel": {
+        "dataType": "refEnum",
+        "enums": ["OFFLINE_AGREEMENT","SOCIAL_PLATFORM","ONLINE_MARKETPLACE"],
+    },
+    // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+    "TradeFormIdentityRequirement": {
+        "dataType": "refEnum",
+        "enums": ["STUDENT_ID","EMPLOYEE_ID","DIETITIAN_LICENSE","LAWYER_LICENSE","PROOF_OF_ORIGIN"],
+    },
+    // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
     "TradeFormStatus": {
+        "dataType": "refEnum",
+        "enums": ["draft","pending","verified","confirmed","cancelled","failed","done"],
+    },
+    // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+    "TradeFormIdentityRequirementsMeta": {
+        "dataType": "refObject",
+        "properties": {
+            "requiredClaims": {"dataType":"array","array":{"dataType":"string"}},
+            "allowedIssuers": {"dataType":"array","array":{"dataType":"string"}},
+            "credentialTypes": {"dataType":"array","array":{"dataType":"string"}},
+            "minLevel": {"dataType":"double"},
+        },
+        "additionalProperties": {"dataType":"any"},
+    },
+    // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+    "TradeFormVCUser2Meta": {
+        "dataType": "refObject",
+        "properties": {
+            "valid": {"dataType":"boolean","required":true},
+            "at": {"dataType":"string","required":true},
+            "claimsMatched": {"dataType":"array","array":{"dataType":"string"}},
+            "issuer": {"dataType":"string"},
+            "credentialType": {"dataType":"string"},
+            "level": {"dataType":"double"},
+            "reason": {"dataType":"string"},
+            "expiresAt": {"dataType":"string"},
+            "rawRef": {"dataType":"string"},
+        },
+        "additionalProperties": {"dataType":"any"},
+    },
+    // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+    "TradeFormMeta": {
         "dataType": "refAlias",
-        "type": {"dataType":"union","subSchemas":[{"dataType":"enum","enums":["draft"]},{"dataType":"enum","enums":["pending"]},{"dataType":"enum","enums":["verified"]},{"dataType":"enum","enums":["confirmed"]},{"dataType":"enum","enums":["cancelled"]},{"dataType":"enum","enums":["failed"]},{"dataType":"enum","enums":["done"]}],"validators":{}},
+        "type": {"dataType":"nestedObjectLiteral","nestedProperties":{"vc_user2":{"ref":"TradeFormVCUser2Meta"},"identity_requirements":{"ref":"TradeFormIdentityRequirementsMeta"}},"additionalProperties":{"dataType":"any"},"validators":{}},
+    },
+    // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+    "TradeFormResponse": {
+        "dataType": "refObject",
+        "properties": {
+            "id": {"dataType":"double","required":true},
+            "uid": {"dataType":"string","required":true},
+            "creatorId": {"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"enum","enums":[null]}],"required":true},
+            "counterpartyId": {"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"enum","enums":[null]}],"required":true},
+            "creatorVerifiedIdentities": {"dataType":"array","array":{"dataType":"string"},"required":true},
+            "itemName": {"dataType":"string","required":true},
+            "itemDescription": {"dataType":"string","required":true},
+            "itemCondition": {"ref":"TradeFormItemCondition","required":true},
+            "amount": {"dataType":"string","required":true},
+            "tradeChannel": {"ref":"TradeFormChannel","required":true},
+            "paymentMethod": {"ref":"TradeFormPaymentMethod","required":true},
+            "matchmakingChannel": {"ref":"TradeFormMatchmakingChannel","required":true},
+            "identityRequirements": {"dataType":"array","array":{"dataType":"refEnum","ref":"TradeFormIdentityRequirement"},"required":true},
+            "userRating": {"dataType":"double","required":true},
+            "status": {"ref":"TradeFormStatus","required":true},
+            "meta": {"ref":"TradeFormMeta","required":true},
+            "confirmedByUser1": {"dataType":"boolean","required":true},
+            "confirmedByUser2": {"dataType":"boolean","required":true},
+            "vcVerifiedAt": {"dataType":"union","subSchemas":[{"dataType":"datetime"},{"dataType":"enum","enums":[null]}],"required":true},
+            "uidExpiresAt": {"dataType":"union","subSchemas":[{"dataType":"datetime"},{"dataType":"enum","enums":[null]}],"required":true},
+            "finalizedAt": {"dataType":"union","subSchemas":[{"dataType":"datetime"},{"dataType":"enum","enums":[null]}],"required":true},
+            "createdAt": {"dataType":"datetime","required":true},
+            "updatedAt": {"dataType":"datetime","required":true},
+        },
+        "additionalProperties": false,
     },
     // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
     "ErrorResponse": {
@@ -37,126 +122,108 @@ const models: TsoaRoute.Models = {
     "CreateTradeFormDto": {
         "dataType": "refObject",
         "properties": {
-            "title": {"dataType":"string","required":true},
-            "description": {"dataType":"string","required":true},
-            "amount": {"dataType":"string"},
-        },
-        "additionalProperties": false,
-    },
-    // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
-    "TradeFormStatusValue": {
-        "dataType": "refAlias",
-        "type": {"dataType":"union","subSchemas":[{"dataType":"enum","enums":["draft"]},{"dataType":"enum","enums":["pending"]},{"dataType":"enum","enums":["verified"]},{"dataType":"enum","enums":["confirmed"]},{"dataType":"enum","enums":["cancelled"]},{"dataType":"enum","enums":["failed"]},{"dataType":"enum","enums":["done"]}],"validators":{}},
-    },
-    // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
-    "Record_string.unknown_": {
-        "dataType": "refAlias",
-        "type": {"dataType":"nestedObjectLiteral","nestedProperties":{},"additionalProperties":{"dataType":"any"},"validators":{}},
-    },
-    // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
-    "AuditEventView": {
-        "dataType": "refObject",
-        "properties": {
-            "id": {"dataType":"string","required":true},
-            "tradeUid": {"dataType":"string","required":true},
-            "actorId": {"dataType":"string","required":true},
-            "action": {"dataType":"union","subSchemas":[{"dataType":"enum","enums":["create"]},{"dataType":"enum","enums":["verifyVC"]},{"dataType":"enum","enums":["confirm"]},{"dataType":"enum","enums":["cancel"]},{"dataType":"enum","enums":["finalize"]},{"dataType":"enum","enums":["fail"]},{"dataType":"enum","enums":["retry"]}],"required":true},
-            "at": {"dataType":"datetime","required":true},
-            "details": {"dataType":"union","subSchemas":[{"ref":"Record_string.unknown_"},{"dataType":"enum","enums":[null]}]},
-        },
-        "additionalProperties": false,
-    },
-    // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
-    "TradeFormView": {
-        "dataType": "refObject",
-        "properties": {
-            "uid": {"dataType":"string","required":true},
-            "title": {"dataType":"string","required":true},
-            "description": {"dataType":"string"},
-            "amount": {"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"enum","enums":[null]}]},
-            "status": {"ref":"TradeFormStatusValue","required":true},
-            "creatorId": {"dataType":"string","required":true},
-            "counterpartyId": {"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"enum","enums":[null]}]},
-            "meta": {"ref":"Record_string.unknown_","required":true},
-            "createdAt": {"dataType":"datetime","required":true},
-            "updatedAt": {"dataType":"datetime","required":true},
-            "auditLog": {"dataType":"array","array":{"dataType":"refObject","ref":"AuditEventView"},"required":true},
-        },
-        "additionalProperties": false,
-    },
-    // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
-    "TradeFormMinimalView": {
-        "dataType": "refObject",
-        "properties": {
-            "uid": {"dataType":"string","required":true},
-            "status": {"ref":"TradeFormStatusValue","required":true},
-        },
-        "additionalProperties": false,
-    },
-    // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
-    "VerifyVcDto": {
-        "dataType": "refObject",
-        "properties": {
-            "credential": {"ref":"Record_string.unknown_"},
-        },
-        "additionalProperties": false,
-    },
-    // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
-    "ConfirmDto": {
-        "dataType": "refObject",
-        "properties": {
-            "role": {"dataType":"union","subSchemas":[{"dataType":"enum","enums":["user1"]},{"dataType":"enum","enums":["user2"]}],"required":true},
-        },
-        "additionalProperties": false,
-    },
-    // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
-    "CancelDto": {
-        "dataType": "refObject",
-        "properties": {
-            "reason": {"dataType":"string"},
-        },
-        "additionalProperties": false,
-    },
-    // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
-    "FinalizeResult": {
-        "dataType": "refObject",
-        "properties": {
-            "status": {"ref":"TradeFormStatus","required":true},
-            "meta": {"ref":"Record_string.unknown_","required":true},
-            "error": {"dataType":"string"},
-        },
-        "additionalProperties": false,
-    },
-    // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
-    "TradeFormListItemView": {
-        "dataType": "refAlias",
-        "type": {"dataType":"intersection","subSchemas":[{"ref":"TradeFormView"},{"dataType":"nestedObjectLiteral","nestedProperties":{"shareUrl":{"dataType":"string","required":true}}}],"validators":{}},
-    },
-    // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
-    "Paged_TradeFormListItemView_": {
-        "dataType": "refObject",
-        "properties": {
-            "data": {"dataType":"array","array":{"dataType":"refAlias","ref":"TradeFormListItemView"},"required":true},
-            "page": {"dataType":"double","required":true},
-            "pageSize": {"dataType":"double","required":true},
-            "total": {"dataType":"double","required":true},
+            "creatorVerifiedIdentities": {"dataType":"array","array":{"dataType":"string"}},
+            "itemName": {"dataType":"string","required":true},
+            "itemDescription": {"dataType":"string","required":true},
+            "itemCondition": {"ref":"TradeFormItemCondition","required":true},
+            "amount": {"dataType":"string","required":true},
+            "tradeChannel": {"ref":"TradeFormChannel","required":true},
+            "paymentMethod": {"ref":"TradeFormPaymentMethod","required":true},
+            "matchmakingChannel": {"ref":"TradeFormMatchmakingChannel","required":true},
+            "identityRequirements": {"dataType":"array","array":{"dataType":"refEnum","ref":"TradeFormIdentityRequirement"},"required":true},
+            "userRating": {"dataType":"double","required":true},
         },
         "additionalProperties": false,
     },
     // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
     "TradeFormListResponse": {
-        "dataType": "refAlias",
-        "type": {"ref":"Paged_TradeFormListItemView_","validators":{}},
-    },
-    // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
-    "TradeFormListQueryParams": {
         "dataType": "refObject",
         "properties": {
-            "status": {"ref":"TradeFormStatusValue"},
-            "created_from": {"dataType":"string"},
-            "created_to": {"dataType":"string"},
-            "page": {"dataType":"double"},
-            "page_size": {"dataType":"double"},
+            "data": {"dataType":"array","array":{"dataType":"refObject","ref":"TradeFormResponse"},"required":true},
+            "total": {"dataType":"double","required":true},
+        },
+        "additionalProperties": false,
+    },
+    // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+    "TradeFormListQuery": {
+        "dataType": "refObject",
+        "properties": {
+            "itemCondition": {"ref":"TradeFormItemCondition"},
+            "tradeChannel": {"ref":"TradeFormChannel"},
+            "paymentMethod": {"ref":"TradeFormPaymentMethod"},
+            "matchmakingChannel": {"ref":"TradeFormMatchmakingChannel"},
+            "identityRequirement": {"ref":"TradeFormIdentityRequirement"},
+        },
+        "additionalProperties": false,
+    },
+    // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+    "TradeFormViewMode": {
+        "dataType": "refAlias",
+        "type": {"dataType":"union","subSchemas":[{"dataType":"enum","enums":["participant"]},{"dataType":"enum","enums":["limited"]}],"validators":{}},
+    },
+    // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+    "TradeFormPublicResponse": {
+        "dataType": "refObject",
+        "properties": {
+            "uid": {"dataType":"string","required":true},
+            "status": {"ref":"TradeFormStatus","required":true},
+            "createdAt": {"dataType":"datetime","required":true},
+            "updatedAt": {"dataType":"datetime","required":true},
+        },
+        "additionalProperties": false,
+    },
+    // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+    "TradeFormViewResponse": {
+        "dataType": "refObject",
+        "properties": {
+            "view": {"ref":"TradeFormViewMode","required":true},
+            "trade": {"dataType":"union","subSchemas":[{"ref":"TradeFormResponse"},{"ref":"TradeFormPublicResponse"}],"required":true},
+        },
+        "additionalProperties": false,
+    },
+    // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+    "UpdateTradeFormDto": {
+        "dataType": "refObject",
+        "properties": {
+            "creatorVerifiedIdentities": {"dataType":"array","array":{"dataType":"string"}},
+            "itemName": {"dataType":"string"},
+            "itemDescription": {"dataType":"string"},
+            "itemCondition": {"ref":"TradeFormItemCondition"},
+            "amount": {"dataType":"string"},
+            "tradeChannel": {"ref":"TradeFormChannel"},
+            "paymentMethod": {"ref":"TradeFormPaymentMethod"},
+            "matchmakingChannel": {"ref":"TradeFormMatchmakingChannel"},
+            "identityRequirements": {"dataType":"array","array":{"dataType":"refEnum","ref":"TradeFormIdentityRequirement"}},
+            "userRating": {"dataType":"double"},
+        },
+        "additionalProperties": false,
+    },
+    // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+    "VerifyVcResponseDto": {
+        "dataType": "refObject",
+        "properties": {
+            "valid": {"dataType":"boolean","required":true},
+            "reason": {"dataType":"string"},
+            "code": {"dataType":"string"},
+            "matched": {"dataType":"nestedObjectLiteral","nestedProperties":{"expiresAt":{"dataType":"string"},"level":{"dataType":"double"},"credentialType":{"dataType":"string"},"issuer":{"dataType":"string"},"claims":{"dataType":"array","array":{"dataType":"string"},"required":true}}},
+            "status": {"ref":"TradeFormStatus","required":true},
+            "trade": {"ref":"TradeFormResponse"},
+        },
+        "additionalProperties": false,
+    },
+    // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+    "VerifyVcRequestDto": {
+        "dataType": "refObject",
+        "properties": {
+            "vcProof": {"dataType":"any","required":true},
+        },
+        "additionalProperties": false,
+    },
+    // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+    "ConfirmTradeResponseDto": {
+        "dataType": "refObject",
+        "properties": {
+            "trade": {"ref":"TradeFormResponse","required":true},
         },
         "additionalProperties": false,
     },
@@ -213,27 +280,27 @@ export function RegisterRoutes(app: Router) {
 
 
     
-        const argsTradeFormController_createTradeForm: Record<string, TsoaRoute.ParameterSchema> = {
+        const argsTradeFormController_create: Record<string, TsoaRoute.ParameterSchema> = {
                 body: {"in":"body","name":"body","required":true,"ref":"CreateTradeFormDto"},
                 req: {"in":"request","name":"req","required":true,"dataType":"object"},
         };
         app.post('/api/v1/tradeforms',
             authenticateMiddleware([{"bearerAuth":[]}]),
             ...(fetchMiddlewares<RequestHandler>(TradeFormController)),
-            ...(fetchMiddlewares<RequestHandler>(TradeFormController.prototype.createTradeForm)),
+            ...(fetchMiddlewares<RequestHandler>(TradeFormController.prototype.create)),
 
-            async function TradeFormController_createTradeForm(request: ExRequest, response: ExResponse, next: any) {
+            async function TradeFormController_create(request: ExRequest, response: ExResponse, next: any) {
 
             // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
 
             let validatedArgs: any[] = [];
             try {
-                validatedArgs = templateService.getValidatedArgs({ args: argsTradeFormController_createTradeForm, request, response });
+                validatedArgs = templateService.getValidatedArgs({ args: argsTradeFormController_create, request, response });
 
                 const controller = new TradeFormController();
 
               await templateService.apiHandler({
-                methodName: 'createTradeForm',
+                methodName: 'create',
                 controller,
                 response,
                 next,
@@ -245,27 +312,152 @@ export function RegisterRoutes(app: Router) {
             }
         });
         // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
-        const argsTradeFormController_getTradeForm: Record<string, TsoaRoute.ParameterSchema> = {
-                uid: {"in":"path","name":"uid","required":true,"dataType":"string"},
-                req: {"in":"request","name":"req","required":true,"dataType":"object"},
+        const argsTradeFormController_list: Record<string, TsoaRoute.ParameterSchema> = {
+                query: {"in":"queries","name":"query","required":true,"ref":"TradeFormListQuery"},
         };
-        app.get('/api/v1/tradeforms/:uid',
+        app.get('/api/v1/tradeforms',
             authenticateMiddleware([{"bearerAuth":[]}]),
             ...(fetchMiddlewares<RequestHandler>(TradeFormController)),
-            ...(fetchMiddlewares<RequestHandler>(TradeFormController.prototype.getTradeForm)),
+            ...(fetchMiddlewares<RequestHandler>(TradeFormController.prototype.list)),
 
-            async function TradeFormController_getTradeForm(request: ExRequest, response: ExResponse, next: any) {
+            async function TradeFormController_list(request: ExRequest, response: ExResponse, next: any) {
 
             // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
 
             let validatedArgs: any[] = [];
             try {
-                validatedArgs = templateService.getValidatedArgs({ args: argsTradeFormController_getTradeForm, request, response });
+                validatedArgs = templateService.getValidatedArgs({ args: argsTradeFormController_list, request, response });
 
                 const controller = new TradeFormController();
 
               await templateService.apiHandler({
-                methodName: 'getTradeForm',
+                methodName: 'list',
+                controller,
+                response,
+                next,
+                validatedArgs,
+                successStatus: undefined,
+              });
+            } catch (err) {
+                return next(err);
+            }
+        });
+        // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+        const argsTradeFormController_findOne: Record<string, TsoaRoute.ParameterSchema> = {
+                id: {"in":"path","name":"id","required":true,"dataType":"double"},
+        };
+        app.get('/api/v1/tradeforms/:id',
+            authenticateMiddleware([{"bearerAuth":[]}]),
+            ...(fetchMiddlewares<RequestHandler>(TradeFormController)),
+            ...(fetchMiddlewares<RequestHandler>(TradeFormController.prototype.findOne)),
+
+            async function TradeFormController_findOne(request: ExRequest, response: ExResponse, next: any) {
+
+            // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+
+            let validatedArgs: any[] = [];
+            try {
+                validatedArgs = templateService.getValidatedArgs({ args: argsTradeFormController_findOne, request, response });
+
+                const controller = new TradeFormController();
+
+              await templateService.apiHandler({
+                methodName: 'findOne',
+                controller,
+                response,
+                next,
+                validatedArgs,
+                successStatus: undefined,
+              });
+            } catch (err) {
+                return next(err);
+            }
+        });
+        // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+        const argsTradeFormController_viewByUid: Record<string, TsoaRoute.ParameterSchema> = {
+                uid: {"in":"path","name":"uid","required":true,"dataType":"string"},
+                req: {"in":"request","name":"req","required":true,"dataType":"object"},
+        };
+        app.get('/api/v1/tradeforms/uid/:uid',
+            authenticateMiddleware([{"bearerAuth":[]}]),
+            ...(fetchMiddlewares<RequestHandler>(TradeFormController)),
+            ...(fetchMiddlewares<RequestHandler>(TradeFormController.prototype.viewByUid)),
+
+            async function TradeFormController_viewByUid(request: ExRequest, response: ExResponse, next: any) {
+
+            // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+
+            let validatedArgs: any[] = [];
+            try {
+                validatedArgs = templateService.getValidatedArgs({ args: argsTradeFormController_viewByUid, request, response });
+
+                const controller = new TradeFormController();
+
+              await templateService.apiHandler({
+                methodName: 'viewByUid',
+                controller,
+                response,
+                next,
+                validatedArgs,
+                successStatus: undefined,
+              });
+            } catch (err) {
+                return next(err);
+            }
+        });
+        // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+        const argsTradeFormController_update: Record<string, TsoaRoute.ParameterSchema> = {
+                id: {"in":"path","name":"id","required":true,"dataType":"double"},
+                body: {"in":"body","name":"body","required":true,"ref":"UpdateTradeFormDto"},
+        };
+        app.put('/api/v1/tradeforms/:id',
+            authenticateMiddleware([{"bearerAuth":[]}]),
+            ...(fetchMiddlewares<RequestHandler>(TradeFormController)),
+            ...(fetchMiddlewares<RequestHandler>(TradeFormController.prototype.update)),
+
+            async function TradeFormController_update(request: ExRequest, response: ExResponse, next: any) {
+
+            // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+
+            let validatedArgs: any[] = [];
+            try {
+                validatedArgs = templateService.getValidatedArgs({ args: argsTradeFormController_update, request, response });
+
+                const controller = new TradeFormController();
+
+              await templateService.apiHandler({
+                methodName: 'update',
+                controller,
+                response,
+                next,
+                validatedArgs,
+                successStatus: undefined,
+              });
+            } catch (err) {
+                return next(err);
+            }
+        });
+        // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+        const argsTradeFormController_remove: Record<string, TsoaRoute.ParameterSchema> = {
+                id: {"in":"path","name":"id","required":true,"dataType":"double"},
+        };
+        app.delete('/api/v1/tradeforms/:id',
+            authenticateMiddleware([{"bearerAuth":[]}]),
+            ...(fetchMiddlewares<RequestHandler>(TradeFormController)),
+            ...(fetchMiddlewares<RequestHandler>(TradeFormController.prototype.remove)),
+
+            async function TradeFormController_remove(request: ExRequest, response: ExResponse, next: any) {
+
+            // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+
+            let validatedArgs: any[] = [];
+            try {
+                validatedArgs = templateService.getValidatedArgs({ args: argsTradeFormController_remove, request, response });
+
+                const controller = new TradeFormController();
+
+              await templateService.apiHandler({
+                methodName: 'remove',
                 controller,
                 response,
                 next,
@@ -279,7 +471,7 @@ export function RegisterRoutes(app: Router) {
         // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
         const argsTradeFormController_verifyVc: Record<string, TsoaRoute.ParameterSchema> = {
                 uid: {"in":"path","name":"uid","required":true,"dataType":"string"},
-                body: {"in":"body","name":"body","required":true,"ref":"VerifyVcDto"},
+                body: {"in":"body","name":"body","required":true,"ref":"VerifyVcRequestDto"},
                 req: {"in":"request","name":"req","required":true,"dataType":"object"},
         };
         app.post('/api/v1/tradeforms/:uid/verify-vc',
@@ -310,189 +502,27 @@ export function RegisterRoutes(app: Router) {
             }
         });
         // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
-        const argsTradeFormController_confirmTradeForm: Record<string, TsoaRoute.ParameterSchema> = {
+        const argsTradeFormController_confirm: Record<string, TsoaRoute.ParameterSchema> = {
                 uid: {"in":"path","name":"uid","required":true,"dataType":"string"},
-                body: {"in":"body","name":"body","required":true,"ref":"ConfirmDto"},
                 req: {"in":"request","name":"req","required":true,"dataType":"object"},
         };
         app.post('/api/v1/tradeforms/:uid/confirm',
             authenticateMiddleware([{"bearerAuth":[]}]),
             ...(fetchMiddlewares<RequestHandler>(TradeFormController)),
-            ...(fetchMiddlewares<RequestHandler>(TradeFormController.prototype.confirmTradeForm)),
+            ...(fetchMiddlewares<RequestHandler>(TradeFormController.prototype.confirm)),
 
-            async function TradeFormController_confirmTradeForm(request: ExRequest, response: ExResponse, next: any) {
+            async function TradeFormController_confirm(request: ExRequest, response: ExResponse, next: any) {
 
             // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
 
             let validatedArgs: any[] = [];
             try {
-                validatedArgs = templateService.getValidatedArgs({ args: argsTradeFormController_confirmTradeForm, request, response });
+                validatedArgs = templateService.getValidatedArgs({ args: argsTradeFormController_confirm, request, response });
 
                 const controller = new TradeFormController();
 
               await templateService.apiHandler({
-                methodName: 'confirmTradeForm',
-                controller,
-                response,
-                next,
-                validatedArgs,
-                successStatus: undefined,
-              });
-            } catch (err) {
-                return next(err);
-            }
-        });
-        // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
-        const argsTradeFormController_cancelTradeForm: Record<string, TsoaRoute.ParameterSchema> = {
-                uid: {"in":"path","name":"uid","required":true,"dataType":"string"},
-                body: {"in":"body","name":"body","required":true,"ref":"CancelDto"},
-                req: {"in":"request","name":"req","required":true,"dataType":"object"},
-        };
-        app.post('/api/v1/tradeforms/:uid/cancel',
-            authenticateMiddleware([{"bearerAuth":[]}]),
-            ...(fetchMiddlewares<RequestHandler>(TradeFormController)),
-            ...(fetchMiddlewares<RequestHandler>(TradeFormController.prototype.cancelTradeForm)),
-
-            async function TradeFormController_cancelTradeForm(request: ExRequest, response: ExResponse, next: any) {
-
-            // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
-
-            let validatedArgs: any[] = [];
-            try {
-                validatedArgs = templateService.getValidatedArgs({ args: argsTradeFormController_cancelTradeForm, request, response });
-
-                const controller = new TradeFormController();
-
-              await templateService.apiHandler({
-                methodName: 'cancelTradeForm',
-                controller,
-                response,
-                next,
-                validatedArgs,
-                successStatus: undefined,
-              });
-            } catch (err) {
-                return next(err);
-            }
-        });
-        // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
-        const argsTradeFormController_finalizeTradeForm: Record<string, TsoaRoute.ParameterSchema> = {
-                uid: {"in":"path","name":"uid","required":true,"dataType":"string"},
-                req: {"in":"request","name":"req","required":true,"dataType":"object"},
-        };
-        app.post('/api/v1/tradeforms/:uid/finalize',
-            authenticateMiddleware([{"bearerAuth":[]}]),
-            ...(fetchMiddlewares<RequestHandler>(TradeFormController)),
-            ...(fetchMiddlewares<RequestHandler>(TradeFormController.prototype.finalizeTradeForm)),
-
-            async function TradeFormController_finalizeTradeForm(request: ExRequest, response: ExResponse, next: any) {
-
-            // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
-
-            let validatedArgs: any[] = [];
-            try {
-                validatedArgs = templateService.getValidatedArgs({ args: argsTradeFormController_finalizeTradeForm, request, response });
-
-                const controller = new TradeFormController();
-
-              await templateService.apiHandler({
-                methodName: 'finalizeTradeForm',
-                controller,
-                response,
-                next,
-                validatedArgs,
-                successStatus: undefined,
-              });
-            } catch (err) {
-                return next(err);
-            }
-        });
-        // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
-        const argsTradeFormController_retryFinalizeTradeForm: Record<string, TsoaRoute.ParameterSchema> = {
-                uid: {"in":"path","name":"uid","required":true,"dataType":"string"},
-                req: {"in":"request","name":"req","required":true,"dataType":"object"},
-        };
-        app.post('/api/v1/tradeforms/:uid/finalize/retry',
-            authenticateMiddleware([{"bearerAuth":[]}]),
-            ...(fetchMiddlewares<RequestHandler>(TradeFormController)),
-            ...(fetchMiddlewares<RequestHandler>(TradeFormController.prototype.retryFinalizeTradeForm)),
-
-            async function TradeFormController_retryFinalizeTradeForm(request: ExRequest, response: ExResponse, next: any) {
-
-            // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
-
-            let validatedArgs: any[] = [];
-            try {
-                validatedArgs = templateService.getValidatedArgs({ args: argsTradeFormController_retryFinalizeTradeForm, request, response });
-
-                const controller = new TradeFormController();
-
-              await templateService.apiHandler({
-                methodName: 'retryFinalizeTradeForm',
-                controller,
-                response,
-                next,
-                validatedArgs,
-                successStatus: undefined,
-              });
-            } catch (err) {
-                return next(err);
-            }
-        });
-        // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
-        const argsTradeFormController_getAuditLog: Record<string, TsoaRoute.ParameterSchema> = {
-                uid: {"in":"path","name":"uid","required":true,"dataType":"string"},
-                req: {"in":"request","name":"req","required":true,"dataType":"object"},
-        };
-        app.get('/api/v1/tradeforms/:uid/audit',
-            authenticateMiddleware([{"bearerAuth":[]}]),
-            ...(fetchMiddlewares<RequestHandler>(TradeFormController)),
-            ...(fetchMiddlewares<RequestHandler>(TradeFormController.prototype.getAuditLog)),
-
-            async function TradeFormController_getAuditLog(request: ExRequest, response: ExResponse, next: any) {
-
-            // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
-
-            let validatedArgs: any[] = [];
-            try {
-                validatedArgs = templateService.getValidatedArgs({ args: argsTradeFormController_getAuditLog, request, response });
-
-                const controller = new TradeFormController();
-
-              await templateService.apiHandler({
-                methodName: 'getAuditLog',
-                controller,
-                response,
-                next,
-                validatedArgs,
-                successStatus: undefined,
-              });
-            } catch (err) {
-                return next(err);
-            }
-        });
-        // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
-        const argsMeTradeFormController_listMyTradeForms: Record<string, TsoaRoute.ParameterSchema> = {
-                rawQuery: {"in":"queries","name":"rawQuery","required":true,"ref":"TradeFormListQueryParams"},
-                req: {"in":"request","name":"req","required":true,"dataType":"object"},
-        };
-        app.get('/api/v1/me/tradeforms',
-            authenticateMiddleware([{"bearerAuth":[]}]),
-            ...(fetchMiddlewares<RequestHandler>(MeTradeFormController)),
-            ...(fetchMiddlewares<RequestHandler>(MeTradeFormController.prototype.listMyTradeForms)),
-
-            async function MeTradeFormController_listMyTradeForms(request: ExRequest, response: ExResponse, next: any) {
-
-            // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
-
-            let validatedArgs: any[] = [];
-            try {
-                validatedArgs = templateService.getValidatedArgs({ args: argsMeTradeFormController_listMyTradeForms, request, response });
-
-                const controller = new MeTradeFormController();
-
-              await templateService.apiHandler({
-                methodName: 'listMyTradeForms',
+                methodName: 'confirm',
                 controller,
                 response,
                 next,

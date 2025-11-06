@@ -1,11 +1,11 @@
-import './env';
+import './env.bootstrap';
 import { z } from 'zod';
 
 const appConfigSchema = z.object({
   NODE_ENV: z.enum(['development', 'test', 'production']).default('development'),
   PORT: z.coerce.number().int().positive().default(3000),
   HOST: z.string().default('0.0.0.0'),
-  JWT_SECRET: z.string().min(10, 'JWT_SECRET must be at least 10 characters long'),
+  JWT_SECRET: z.string().min(10, 'JWT_SECRET must be at least 10 characters long').optional(),
   PLATFORM_JWT_SECRET: z.string().min(10).optional(),
   RATE_LIMIT_WINDOW_MS: z.coerce.number().int().positive().default(60_000),
   RATE_LIMIT_MAX: z.coerce.number().int().positive().default(20),
@@ -15,7 +15,7 @@ const appConfigSchema = z.object({
     .default('https://app.example.com/join'),
   ALLOWED_META_KEYS: z
     .string()
-    .default('chain_tx_hash'),
+    .default('chain_tx_hash,vc_user2'),
   SWAGGER_PATH: z.string().default('/docs'),
   BASE_PATH: z.string().default('/'),
   DEV_HTTPS: z.string().default('false'),
@@ -25,6 +25,32 @@ const appConfigSchema = z.object({
 });
 
 const rawConfig = appConfigSchema.parse(process.env);
+
+const DEV_JWT_FALLBACK = 'dev-only-insecure-secret-change-me';
+const isProduction = rawConfig.NODE_ENV === 'production';
+
+if (isProduction && !rawConfig.JWT_SECRET) {
+  throw new Error('Missing required env var JWT_SECRET in production.');
+}
+
+const resolvedJwtSecret =
+  !isProduction && rawConfig.JWT_SECRET === undefined
+    ? DEV_JWT_FALLBACK
+    : (rawConfig.JWT_SECRET as string);
+
+const resolvedPlatformJwtSecret = rawConfig.PLATFORM_JWT_SECRET ?? resolvedJwtSecret;
+
+if (!process.env.JWT_SECRET && resolvedJwtSecret) {
+  process.env.JWT_SECRET = resolvedJwtSecret;
+}
+
+export const env = {
+  NODE_ENV: rawConfig.NODE_ENV,
+  PORT: rawConfig.PORT,
+  HOST: rawConfig.HOST,
+  JWT_SECRET: resolvedJwtSecret,
+  PLATFORM_JWT_SECRET: resolvedPlatformJwtSecret
+} as const;
 
 const parseTrustProxy = (value?: string): boolean | number | string => {
   if (!value) {
@@ -71,8 +97,8 @@ export const appConfig = {
   nodeEnv: rawConfig.NODE_ENV,
   port: rawConfig.PORT,
   host: rawConfig.HOST,
-  jwtSecret: rawConfig.JWT_SECRET,
-  platformJwtSecret: rawConfig.PLATFORM_JWT_SECRET ?? rawConfig.JWT_SECRET,
+  jwtSecret: resolvedJwtSecret,
+  platformJwtSecret: resolvedPlatformJwtSecret,
   rateLimitWindowMs: rawConfig.RATE_LIMIT_WINDOW_MS,
   rateLimitMax: rawConfig.RATE_LIMIT_MAX,
   shareUrlBase: rawConfig.SHARE_URL_BASE,

@@ -1,10 +1,25 @@
-import { Column, Entity, Index, JoinColumn, ManyToOne, PrimaryGeneratedColumn } from 'typeorm';
-import { AuditAction, TradeFormEntity } from './tradeform.entity';
+import {
+  Column,
+  CreateDateColumn,
+  Entity,
+  JoinColumn,
+  ManyToOne,
+  PrimaryGeneratedColumn
+} from 'typeorm';
+import { UserEntity } from '@modules/auth/entity/user.entity';
+import { TradeFormEntity } from './trade-form.entity';
+
+export enum TradeAuditAction {
+  CREATE = 'create',
+  VERIFY_VC = 'verifyVC',
+  CONFIRM = 'confirm',
+  CANCEL = 'cancel',
+  FINALIZE = 'finalize',
+  FAIL = 'fail',
+  RETRY = 'retry'
+}
 
 @Entity({ name: 'trade_audit_events' })
-@Index('IDX_trade_audit_trade_uid', ['tradeUid'])
-@Index('IDX_trade_audit_actor', ['actorId'])
-@Index('IDX_trade_audit_action', ['action'])
 export class TradeAuditEventEntity {
   @PrimaryGeneratedColumn('uuid')
   id!: string;
@@ -14,18 +29,23 @@ export class TradeAuditEventEntity {
 
   @ManyToOne(() => TradeFormEntity, { onDelete: 'CASCADE' })
   @JoinColumn({ name: 'trade_uid', referencedColumnName: 'uid' })
-  tradeForm?: TradeFormEntity;
+  trade?: TradeFormEntity;
 
-  @Column({ type: 'uuid', name: 'actor_id' })
-  actorId!: string;
+  @Column({ type: 'uuid', name: 'actor_id', nullable: true })
+  actorId!: string | null;
+
+  @ManyToOne(() => UserEntity, { nullable: true, onDelete: 'SET NULL' })
+  @JoinColumn({ name: 'actor_id' })
+  actor?: UserEntity | null;
 
   @Column({
     type: 'enum',
-    enum: ['create', 'verifyVC', 'confirm', 'cancel', 'finalize', 'fail', 'retry']
+    enum: TradeAuditAction,
+    enumName: 'trade_audit_events_action_enum'
   })
-  action!: AuditAction;
+  action!: TradeAuditAction;
 
-  @Column({ type: 'timestamp with time zone', default: () => 'CURRENT_TIMESTAMP' })
+  @CreateDateColumn({ type: 'timestamp with time zone', name: 'at' })
   at!: Date;
 
   @Column({ type: 'jsonb', nullable: true })

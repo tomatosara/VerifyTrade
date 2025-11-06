@@ -7,8 +7,52 @@
 		"requestBodies": {},
 		"responses": {},
 		"schemas": {
+			"TradeFormItemCondition": {
+				"enum": [
+					"SECOND_HAND",
+					"LIKE_NEW",
+					"BRAND_NEW"
+				],
+				"type": "string"
+			},
+			"TradeFormChannel": {
+				"enum": [
+					"IN_PERSON",
+					"CONVENIENCE_STORE_DELIVERY",
+					"POST_OFFICE",
+					"COURIER",
+					"OTHER"
+				],
+				"type": "string"
+			},
+			"TradeFormPaymentMethod": {
+				"enum": [
+					"CASH_ON_DELIVERY",
+					"BANK_TRANSFER",
+					"LINE_PAY",
+					"CRYPTO"
+				],
+				"type": "string"
+			},
+			"TradeFormMatchmakingChannel": {
+				"enum": [
+					"OFFLINE_AGREEMENT",
+					"SOCIAL_PLATFORM",
+					"ONLINE_MARKETPLACE"
+				],
+				"type": "string"
+			},
+			"TradeFormIdentityRequirement": {
+				"enum": [
+					"STUDENT_ID",
+					"EMPLOYEE_ID",
+					"DIETITIAN_LICENSE",
+					"LAWYER_LICENSE",
+					"PROOF_OF_ORIGIN"
+				],
+				"type": "string"
+			},
 			"TradeFormStatus": {
-				"type": "string",
 				"enum": [
 					"draft",
 					"pending",
@@ -17,7 +61,207 @@
 					"cancelled",
 					"failed",
 					"done"
-				]
+				],
+				"type": "string"
+			},
+			"TradeFormIdentityRequirementsMeta": {
+				"properties": {
+					"requiredClaims": {
+						"items": {
+							"type": "string"
+						},
+						"type": "array"
+					},
+					"allowedIssuers": {
+						"items": {
+							"type": "string"
+						},
+						"type": "array"
+					},
+					"credentialTypes": {
+						"items": {
+							"type": "string"
+						},
+						"type": "array"
+					},
+					"minLevel": {
+						"type": "number",
+						"format": "double"
+					}
+				},
+				"type": "object",
+				"additionalProperties": {}
+			},
+			"TradeFormVCUser2Meta": {
+				"properties": {
+					"valid": {
+						"type": "boolean"
+					},
+					"at": {
+						"type": "string"
+					},
+					"claimsMatched": {
+						"items": {
+							"type": "string"
+						},
+						"type": "array"
+					},
+					"issuer": {
+						"type": "string"
+					},
+					"credentialType": {
+						"type": "string"
+					},
+					"level": {
+						"type": "number",
+						"format": "double"
+					},
+					"reason": {
+						"type": "string"
+					},
+					"expiresAt": {
+						"type": "string"
+					},
+					"rawRef": {
+						"type": "string"
+					}
+				},
+				"required": [
+					"valid",
+					"at"
+				],
+				"type": "object",
+				"additionalProperties": {}
+			},
+			"TradeFormMeta": {
+				"properties": {
+					"vc_user2": {
+						"$ref": "#/components/schemas/TradeFormVCUser2Meta"
+					},
+					"identity_requirements": {
+						"$ref": "#/components/schemas/TradeFormIdentityRequirementsMeta"
+					}
+				},
+				"additionalProperties": {},
+				"type": "object"
+			},
+			"TradeFormResponse": {
+				"properties": {
+					"id": {
+						"type": "number",
+						"format": "double"
+					},
+					"uid": {
+						"type": "string"
+					},
+					"creatorId": {
+						"type": "string",
+						"nullable": true
+					},
+					"counterpartyId": {
+						"type": "string",
+						"nullable": true
+					},
+					"creatorVerifiedIdentities": {
+						"items": {
+							"type": "string"
+						},
+						"type": "array"
+					},
+					"itemName": {
+						"type": "string"
+					},
+					"itemDescription": {
+						"type": "string"
+					},
+					"itemCondition": {
+						"$ref": "#/components/schemas/TradeFormItemCondition"
+					},
+					"amount": {
+						"type": "string"
+					},
+					"tradeChannel": {
+						"$ref": "#/components/schemas/TradeFormChannel"
+					},
+					"paymentMethod": {
+						"$ref": "#/components/schemas/TradeFormPaymentMethod"
+					},
+					"matchmakingChannel": {
+						"$ref": "#/components/schemas/TradeFormMatchmakingChannel"
+					},
+					"identityRequirements": {
+						"items": {
+							"$ref": "#/components/schemas/TradeFormIdentityRequirement"
+						},
+						"type": "array"
+					},
+					"userRating": {
+						"type": "number",
+						"format": "double"
+					},
+					"status": {
+						"$ref": "#/components/schemas/TradeFormStatus"
+					},
+					"meta": {
+						"$ref": "#/components/schemas/TradeFormMeta"
+					},
+					"confirmedByUser1": {
+						"type": "boolean"
+					},
+					"confirmedByUser2": {
+						"type": "boolean"
+					},
+					"vcVerifiedAt": {
+						"type": "string",
+						"format": "date-time",
+						"nullable": true
+					},
+					"uidExpiresAt": {
+						"type": "string",
+						"format": "date-time",
+						"nullable": true
+					},
+					"finalizedAt": {
+						"type": "string",
+						"format": "date-time",
+						"nullable": true
+					},
+					"createdAt": {
+						"type": "string",
+						"format": "date-time"
+					},
+					"updatedAt": {
+						"type": "string",
+						"format": "date-time"
+					}
+				},
+				"required": [
+					"id",
+					"uid",
+					"creatorId",
+					"counterpartyId",
+					"creatorVerifiedIdentities",
+					"itemName",
+					"itemDescription",
+					"itemCondition",
+					"amount",
+					"tradeChannel",
+					"paymentMethod",
+					"matchmakingChannel",
+					"identityRequirements",
+					"userRating",
+					"status",
+					"meta",
+					"confirmedByUser1",
+					"confirmedByUser2",
+					"vcVerifiedAt",
+					"uidExpiresAt",
+					"finalizedAt",
+					"createdAt",
+					"updatedAt"
+				],
+				"type": "object",
+				"additionalProperties": false
 			},
 			"ErrorResponse": {
 				"properties": {
@@ -37,245 +281,86 @@
 			},
 			"CreateTradeFormDto": {
 				"properties": {
-					"title": {
-						"type": "string"
-					},
-					"description": {
-						"type": "string"
-					},
-					"amount": {
-						"type": "string"
-					}
-				},
-				"required": [
-					"title",
-					"description"
-				],
-				"type": "object",
-				"additionalProperties": false
-			},
-			"TradeFormStatusValue": {
-				"type": "string",
-				"enum": [
-					"draft",
-					"pending",
-					"verified",
-					"confirmed",
-					"cancelled",
-					"failed",
-					"done"
-				]
-			},
-			"Record_string.unknown_": {
-				"properties": {},
-				"additionalProperties": {},
-				"type": "object",
-				"description": "Construct a type with a set of properties K of type T"
-			},
-			"AuditEventView": {
-				"properties": {
-					"id": {
-						"type": "string"
-					},
-					"tradeUid": {
-						"type": "string"
-					},
-					"actorId": {
-						"type": "string"
-					},
-					"action": {
-						"type": "string",
-						"enum": [
-							"create",
-							"verifyVC",
-							"confirm",
-							"cancel",
-							"finalize",
-							"fail",
-							"retry"
-						]
-					},
-					"at": {
-						"type": "string",
-						"format": "date-time"
-					},
-					"details": {
-						"allOf": [
-							{
-								"$ref": "#/components/schemas/Record_string.unknown_"
-							}
-						],
-						"nullable": true
-					}
-				},
-				"required": [
-					"id",
-					"tradeUid",
-					"actorId",
-					"action",
-					"at"
-				],
-				"type": "object",
-				"additionalProperties": false
-			},
-			"TradeFormView": {
-				"properties": {
-					"uid": {
-						"type": "string"
-					},
-					"title": {
-						"type": "string"
-					},
-					"description": {
-						"type": "string"
-					},
-					"amount": {
-						"type": "string",
-						"nullable": true
-					},
-					"status": {
-						"$ref": "#/components/schemas/TradeFormStatusValue"
-					},
-					"creatorId": {
-						"type": "string"
-					},
-					"counterpartyId": {
-						"type": "string",
-						"nullable": true
-					},
-					"meta": {
-						"$ref": "#/components/schemas/Record_string.unknown_"
-					},
-					"createdAt": {
-						"type": "string",
-						"format": "date-time"
-					},
-					"updatedAt": {
-						"type": "string",
-						"format": "date-time"
-					},
-					"auditLog": {
+					"creatorVerifiedIdentities": {
 						"items": {
-							"$ref": "#/components/schemas/AuditEventView"
+							"type": "string"
 						},
-						"type": "array"
-					}
-				},
-				"required": [
-					"uid",
-					"title",
-					"status",
-					"creatorId",
-					"meta",
-					"createdAt",
-					"updatedAt",
-					"auditLog"
-				],
-				"type": "object",
-				"additionalProperties": false
-			},
-			"TradeFormMinimalView": {
-				"properties": {
-					"uid": {
-						"type": "string"
-					},
-					"status": {
-						"$ref": "#/components/schemas/TradeFormStatusValue"
-					}
-				},
-				"required": [
-					"uid",
-					"status"
-				],
-				"type": "object",
-				"additionalProperties": false
-			},
-			"VerifyVcDto": {
-				"properties": {
-					"credential": {
-						"$ref": "#/components/schemas/Record_string.unknown_"
-					}
-				},
-				"type": "object",
-				"additionalProperties": false
-			},
-			"ConfirmDto": {
-				"properties": {
-					"role": {
-						"type": "string",
-						"enum": [
-							"user1",
-							"user2"
+						"type": "array",
+						"description": "已驗證身分(創建者) / Creator verified identities",
+						"example": [
+							"StudentID",
+							"CompanyEmail"
 						]
-					}
-				},
-				"required": [
-					"role"
-				],
-				"type": "object",
-				"additionalProperties": false
-			},
-			"CancelDto": {
-				"properties": {
-					"reason": {
-						"type": "string"
-					}
-				},
-				"type": "object",
-				"additionalProperties": false
-			},
-			"FinalizeResult": {
-				"properties": {
-					"status": {
-						"$ref": "#/components/schemas/TradeFormStatus"
 					},
-					"meta": {
-						"$ref": "#/components/schemas/Record_string.unknown_"
+					"itemName": {
+						"type": "string",
+						"description": "交易商品 / Item name",
+						"example": "iPad Pro 11\""
 					},
-					"error": {
-						"type": "string"
-					}
-				},
-				"required": [
-					"status",
-					"meta"
-				],
-				"type": "object",
-				"additionalProperties": false
-			},
-			"TradeFormListItemView": {
-				"allOf": [
-					{
-						"$ref": "#/components/schemas/TradeFormView"
+					"itemDescription": {
+						"type": "string",
+						"description": "商品說明 / Item description",
+						"example": "盒裝完整，含原廠鍵盤"
 					},
-					{
-						"properties": {
-							"shareUrl": {
-								"type": "string"
-							}
+					"itemCondition": {
+						"$ref": "#/components/schemas/TradeFormItemCondition",
+						"description": "商品狀態：{ 二手 || 二手近全新 || 全新 }"
+					},
+					"amount": {
+						"type": "string",
+						"description": "交易金額 / Amount (string to keep currency format)",
+						"example": "22000"
+					},
+					"tradeChannel": {
+						"$ref": "#/components/schemas/TradeFormChannel",
+						"description": "交易管道：{ 面交 || 交貨便 || 郵局 || 快遞 || 其他 }"
+					},
+					"paymentMethod": {
+						"$ref": "#/components/schemas/TradeFormPaymentMethod",
+						"description": "付款方式：{ 面交 || 匯款 || LinePay || 加密貨幣 }"
+					},
+					"matchmakingChannel": {
+						"$ref": "#/components/schemas/TradeFormMatchmakingChannel",
+						"description": "交易媒合管道：{ 線下合議 || 社交平台 || 網路交易平台 }"
+					},
+					"identityRequirements": {
+						"items": {
+							"$ref": "#/components/schemas/TradeFormIdentityRequirement"
 						},
-						"required": [
-							"shareUrl"
-						],
-						"type": "object"
+						"type": "array",
+						"description": "身份驗證條件 (複選) / Identity requirements (multi-select)",
+						"example": [
+							"STUDENT_ID",
+							"PROOF_OF_ORIGIN"
+						]
+					},
+					"userRating": {
+						"type": "number",
+						"format": "double",
+						"description": "用戶評分：{1..5}"
 					}
-				]
+				},
+				"required": [
+					"itemName",
+					"itemDescription",
+					"itemCondition",
+					"amount",
+					"tradeChannel",
+					"paymentMethod",
+					"matchmakingChannel",
+					"identityRequirements",
+					"userRating"
+				],
+				"type": "object",
+				"additionalProperties": false
 			},
-			"Paged_TradeFormListItemView_": {
+			"TradeFormListResponse": {
 				"properties": {
 					"data": {
 						"items": {
-							"$ref": "#/components/schemas/TradeFormListItemView"
+							"$ref": "#/components/schemas/TradeFormResponse"
 						},
 						"type": "array"
-					},
-					"page": {
-						"type": "number",
-						"format": "double"
-					},
-					"pageSize": {
-						"type": "number",
-						"format": "double"
 					},
 					"total": {
 						"type": "number",
@@ -284,36 +369,202 @@
 				},
 				"required": [
 					"data",
-					"page",
-					"pageSize",
 					"total"
 				],
 				"type": "object",
 				"additionalProperties": false
 			},
-			"TradeFormListResponse": {
-				"$ref": "#/components/schemas/Paged_TradeFormListItemView_"
-			},
-			"TradeFormListQueryParams": {
+			"TradeFormListQuery": {
 				"properties": {
+					"itemCondition": {
+						"$ref": "#/components/schemas/TradeFormItemCondition"
+					},
+					"tradeChannel": {
+						"$ref": "#/components/schemas/TradeFormChannel"
+					},
+					"paymentMethod": {
+						"$ref": "#/components/schemas/TradeFormPaymentMethod"
+					},
+					"matchmakingChannel": {
+						"$ref": "#/components/schemas/TradeFormMatchmakingChannel"
+					},
+					"identityRequirement": {
+						"$ref": "#/components/schemas/TradeFormIdentityRequirement"
+					}
+				},
+				"type": "object",
+				"additionalProperties": false
+			},
+			"TradeFormViewMode": {
+				"type": "string",
+				"enum": [
+					"participant",
+					"limited"
+				]
+			},
+			"TradeFormPublicResponse": {
+				"properties": {
+					"uid": {
+						"type": "string"
+					},
 					"status": {
-						"$ref": "#/components/schemas/TradeFormStatusValue"
+						"$ref": "#/components/schemas/TradeFormStatus"
 					},
-					"created_from": {
+					"createdAt": {
+						"type": "string",
+						"format": "date-time"
+					},
+					"updatedAt": {
+						"type": "string",
+						"format": "date-time"
+					}
+				},
+				"required": [
+					"uid",
+					"status",
+					"createdAt",
+					"updatedAt"
+				],
+				"type": "object",
+				"additionalProperties": false
+			},
+			"TradeFormViewResponse": {
+				"properties": {
+					"view": {
+						"$ref": "#/components/schemas/TradeFormViewMode"
+					},
+					"trade": {
+						"anyOf": [
+							{
+								"$ref": "#/components/schemas/TradeFormResponse"
+							},
+							{
+								"$ref": "#/components/schemas/TradeFormPublicResponse"
+							}
+						]
+					}
+				},
+				"required": [
+					"view",
+					"trade"
+				],
+				"type": "object",
+				"additionalProperties": false
+			},
+			"UpdateTradeFormDto": {
+				"properties": {
+					"creatorVerifiedIdentities": {
+						"items": {
+							"type": "string"
+						},
+						"type": "array"
+					},
+					"itemName": {
 						"type": "string"
 					},
-					"created_to": {
+					"itemDescription": {
 						"type": "string"
 					},
-					"page": {
-						"type": "number",
-						"format": "double"
+					"itemCondition": {
+						"$ref": "#/components/schemas/TradeFormItemCondition"
 					},
-					"page_size": {
+					"amount": {
+						"type": "string"
+					},
+					"tradeChannel": {
+						"$ref": "#/components/schemas/TradeFormChannel"
+					},
+					"paymentMethod": {
+						"$ref": "#/components/schemas/TradeFormPaymentMethod"
+					},
+					"matchmakingChannel": {
+						"$ref": "#/components/schemas/TradeFormMatchmakingChannel"
+					},
+					"identityRequirements": {
+						"items": {
+							"$ref": "#/components/schemas/TradeFormIdentityRequirement"
+						},
+						"type": "array"
+					},
+					"userRating": {
 						"type": "number",
 						"format": "double"
 					}
 				},
+				"type": "object",
+				"additionalProperties": false
+			},
+			"VerifyVcResponseDto": {
+				"properties": {
+					"valid": {
+						"type": "boolean"
+					},
+					"reason": {
+						"type": "string"
+					},
+					"code": {
+						"type": "string"
+					},
+					"matched": {
+						"properties": {
+							"expiresAt": {
+								"type": "string"
+							},
+							"level": {
+								"type": "number",
+								"format": "double"
+							},
+							"credentialType": {
+								"type": "string"
+							},
+							"issuer": {
+								"type": "string"
+							},
+							"claims": {
+								"items": {
+									"type": "string"
+								},
+								"type": "array"
+							}
+						},
+						"required": [
+							"claims"
+						],
+						"type": "object"
+					},
+					"status": {
+						"$ref": "#/components/schemas/TradeFormStatus"
+					},
+					"trade": {
+						"$ref": "#/components/schemas/TradeFormResponse"
+					}
+				},
+				"required": [
+					"valid",
+					"status"
+				],
+				"type": "object",
+				"additionalProperties": false
+			},
+			"VerifyVcRequestDto": {
+				"properties": {
+					"vcProof": {}
+				},
+				"required": [
+					"vcProof"
+				],
+				"type": "object",
+				"additionalProperties": false
+			},
+			"ConfirmTradeResponseDto": {
+				"properties": {
+					"trade": {
+						"$ref": "#/components/schemas/TradeFormResponse"
+					}
+				},
+				"required": [
+					"trade"
+				],
 				"type": "object",
 				"additionalProperties": false
 			},
@@ -399,42 +650,7 @@
 						"content": {
 							"application/json": {
 								"schema": {
-									"properties": {
-										"shareUrl": {
-											"type": "string"
-										},
-										"status": {
-											"$ref": "#/components/schemas/TradeFormStatus"
-										},
-										"uid": {
-											"type": "string"
-										}
-									},
-									"required": [
-										"shareUrl",
-										"status",
-										"uid"
-									],
-									"type": "object"
-								},
-								"examples": {
-									"Example 1": {
-										"value": {
-											"uid": "dQ7rFZc1o7g0uX9A1c2b",
-											"status": "pending",
-											"shareUrl": "https://app.example.com/join/dQ7rFZc1o7g0uX9A1c2b"
-										}
-									}
-								}
-							}
-						}
-					},
-					"401": {
-						"description": "Unauthorized",
-						"content": {
-							"application/json": {
-								"schema": {
-									"$ref": "#/components/schemas/ErrorResponse"
+									"$ref": "#/components/schemas/TradeFormResponse"
 								}
 							}
 						}
@@ -469,9 +685,74 @@
 						}
 					}
 				}
+			},
+			"get": {
+				"operationId": "listTradeForms",
+				"responses": {
+					"200": {
+						"description": "Ok",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/TradeFormListResponse"
+								}
+							}
+						}
+					}
+				},
+				"tags": [
+					"TradeForm"
+				],
+				"security": [
+					{
+						"bearerAuth": []
+					}
+				],
+				"parameters": [
+					{
+						"in": "query",
+						"name": "itemCondition",
+						"required": false,
+						"schema": {
+							"$ref": "#/components/schemas/TradeFormItemCondition"
+						}
+					},
+					{
+						"in": "query",
+						"name": "tradeChannel",
+						"required": false,
+						"schema": {
+							"$ref": "#/components/schemas/TradeFormChannel"
+						}
+					},
+					{
+						"in": "query",
+						"name": "paymentMethod",
+						"required": false,
+						"schema": {
+							"$ref": "#/components/schemas/TradeFormPaymentMethod"
+						}
+					},
+					{
+						"in": "query",
+						"name": "matchmakingChannel",
+						"required": false,
+						"schema": {
+							"$ref": "#/components/schemas/TradeFormMatchmakingChannel"
+						}
+					},
+					{
+						"in": "query",
+						"name": "identityRequirement",
+						"required": false,
+						"schema": {
+							"$ref": "#/components/schemas/TradeFormIdentityRequirement"
+						}
+					}
+				]
 			}
 		},
-		"/tradeforms/{uid}": {
+		"/tradeforms/{id}": {
 			"get": {
 				"operationId": "getTradeForm",
 				"responses": {
@@ -480,52 +761,7 @@
 						"content": {
 							"application/json": {
 								"schema": {
-									"anyOf": [
-										{
-											"$ref": "#/components/schemas/TradeFormView"
-										},
-										{
-											"$ref": "#/components/schemas/TradeFormMinimalView"
-										}
-									]
-								},
-								"examples": {
-									"Example 1": {
-										"value": {
-											"uid": "dQ7rFZc1o7g0uX9A1c2b",
-											"title": "USDT OTC escrow",
-											"description": "P2P escrow with VC verification",
-											"amount": "1000.00",
-											"status": "verified",
-											"creatorId": "35ad1c74-53f5-4fc2-849e-2e120a6a6ba9",
-											"counterpartyId": "1fb3ac97-3a92-49aa-8bdb-051a1aec2ae9",
-											"meta": {},
-											"createdAt": "2024-06-01T12:00:00.000Z",
-											"updatedAt": "2024-06-01T12:30:00.000Z",
-											"auditLog": [
-												{
-													"id": "5a9d0bf4-4135-4ca8-8b46-25b8d0f32c4f",
-													"tradeUid": "dQ7rFZc1o7g0uX9A1c2b",
-													"actorId": "35ad1c74-53f5-4fc2-849e-2e120a6a6ba9",
-													"action": "create",
-													"at": "2024-06-01T12:00:00.000Z",
-													"details": {
-														"title": "USDT OTC escrow"
-													}
-												}
-											]
-										}
-									}
-								}
-							}
-						}
-					},
-					"401": {
-						"description": "Unauthorized",
-						"content": {
-							"application/json": {
-								"schema": {
-									"$ref": "#/components/schemas/ErrorResponse"
+									"$ref": "#/components/schemas/TradeFormResponse"
 								}
 							}
 						}
@@ -539,9 +775,116 @@
 								}
 							}
 						}
+					}
+				},
+				"tags": [
+					"TradeForm"
+				],
+				"security": [
+					{
+						"bearerAuth": []
+					}
+				],
+				"parameters": [
+					{
+						"in": "path",
+						"name": "id",
+						"required": true,
+						"schema": {
+							"format": "double",
+							"type": "number"
+						}
+					}
+				]
+			},
+			"put": {
+				"operationId": "updateTradeForm",
+				"responses": {
+					"200": {
+						"description": "Ok",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/TradeFormResponse"
+								}
+							}
+						}
+					}
+				},
+				"tags": [
+					"TradeForm"
+				],
+				"security": [
+					{
+						"bearerAuth": []
+					}
+				],
+				"parameters": [
+					{
+						"in": "path",
+						"name": "id",
+						"required": true,
+						"schema": {
+							"format": "double",
+							"type": "number"
+						}
+					}
+				],
+				"requestBody": {
+					"required": true,
+					"content": {
+						"application/json": {
+							"schema": {
+								"$ref": "#/components/schemas/UpdateTradeFormDto"
+							}
+						}
+					}
+				}
+			},
+			"delete": {
+				"operationId": "deleteTradeForm",
+				"responses": {
+					"204": {
+						"description": "No content"
+					}
+				},
+				"tags": [
+					"TradeForm"
+				],
+				"security": [
+					{
+						"bearerAuth": []
+					}
+				],
+				"parameters": [
+					{
+						"in": "path",
+						"name": "id",
+						"required": true,
+						"schema": {
+							"format": "double",
+							"type": "number"
+						}
+					}
+				]
+			}
+		},
+		"/tradeforms/uid/{uid}": {
+			"get": {
+				"operationId": "viewTradeFormByUid",
+				"responses": {
+					"200": {
+						"description": "Ok",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/TradeFormViewResponse"
+								}
+							}
+						}
 					},
-					"410": {
-						"description": "Expired",
+					"404": {
+						"description": "Not Found",
 						"content": {
 							"application/json": {
 								"schema": {
@@ -573,43 +916,20 @@
 		},
 		"/tradeforms/{uid}/verify-vc": {
 			"post": {
-				"operationId": "verifyTradeFormCredential",
+				"operationId": "verifyTradeFormVc",
 				"responses": {
 					"200": {
 						"description": "Ok",
 						"content": {
 							"application/json": {
 								"schema": {
-									"properties": {
-										"reason": {
-											"type": "string"
-										},
-										"status": {
-											"$ref": "#/components/schemas/TradeFormStatus"
-										},
-										"valid": {
-											"type": "boolean"
-										}
-									},
-									"required": [
-										"status",
-										"valid"
-									],
-									"type": "object"
-								},
-								"examples": {
-									"Example 1": {
-										"value": {
-											"valid": true,
-											"status": "verified"
-										}
-									}
+									"$ref": "#/components/schemas/VerifyVcResponseDto"
 								}
 							}
 						}
 					},
-					"401": {
-						"description": "Unauthorized",
+					"403": {
+						"description": "Forbidden – VC requirement not met or caller not allowed",
 						"content": {
 							"application/json": {
 								"schema": {
@@ -629,7 +949,27 @@
 						}
 					},
 					"409": {
-						"description": "Conflict",
+						"description": "Conflict – Trade is not in a verifiable state",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/ErrorResponse"
+								}
+							}
+						}
+					},
+					"410": {
+						"description": "Gone – Trade UID expired",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/ErrorResponse"
+								}
+							}
+						}
+					},
+					"422": {
+						"description": "Invalid VC proof payload",
 						"content": {
 							"application/json": {
 								"schema": {
@@ -662,7 +1002,7 @@
 					"content": {
 						"application/json": {
 							"schema": {
-								"$ref": "#/components/schemas/VerifyVcDto"
+								"$ref": "#/components/schemas/VerifyVcRequestDto"
 							}
 						}
 					}
@@ -678,43 +1018,13 @@
 						"content": {
 							"application/json": {
 								"schema": {
-									"properties": {
-										"finalizeTriggered": {
-											"type": "boolean"
-										},
-										"status": {
-											"$ref": "#/components/schemas/TradeFormStatus"
-										}
-									},
-									"required": [
-										"finalizeTriggered",
-										"status"
-									],
-									"type": "object"
-								},
-								"examples": {
-									"Example 1": {
-										"value": {
-											"status": "confirmed",
-											"finalizeTriggered": true
-										}
-									}
-								}
-							}
-						}
-					},
-					"401": {
-						"description": "Unauthorized",
-						"content": {
-							"application/json": {
-								"schema": {
-									"$ref": "#/components/schemas/ErrorResponse"
+									"$ref": "#/components/schemas/ConfirmTradeResponseDto"
 								}
 							}
 						}
 					},
 					"403": {
-						"description": "Forbidden",
+						"description": "Forbidden – Only participants may confirm; User 2 must have a valid VC",
 						"content": {
 							"application/json": {
 								"schema": {
@@ -734,7 +1044,7 @@
 						}
 					},
 					"409": {
-						"description": "Conflict",
+						"description": "Conflict – Trade status or counterparty mismatch",
 						"content": {
 							"application/json": {
 								"schema": {
@@ -759,468 +1069,6 @@
 						"required": true,
 						"schema": {
 							"type": "string"
-						}
-					}
-				],
-				"requestBody": {
-					"required": true,
-					"content": {
-						"application/json": {
-							"schema": {
-								"$ref": "#/components/schemas/ConfirmDto"
-							}
-						}
-					}
-				}
-			}
-		},
-		"/tradeforms/{uid}/cancel": {
-			"post": {
-				"operationId": "cancelTradeForm",
-				"responses": {
-					"200": {
-						"description": "Ok",
-						"content": {
-							"application/json": {
-								"schema": {
-									"properties": {
-										"status": {
-											"$ref": "#/components/schemas/TradeFormStatus"
-										}
-									},
-									"required": [
-										"status"
-									],
-									"type": "object"
-								},
-								"examples": {
-									"Example 1": {
-										"value": {
-											"status": "cancelled"
-										}
-									}
-								}
-							}
-						}
-					},
-					"401": {
-						"description": "Unauthorized",
-						"content": {
-							"application/json": {
-								"schema": {
-									"$ref": "#/components/schemas/ErrorResponse"
-								}
-							}
-						}
-					},
-					"403": {
-						"description": "Forbidden",
-						"content": {
-							"application/json": {
-								"schema": {
-									"$ref": "#/components/schemas/ErrorResponse"
-								}
-							}
-						}
-					},
-					"404": {
-						"description": "Not Found",
-						"content": {
-							"application/json": {
-								"schema": {
-									"$ref": "#/components/schemas/ErrorResponse"
-								}
-							}
-						}
-					},
-					"409": {
-						"description": "Conflict",
-						"content": {
-							"application/json": {
-								"schema": {
-									"$ref": "#/components/schemas/ErrorResponse"
-								}
-							}
-						}
-					}
-				},
-				"tags": [
-					"TradeForm"
-				],
-				"security": [
-					{
-						"bearerAuth": []
-					}
-				],
-				"parameters": [
-					{
-						"in": "path",
-						"name": "uid",
-						"required": true,
-						"schema": {
-							"type": "string"
-						}
-					}
-				],
-				"requestBody": {
-					"required": true,
-					"content": {
-						"application/json": {
-							"schema": {
-								"$ref": "#/components/schemas/CancelDto"
-							}
-						}
-					}
-				}
-			}
-		},
-		"/tradeforms/{uid}/finalize": {
-			"post": {
-				"operationId": "finalizeTradeForm",
-				"responses": {
-					"200": {
-						"description": "Ok",
-						"content": {
-							"application/json": {
-								"schema": {
-									"$ref": "#/components/schemas/FinalizeResult"
-								},
-								"examples": {
-									"Example 1": {
-										"value": {
-											"status": "done",
-											"meta": {
-												"finalizedBy": "platform"
-											}
-										}
-									}
-								}
-							}
-						}
-					},
-					"401": {
-						"description": "Unauthorized",
-						"content": {
-							"application/json": {
-								"schema": {
-									"$ref": "#/components/schemas/ErrorResponse"
-								}
-							}
-						}
-					},
-					"403": {
-						"description": "Forbidden",
-						"content": {
-							"application/json": {
-								"schema": {
-									"$ref": "#/components/schemas/ErrorResponse"
-								}
-							}
-						}
-					},
-					"404": {
-						"description": "Not Found",
-						"content": {
-							"application/json": {
-								"schema": {
-									"$ref": "#/components/schemas/ErrorResponse"
-								}
-							}
-						}
-					},
-					"409": {
-						"description": "Conflict",
-						"content": {
-							"application/json": {
-								"schema": {
-									"$ref": "#/components/schemas/ErrorResponse"
-								}
-							}
-						}
-					}
-				},
-				"tags": [
-					"TradeForm",
-					"Internal"
-				],
-				"security": [
-					{
-						"bearerAuth": []
-					}
-				],
-				"parameters": [
-					{
-						"in": "path",
-						"name": "uid",
-						"required": true,
-						"schema": {
-							"type": "string"
-						}
-					}
-				]
-			}
-		},
-		"/tradeforms/{uid}/finalize/retry": {
-			"post": {
-				"operationId": "retryFinalizeTradeForm",
-				"responses": {
-					"200": {
-						"description": "Ok",
-						"content": {
-							"application/json": {
-								"schema": {
-									"$ref": "#/components/schemas/FinalizeResult"
-								},
-								"examples": {
-									"Example 1": {
-										"value": {
-											"status": "failed",
-											"meta": {
-												"finalizedBy": "platform",
-												"retry": true
-											},
-											"error": "Chain configuration missing"
-										}
-									}
-								}
-							}
-						}
-					},
-					"401": {
-						"description": "Unauthorized",
-						"content": {
-							"application/json": {
-								"schema": {
-									"$ref": "#/components/schemas/ErrorResponse"
-								}
-							}
-						}
-					},
-					"403": {
-						"description": "Forbidden",
-						"content": {
-							"application/json": {
-								"schema": {
-									"$ref": "#/components/schemas/ErrorResponse"
-								}
-							}
-						}
-					},
-					"404": {
-						"description": "Not Found",
-						"content": {
-							"application/json": {
-								"schema": {
-									"$ref": "#/components/schemas/ErrorResponse"
-								}
-							}
-						}
-					}
-				},
-				"tags": [
-					"TradeForm",
-					"Internal"
-				],
-				"security": [
-					{
-						"bearerAuth": []
-					}
-				],
-				"parameters": [
-					{
-						"in": "path",
-						"name": "uid",
-						"required": true,
-						"schema": {
-							"type": "string"
-						}
-					}
-				]
-			}
-		},
-		"/tradeforms/{uid}/audit": {
-			"get": {
-				"operationId": "getTradeFormAuditLog",
-				"responses": {
-					"200": {
-						"description": "Ok",
-						"content": {
-							"application/json": {
-								"schema": {
-									"items": {
-										"$ref": "#/components/schemas/AuditEventView"
-									},
-									"type": "array"
-								},
-								"examples": {
-									"Example 1": {
-										"value": [
-											{
-												"id": "5a9d0bf4-4135-4ca8-8b46-25b8d0f32c4f",
-												"tradeUid": "dQ7rFZc1o7g0uX9A1c2b",
-												"actorId": "35ad1c74-53f5-4fc2-849e-2e120a6a6ba9",
-												"action": "create",
-												"at": "2024-06-01T12:00:00.000Z",
-												"details": {
-													"title": "USDT OTC escrow"
-												}
-											}
-										]
-									}
-								}
-							}
-						}
-					},
-					"401": {
-						"description": "Unauthorized",
-						"content": {
-							"application/json": {
-								"schema": {
-									"$ref": "#/components/schemas/ErrorResponse"
-								}
-							}
-						}
-					},
-					"403": {
-						"description": "Forbidden",
-						"content": {
-							"application/json": {
-								"schema": {
-									"$ref": "#/components/schemas/ErrorResponse"
-								}
-							}
-						}
-					},
-					"404": {
-						"description": "Not Found",
-						"content": {
-							"application/json": {
-								"schema": {
-									"$ref": "#/components/schemas/ErrorResponse"
-								}
-							}
-						}
-					}
-				},
-				"tags": [
-					"Audit"
-				],
-				"security": [
-					{
-						"bearerAuth": []
-					}
-				],
-				"parameters": [
-					{
-						"in": "path",
-						"name": "uid",
-						"required": true,
-						"schema": {
-							"type": "string"
-						}
-					}
-				]
-			}
-		},
-		"/me/tradeforms": {
-			"get": {
-				"operationId": "listMyTradeForms",
-				"responses": {
-					"200": {
-						"description": "Ok",
-						"content": {
-							"application/json": {
-								"schema": {
-									"$ref": "#/components/schemas/TradeFormListResponse"
-								},
-								"examples": {
-									"Example 1": {
-										"value": {
-											"data": [
-												{
-													"uid": "dQ7rFZc1o7g0uX9A1c2b",
-													"title": "USDT OTC escrow",
-													"description": "P2P escrow with VC verification",
-													"amount": "1000.00",
-													"status": "pending",
-													"creatorId": "35ad1c74-53f5-4fc2-849e-2e120a6a6ba9",
-													"counterpartyId": null,
-													"meta": {},
-													"createdAt": "2024-06-01T12:00:00.000Z",
-													"updatedAt": "2024-06-01T12:00:00.000Z",
-													"auditLog": [],
-													"shareUrl": "https://app.example.com/join/dQ7rFZc1o7g0uX9A1c2b"
-												}
-											],
-											"page": 1,
-											"pageSize": 20,
-											"total": 1
-										}
-									}
-								}
-							}
-						}
-					},
-					"401": {
-						"description": "Unauthorized",
-						"content": {
-							"application/json": {
-								"schema": {
-									"$ref": "#/components/schemas/ErrorResponse"
-								}
-							}
-						}
-					}
-				},
-				"tags": [
-					"TradeForm"
-				],
-				"security": [
-					{
-						"bearerAuth": []
-					}
-				],
-				"parameters": [
-					{
-						"in": "query",
-						"name": "status",
-						"required": false,
-						"schema": {
-							"$ref": "#/components/schemas/TradeFormStatusValue"
-						}
-					},
-					{
-						"in": "query",
-						"name": "created_from",
-						"required": false,
-						"schema": {
-							"type": "string"
-						}
-					},
-					{
-						"in": "query",
-						"name": "created_to",
-						"required": false,
-						"schema": {
-							"type": "string"
-						}
-					},
-					{
-						"in": "query",
-						"name": "page",
-						"required": false,
-						"schema": {
-							"format": "double",
-							"type": "number"
-						}
-					},
-					{
-						"in": "query",
-						"name": "page_size",
-						"required": false,
-						"schema": {
-							"format": "double",
-							"type": "number"
 						}
 					}
 				]
@@ -1285,8 +1133,8 @@
 	],
 	"tags": [
 		{
-			"name": "tradeforms",
-			"description": "Trade form lifecycle"
+			"name": "TradeForm",
+			"description": "Trade form marketplace operations"
 		}
 	]
 }

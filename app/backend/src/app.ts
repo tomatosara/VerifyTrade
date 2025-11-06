@@ -10,6 +10,8 @@ import { healthRouter } from './routes/health';
 import { RegisterRoutes } from './http/routes';
 import { appConfig } from '@config/app';
 import { registerSwagger } from './docs/swagger';
+import { TradeFormService } from '@modules/tradeform/tradeform.service';
+import { requireAuth } from '@modules/auth/requireAuth';
 
 export function createApp(): Express {
   const app = express();
@@ -69,9 +71,25 @@ export function createApp(): Express {
   app.use(requestIdMiddleware);
   app.use(loggingMiddleware);
 
-  app.use('/health', healthRouter);
+  app.use(healthRouter);
 
   registerSwagger(app, appConfig.swaggerPath);
+
+  const tradeFormService = new TradeFormService();
+  const apiPrefix = appConfig.basePath === '/' ? '' : appConfig.basePath;
+  app.get(`${apiPrefix}/api/v1/tradeforms/:uid`, requireAuth, async (req, res, next) => {
+    const { uid } = req.params;
+    if (/^\d+$/.test(uid)) {
+      return next();
+    }
+
+    try {
+      const result = await tradeFormService.findByUidForActor(uid, req.user?.id ?? null);
+      res.json(result);
+    } catch (error) {
+      next(error);
+    }
+  });
 
   RegisterRoutes(app);
 

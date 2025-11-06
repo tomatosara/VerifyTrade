@@ -1,709 +1,472 @@
 # VerifyTrade Backend
 
-## Table of Contents
-- [Project Overview](#project-overview)
-- [Quick Start](#quick-start)
-- [Database & Migrations](#database--migrations)
-- [API Overview](#api-overview)
-- [Endpoints](#endpoints)
-  - [POST /api/v1/auth/dev-token](#post-apiv1authdev-token)
-  - [POST /api/v1/tradeforms](#post-apiv1tradeforms)
-  - [GET /api/v1/tradeforms/{uid}](#get-apiv1tradeformsuid)
-  - [POST /api/v1/tradeforms/{uid}/verify-vc](#post-apiv1tradeformsuidverify-vc)
-  - [POST /api/v1/tradeforms/{uid}/confirm](#post-apiv1tradeformsuidconfirm)
-  - [POST /api/v1/tradeforms/{uid}/cancel](#post-apiv1tradeformsuidcancel)
-  - [POST /api/v1/tradeforms/{uid}/finalize](#post-apiv1tradeformsuidfinalize)
-  - [POST /api/v1/tradeforms/{uid}/finalize/retry](#post-apiv1tradeformsuidfinalizeretry)
-  - [GET /api/v1/tradeforms/{uid}/audit](#get-apiv1tradeformsuidaudit)
-  - [GET /api/v1/me/tradeforms](#get-apiv1metradeforms)
-  - [GET /health](#get-health)
-  - [GET /health/db](#get-healthdb)
-- [Auth Guide](#auth-guide)
-- [Local Dev Recipes](#local-dev-recipes)
-- [Changelog Note](#changelog-note)
+[![Node.js >=20](https://img.shields.io/badge/Node.js-%3E%3D20.0.0-339933)](https://nodejs.org/)
+[![pnpm workspace](https://img.shields.io/badge/pnpm-10.x-F69220)](https://pnpm.io/)
 
-## Project Overview
+> Digital identity trading API built with TypeScript, Express, TypeORM, and TSOA.
 
-VerifyTrade backend orchestrates the lifecycle of digital trade forms, including credential verification, bilateral confirmations, audit logging, and platform-controlled finalization. The service exposes a JSON REST API, issues signed JWTs for local development, and persists state to PostgreSQL with automatic migrations on boot.
+Read this in [繁體中文](./README.zh-TW.md).
 
-**Tech stack**
-- Runtime: Node.js 20 (pnpm workspaces)
-- Framework: Express 4 + TSOA-generated routes (TypeScript)
-- ORM/validation: TypeORM 0.3 with Zod DTO guards
-- Database: PostgreSQL 16 (see `docker-compose.db.yml`)
+## Overview
 
-## Quick Start
+The VerifyTrade backend powers the trading and verification flows behind the platform. It exposes RESTful APIs for managing trade forms, verifies verifiable-credential (VC) claims, enforces rate limits and idempotency, and serves an OpenAPI 3.1 specification for client integrations. The service is built with TypeScript on Express, TypeORM for PostgreSQL, and TSOA for schema-driven routing.
 
-**Prerequisites**
-- Node.js 20+
-- pnpm 8+
-- Docker & Docker Compose (for PostgreSQL/Testcontainers)
+## Tech Stack
 
-**Install & run**
+- Node.js 20+, pnpm workspaces, TSX watch mode
+- Express 4 with TSOA-generated controllers and OpenAPI 3.1 spec
+- TypeORM 0.3 targeting PostgreSQL 16, with migrations and seed utilities
+- Validation via class-validator/class-transformer and zod-based config parsing
+- Authentication with JSON Web Tokens (jsonwebtoken) and optional platform secret
+- Pino structured logging with request IDs, rate limiting, and idempotency middleware
+- Testing with Jest, Supertest, and Testcontainers for ephemeral Postgres
+- Tooling: ESLint, dotenv/dotenv-expand, ts-node-compatible CLI scripts
+
+## Project Structure
+
+```text
+src/
+  app.ts                    # Express app wiring, middleware, Swagger registration
+  server.ts                 # Process entrypoint, DB init with retries, startup banner
+  config/                   # Environment-driven configuration modules
+  database/
+    data-source.ts          # TypeORM DataSource factory
+    migrations/             # Versioned schema migrations
+    seed/                   # Seed runner and helpers (clearing tables, sample data)
+  docs/                     # OpenAPI customization and Swagger UI helpers
+  http/                     # TSOA authentication adapter and generated routes
+  middleware/               # Error, logging, rate limit, idempotency, request ID middleware
+  modules/
+    auth/                   # JWT helpers, dev-token controller, user entity
+    tradeform/              # Trade form entities, DTOs, service, controller, repository
+    vc/                     # VC policy evaluation helper
+  routes/health.ts          # Liveness and database health endpoints
+  utils/                    # Error hierarchy, logger, URL builder
+openapi.json                # Generated OpenAPI document (kept in sync via pnpm openapi)
+tsoa.json                   # TSOA configuration (controllers, base path, routes directory)
+jest.config.ts              # Test runner configuration
+```
+
+## Environment Variables
+
+The service loads environment variables from `.env` (or `.env.test` when `NODE_ENV=test`) via `src/config/env.bootstrap.ts`. Copy `app/backend/.env` as a template and update values before deploying.
+
+### Core application & security
+
+| Variable | Required | Default | Description |
+| --- | --- | --- | --- |
+| `NODE_ENV` | No | `development` | Controls Express mode and feature gates (dev token endpoint is disabled in production). |
+| `PORT` | No | `3000` | HTTP port for the API server. |
+| `HOST` | No | `0.0.0.0` | Bind address; set to `127.0.0.1` to restrict to localhost. |
+| `BASE_PATH` | No | `/` | Optional prefix appended in front of `/api/v1` routes when reverse-proxying. |
+| `DEV_HTTPS` | No | `false` | When `true`, generated public URLs in the startup banner use `https://`. |
+| `TRUST_PROXY` | Conditional | `0` | Accepts `true`, `false`, a number, or IP string to configure Express `trust proxy`. |
+| `JWT_SECRET` | Yes (prod) | `dev-only-insecure-secret-change-me` | Symmetric signing key for user JWTs; the server aborts in production if missing. |
+| `PLATFORM_JWT_SECRET` | No | inherits `JWT_SECRET` | Optional second signing key used to validate platform-issued tokens. |
+| `JWT_ISSUER` | No | — | Optional issuer claim required during token verification. |
+| `JWT_AUDIENCE` | No | — | Optional audience claim required during token verification. |
+| `RATE_LIMIT_WINDOW_MS` | No | `60000` | Window (ms) for `express-rate-limit` applied to sensitive endpoints. |
+| `RATE_LIMIT_MAX` | No | `20` | Maximum number of requests per window per actor/IP. |
+| `ALLOWED_META_KEYS` | No | `chain_tx_hash,vc_user2` | Comma-separated list of metadata keys preserved on trade records. |
+| `SHARE_URL_BASE` | No | `https://app.example.com/join` | Used when composing external share URLs sent to participants. |
+
+### Documentation
+
+| Variable | Required | Default | Description |
+| --- | --- | --- | --- |
+| `SWAGGER_PATH` | No | `/docs` | Mount path for Swagger UI (also controls the CSP override in dev). |
+| `API_BASE_URL` | No | `http://localhost:3000` | Absolute URL injected into `servers` inside the OpenAPI document. |
+| `SWAGGER_TITLE` | No | `Trading Platform API` | UI title for Swagger. |
+| `SWAGGER_VERSION` | No | `1.0.0` | Displayed API version in Swagger. |
+
+### Database connectivity
+
+| Variable | Required | Default | Description |
+| --- | --- | --- | --- |
+| `DATABASE_URL` | No | derived from discrete fields | PostgreSQL connection URL (overrides host/user/password settings when present). |
+| `DB_HOST` | No | `localhost` | Database host name. |
+| `DB_PORT` | No | `5432` | Database port. |
+| `DB_USER` | No | `app` | Database user. |
+| `DB_PASSWORD` | No | `app` | Database password. |
+| `DB_NAME` | No | `app_db` | Database name. |
+| `COMPOSE_DB_HOST` | No | `db` | Host used automatically when running against the bundled Docker Compose file. |
+| `COMPOSE_DB_PORT` | No | `5432` | Port used automatically with Docker Compose. |
+| `DB_SCHEMA` | No | `public` | Schema TypeORM targets when generating and running migrations. |
+| `DB_SEARCH_PATH` | No | matches `DB_SCHEMA` | Optional Postgres search path override. |
+
+### Feature flags & VC policy
+
+| Variable | Required | Default | Description |
+| --- | --- | --- | --- |
+| `PERSIST_STRATEGY` | No | `db` | Value recorded in audit logs after finalize (`db`, `chain`, or `db+chain`). |
+| `UID_TTL_MINUTES` | No | `60` | How long a trade UID remains valid before VC verification is rejected. |
+| `VC_MIN_CRITERIA` | No | `{}` | JSON string describing required VC claims; see `src/modules/vc/validateVC.ts`. |
+| `CHAIN_RPC_URL` | No | — | Optional RPC endpoint for future on-chain persistence. |
+| `CHAIN_WALLET_KEY` | Sensitive | — | Optional signing key for chain strategies (store securely). |
+| `LOG_LEVEL` | No | `info` | Pino logger level (`info`, `debug`, `error`). |
+| `REQUIRE_VC_FOR_CREATOR` | No | `false` | Reserved flag to force creators through VC verification. |
+
+### Operational tuning
+
+| Variable | Required | Default | Description |
+| --- | --- | --- | --- |
+| `DB_INIT_MAX_ATTEMPTS` | No | `10` | Number of connection retries before startup fails. |
+| `DB_INIT_RETRY_DELAY_MS` | No | `3000` | Base delay (ms) multiplied by retry attempt when waiting for Postgres. |
+| `DOTENV_CONFIG_PATH` | No | `.env` | Path override for the dotenv loader. |
+| `SEED_PROFILE` | No | `dev` | Optional profile hint for seed scripts (currently informational). |
+
+> **Security reminder:** Never reuse the sample secrets in production. Generate strong random values for `JWT_SECRET`, `PLATFORM_JWT_SECRET`, and database credentials.
+
+## Getting Started
+
+### Prerequisites
+
+- Node.js >= 20.0.0 with Corepack enabled (`corepack enable`)
+- pnpm 10.x (automatically bootstrapped by Corepack)
+- Docker (for local Postgres or when running Jest Testcontainers)
+
+### Install dependencies
+
+From the monorepo root:
 
 ```bash
 pnpm install
-pnpm --filter backend build    # optional: compile TypeScript before running in prod mode
-pnpm --filter backend dev      # starts src/server.ts with tsx in watch mode
 ```
 
-**Environment variables**
+### Configure environment
 
-Create `app/backend/.env` (or export them in your shell). Only `JWT_SECRET` is strictly required; the rest override sensible defaults.
-
-```env
-# Required
-JWT_SECRET=change-me-for-local-dev
-
-# Optional overrides
-PORT=3000
-HOST=0.0.0.0
-DATABASE_URL=postgres://app:app@localhost:5432/app_db
-PLATFORM_JWT_SECRET=platform-secret-change-me
-JWT_ISSUER=verifytrade
-JWT_AUDIENCE=verifytrade-users
-BASE_PATH=/
-SWAGGER_PATH=/docs
-API_BASE_URL=http://localhost:3000
-DEV_HTTPS=false
-TRUST_PROXY=0
-
-# Rate limiting & share links
-RATE_LIMIT_WINDOW_MS=60000
-RATE_LIMIT_MAX=20
-SHARE_URL_BASE=https://app.example.com/join
-ALLOWED_META_KEYS=chain_tx_hash
-
-# Feature flags
-PERSIST_STRATEGY=db                  # db | chain | db+chain
-UID_TTL_MINUTES=60
-VC_MIN_CRITERIA={}
-CHAIN_RPC_URL=
-CHAIN_WALLET_KEY=
-REQUIRE_VC_FOR_CREATOR=false
-
-# Database credentials (used when DATABASE_URL is unset)
-DB_HOST=localhost
-DB_PORT=5432
-DB_USER=app
-DB_PASSWORD=app
-DB_NAME=app_db
-
-# Seed & local tooling
-SEED_PROFILE=dev
-```
-
-## Database & Migrations
-
-**Start PostgreSQL**
+1. Copy `app/backend/.env` to a local variant (e.g. `.env.local`) and adjust secrets.
+2. Ensure `JWT_SECRET`, database credentials, and any custom URLs are set.
+3. Validate that the service can read your configuration:
 
 ```bash
-pnpm --filter backend dev:compose:up
-# Uses docker-compose.db.yml (Postgres 16) and forwards ${HOST_DB_PORT:-5432}
+pnpm env:check
+# → forwards to pnpm --filter @verifytrade/backend env:check
 ```
 
-Stop and remove containers/volumes when done:
+### Local development (without Docker Compose)
 
 ```bash
-pnpm --filter backend dev:compose:down
+pnpm --filter @verifytrade/backend dev:compose:up   # optional: start Postgres via docker-compose.db.yml
+pnpm --filter @verifytrade/backend typeorm:migrate:run
+pnpm --filter @verifytrade/backend db:seed          # inserts sample users and trade forms
+pnpm --filter @verifytrade/backend dev              # watch mode (tsx) with auto-reload
 ```
 
-**Apply migrations & seed data**
+The server listens on `http://localhost:3000` by default and logs the resolved Swagger URL on startup.
+
+To stop the helper database container:
 
 ```bash
-pnpm --filter backend migration:run     # runs TypeORM migrations once
-pnpm --filter backend db:seed           # inserts dev profile data & prints JWTs
-pnpm --filter backend db:seed:test      # optional: loads deterministic test fixtures
+pnpm --filter @verifytrade/backend dev:compose:down
 ```
 
-Migrations are also executed automatically on server startup (`AppDataSource.runMigrations` in `src/server.ts`), but running them manually helps surface errors earlier.
+### Docker Compose
 
-**Schema highlights**
-- `users` — participant accounts with unique emails, role (`user` or `platform`), and optional password hashes.
-- `trade_forms` — core trade records with status progression, share UID, metadata, and confirmation flags.
-- `trade_audit_events` — immutable audit timeline linked to both trade and actor.
-- `trade_confirmations` — per-user confirmation records keyed by `(trade_uid, actor_id)`.
-- `idempotency_keys` — cached responses for POST endpoints that accept the `Idempotency-Key` header.
+A convenience `docker-compose.yml` runs both Postgres and the backend inside containers:
 
-**Troubleshooting**
-- `ECONNREFUSED` or `database not ready`: ensure Docker is running and the DB port is free. Override the host port with `HOST_DB_PORT=5433 pnpm --filter backend dev:compose:up` or adjust `DB_HOST`/`DB_PORT` when running Postgres elsewhere.
-- Stale data after schema changes: run `pnpm --filter backend dev:compose:down` to drop the volume and rerun migrations + seed.
+```bash
+docker compose up db          # optional: keep DB running in the background
+docker compose up backend
+```
 
-## API Overview
+The backend container mounts the repo, installs dependencies with pnpm, and executes `pnpm --filter @verifytrade/backend dev:api`. Modify `docker-compose.yml` if you need to pass additional environment variables.
 
-- **Base URL**: `http://localhost:3000/api/v1` (prefix respects `BASE_PATH` from `.env`)
-- **Auth scheme**: `Authorization: Bearer <JWT>` signed with `JWT_SECRET` (platform-only actions require a `platform` role token)
-- **Swagger UI**: `http://localhost:3000/docs` (configurable via `SWAGGER_PATH`)
-- **OpenAPI spec**: `http://localhost:3000/openapi.json` or the checked-in `openapi.json`; regenerate with `pnpm --filter backend openapi`
+### Database migrations & seeds
 
-**Global conventions**
-- Pagination: `page` (default `1`) and `page_size` (default `20`, max `100`) query params.
-- Filtering: `status` (`draft|pending|verified|confirmed|cancelled|failed|done`), `created_from`, and `created_to` (ISO-8601 timestamps).
-- Dates/times: RFC 3339 UTC strings (e.g. `2024-05-07T09:30:00.000Z`).
-- Idempotency: POST endpoints accept `Idempotency-Key`; repeated calls with the same key return the cached response.
-- Rate limiting: credential verification and confirmations share a per-user window (`RATE_LIMIT_WINDOW_MS`/`RATE_LIMIT_MAX`); responses include standard `RateLimit-*` headers and return `429` with `{"error":"Too Many Requests"}`.
-- Correlation: outbound errors include `requestId`. You can supply `X-Request-Id` or `X-Correlation-Id` to reuse your own trace identifier.
+- Run pending migrations: `pnpm --filter @verifytrade/backend typeorm:migrate:run`
+- Revert last migration: `pnpm --filter @verifytrade/backend typeorm:migrate:revert`
+- Revert everything, rerun, and reseed: `pnpm --filter @verifytrade/backend db:reset`
+- Generate a new migration: `pnpm --filter @verifytrade/backend migration:generate --name=AddSomeFeature`
+- Seed data (dev defaults): `pnpm --filter @verifytrade/backend db:seed`
+- Seed with a custom profile (uses `SEED_PROFILE`): `SEED_PROFILE=test pnpm --filter @verifytrade/backend db:seed`
 
-**Error format**
+The `src/server.ts` entrypoint also runs migrations automatically on boot, making cold starts tolerant while still supporting explicit CLI usage in CI/CD.
+
+## API Documentation
+
+- OpenAPI spec: `openapi.json` (generated by TSOA)
+- Regenerate routes + spec: `pnpm --filter @verifytrade/backend openapi`
+- Print the live spec via running server: `pnpm --filter @verifytrade/backend openapi:print`
+- Swagger UI: available at `${API_BASE_URL}${SWAGGER_PATH}` (default `http://localhost:3000/docs`)
+- Raw spec endpoint: `GET /openapi.json` (servers list is resolved per request)
+
+Swagger UI is served with strict CSP in production and a relaxed policy in local development to avoid Safari upgrade-insecure-request issues.
+
+## Health Checks
+
+The backend exposes unauthenticated probes for orchestrators and on-call diagnostics. All checks complete within a few milliseconds when healthy, skip heavy allocations, and run under a 400 ms timeout so they never block the event loop.
+
+### `GET /healthz` (alias: `/health`)
+
+- Confirms the process is running and the event loop is responsive.
+- Returns `{ "status": "ok", "uptimeSec": <number>, "version": "<package version>" }` without touching the database or other dependencies.
+- Bypasses authentication, CORS restrictions, and rate limiting.
+
+```bash
+curl -i http://localhost:${PORT:-3000}/healthz
+```
+
+Typical `200 OK` response:
 
 ```json
 {
-  "error": "Validation Failed",
-  "details": {
-    "...": "..."
-  },
-  "requestId": "4b8668ae-305f-4b2d-b50a-e77f5cd218aa"
+  "status": "ok",
+  "uptimeSec": 12.34,
+  "version": "0.1.0"
 }
 ```
 
-## Endpoints
-
-Examples assume `BASE_URL` points to the backend origin (for example, `http://localhost:3000`) and that `USER_TOKEN`, `PLATFORM_TOKEN`, and `REQUEST_ID` environment variables hold suitable values where required.
-
-### POST /api/v1/auth/dev-token
-
-- **Summary**: Issue a short-lived JWT for local development (disabled when `NODE_ENV=production`).
-- **Auth**: None
-- **Query Params**: None
-- **Path Params**: None
-- **Request Body**
-
-  ```json
-  {
-    "userId": "5d466f8d-67fd-4eef-90d4-1f7502c4d1f2",
-    "role": "user",
-    "email": "alice.rivers@verifytrade.dev",
-    "name": "Alice Rivers"
-  }
-  ```
-
-  - `userId` (string, required, UUID) — subject claim for the token.
-  - `role` (string, optional) — `user` (default) or `platform`.
-  - `email` (string, optional, must be valid email).
-  - `name` (string, optional).
-
-- **Responses**
-  - `201 Created`
-
-    ```json
-    {
-      "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
-      "expiresIn": "1h",
-      "role": "user"
-    }
-    ```
-
-  - `403 Forbidden` — `{"error":"Dev token endpoint disabled in production","requestId":"..."}` (when `NODE_ENV=production`).
-
-- **Curl Example**
-
-  ```bash
-  curl -X POST "$BASE_URL/api/v1/auth/dev-token" \
-    -H "Content-Type: application/json" \
-    -d '{"userId":"'"$USER_ID"'","role":"user","email":"'"$USER_EMAIL"'","name":"'"$USER_NAME"'"}'
-  ```
-
-- **Notes**: Tokens expire after 1 hour. Use `role: "platform"` to mint a platform token when exercising finalize endpoints.
-
-### POST /api/v1/tradeforms
-
-- **Summary**: Create a draft trade form and receive the shareable UID.
-- **Auth**: `Authorization: Bearer <JWT>` (user role)
-- **Query Params**: None
-- **Path Params**: None
-- **Request Body**
-
-  ```json
-  {
-    "title": "USDT OTC escrow",
-    "description": "P2P escrow with VC verification",
-    "amount": "1000.00"
-  }
-  ```
-
-  - `title` (string, required, 3-160 chars).
-  - `description` (string, required, 3-4000 chars).
-  - `amount` (string, optional) — decimal string with up to 8 fractional digits.
-
-- **Responses**
-  - `201 Created`
-
-    ```json
-    {
-      "uid": "dQ7rFZc1o7g0uX9A1c2b",
-      "status": "pending",
-      "shareUrl": "https://app.example.com/join/dQ7rFZc1o7g0uX9A1c2b"
-    }
-    ```
-
-  - `401 Unauthorized` — missing/invalid bearer token.
-  - `422 Validation Failed` — payload rejected by Zod schema.
-
-- **Curl Example**
-
-  ```bash
-  curl -X POST "$BASE_URL/api/v1/tradeforms" \
-    -H "Authorization: Bearer $USER_TOKEN" \
-    -H "Content-Type: application/json" \
-    -H "Idempotency-Key: $REQUEST_ID" \
-    -d '{"title":"USDT OTC escrow","description":"P2P escrow with VC verification","amount":"1000.00"}'
-  ```
-
-- **Notes**: Supplying `Idempotency-Key` caches the 201 response for 24h per user and route.
-
-### GET /api/v1/tradeforms/{uid}
-
-- **Summary**: Retrieve a trade form visible to the caller (full view for participants, minimal status otherwise).
-- **Auth**: `Authorization: Bearer <JWT>` (user role)
-- **Query Params**: None
-- **Path Params**
-
-  | name | type | required | description |
-  | --- | --- | --- | --- |
-  | uid | string | yes | Trade UID returned during creation or shared with the counterparty. |
-
-- **Responses**
-  - `200 OK`
-
-    ```json
-    {
-      "uid": "dQ7rFZc1o7g0uX9A1c2b",
-      "title": "USDT OTC escrow",
-      "description": "P2P escrow with VC verification",
-      "amount": "1000.00",
-      "status": "verified",
-      "creatorId": "35ad1c74-53f5-4fc2-849e-2e120a6a6ba9",
-      "counterpartyId": "1fb3ac97-3a92-49aa-8bdb-051a1aec2ae9",
-      "meta": {},
-      "createdAt": "2024-06-01T12:00:00.000Z",
-      "updatedAt": "2024-06-01T12:30:00.000Z",
-      "auditLog": [
-        {
-          "id": "5a9d0bf4-4135-4ca8-8b46-25b8d0f32c4f",
-          "tradeUid": "dQ7rFZc1o7g0uX9A1c2b",
-          "actorId": "35ad1c74-53f5-4fc2-849e-2e120a6a6ba9",
-          "action": "create",
-          "at": "2024-06-01T12:00:00.000Z",
-          "details": {
-            "title": "USDT OTC escrow"
-          }
-        }
-      ]
-    }
-    ```
-
-  - `401 Unauthorized` — bearer token missing/invalid.
-  - `404 Not Found` — trade UID does not exist or caller has no access.
-  - `410 Gone` — trade UID expired (`uid_expires_at` exceeded).
-
-- **Curl Example**
-
-  ```bash
-  curl "$BASE_URL/api/v1/tradeforms/$TRADE_UID" \
-    -H "Authorization: Bearer $USER_TOKEN"
-  ```
-
-- **Notes**: Non-participants receive the minimal payload `{ "uid": "...", "status": "..." }` when the trade still exists but is not shared with them.
-
-### POST /api/v1/tradeforms/{uid}/verify-vc
-
-- **Summary**: Validate a verifiable credential against policy and update the trade status.
-- **Auth**: `Authorization: Bearer <JWT>` (user role)
-- **Query Params**: None
-- **Path Params**
-
-  | name | type | required | description |
-  | --- | --- | --- | --- |
-  | uid | string | yes | Trade UID to verify. |
-
-- **Request Body**
-
-  ```json
-  {
-    "credential": {
-      "proof": "base64-credential",
-      "issuer": "did:web:issuer.example"
-    }
-  }
-  ```
-
-  - `credential` (object, optional) — arbitrary credential payload stored temporarily for validation.
-
-- **Responses**
-  - `200 OK`
-
-    ```json
-    {
-      "valid": true,
-      "status": "verified"
-    }
-    ```
-
-  - `401 Unauthorized` — bearer token missing/invalid.
-  - `404 Not Found` — trade not found or not accessible.
-  - `409 Conflict` — credential already verified, VC invalid, or trade not ready for verification.
-
-- **Curl Example**
-
-  ```bash
-  curl -X POST "$BASE_URL/api/v1/tradeforms/$TRADE_UID/verify-vc" \
-    -H "Authorization: Bearer $USER_TOKEN" \
-    -H "Content-Type: application/json" \
-    -H "Idempotency-Key: $REQUEST_ID" \
-    -d '{"credential":{"proof":"sample-proof","issuer":"did:web:issuer.example"}}'
-  ```
-
-- **Notes**: Endpoint is rate-limited per user (default 20 attempts/minute). Use unique `Idempotency-Key` when retrying to avoid `409 Conflict`.
-
-### POST /api/v1/tradeforms/{uid}/confirm
-
-- **Summary**: Record confirmation from either participant; triggers finalization once both roles agree.
-- **Auth**: `Authorization: Bearer <JWT>` (user role)
-- **Query Params**: None
-- **Path Params**
-
-  | name | type | required | description |
-  | --- | --- | --- | --- |
-  | uid | string | yes | Trade UID to confirm. |
-
-- **Request Body**
-
-  ```json
-  {
-    "role": "user1"
-  }
-  ```
-
-  - `role` (string, required) — `user1` (creator) or `user2` (counterparty).
-
-- **Responses**
-  - `200 OK`
-
-    ```json
-    {
-      "status": "confirmed",
-      "finalizeTriggered": true
-    }
-    ```
-
-  - `401 Unauthorized` — bearer token missing/invalid.
-  - `403 Forbidden` — caller lacks permission (e.g., wrong participant).
-  - `404 Not Found` — trade missing.
-  - `409 Conflict` — confirmation already recorded or trade in invalid state.
-
-- **Curl Example**
-
-  ```bash
-  curl -X POST "$BASE_URL/api/v1/tradeforms/$TRADE_UID/confirm" \
-    -H "Authorization: Bearer $USER_TOKEN" \
-    -H "Content-Type: application/json" \
-    -H "Idempotency-Key: $REQUEST_ID" \
-    -d '{"role":"user1"}'
-  ```
-
-- **Notes**: Reusing an `Idempotency-Key` before the first request finishes returns `409 Conflict`. Successful confirmation may asynchronously begin finalization depending on `PERSIST_STRATEGY`.
-
-### POST /api/v1/tradeforms/{uid}/cancel
-
-- **Summary**: Cancel an in-progress trade with an optional reason.
-- **Auth**: `Authorization: Bearer <JWT>` (user role)
-- **Query Params**: None
-- **Path Params**
-
-  | name | type | required | description |
-  | --- | --- | --- | --- |
-  | uid | string | yes | Trade UID to cancel. |
-
-- **Request Body**
-
-  ```json
-  {
-    "reason": "Counterparty requested new price"
-  }
-  ```
-
-  - `reason` (string, optional, ≤500 chars) — cancellation justification.
-
-- **Responses**
-  - `200 OK`
-
-    ```json
-    {
-      "status": "cancelled"
-    }
-    ```
-
-  - `401 Unauthorized`
-  - `403 Forbidden` — caller is not the creator or associated participant.
-  - `404 Not Found`
-  - `409 Conflict` — trade already finalized/failed/cancelled.
-
-- **Curl Example**
-
-  ```bash
-  curl -X POST "$BASE_URL/api/v1/tradeforms/$TRADE_UID/cancel" \
-    -H "Authorization: Bearer $USER_TOKEN" \
-    -H "Content-Type: application/json" \
-    -H "Idempotency-Key: $REQUEST_ID" \
-    -d '{"reason":"Counterparty requested new price"}'
-  ```
-
-- **Notes**: Cancellation appends an audit event and is idempotent when repeating the same `Idempotency-Key`.
-
-### POST /api/v1/tradeforms/{uid}/finalize
-
-- **Summary**: Force finalization for a confirmed trade (platform-only).
-- **Auth**: `Authorization: Bearer <JWT>` (platform role required)
-- **Query Params**: None
-- **Path Params**
-
-  | name | type | required | description |
-  | --- | --- | --- | --- |
-  | uid | string | yes | Trade UID to finalize. |
-
-- **Request Body**: None
-
-- **Responses**
-  - `200 OK`
-
-    ```json
-    {
-      "status": "done",
-      "meta": {
-        "finalizedBy": "platform"
-      }
-    }
-    ```
-
-  - `401 Unauthorized`
-  - `403 Forbidden` — token role is not `platform`.
-  - `404 Not Found`
-  - `409 Conflict` — trade not in `confirmed`/`failed` state or already finalized.
-
-- **Curl Example**
-
-  ```bash
-  curl -X POST "$BASE_URL/api/v1/tradeforms/$TRADE_UID/finalize" \
-    -H "Authorization: Bearer $PLATFORM_TOKEN" \
-    -H "Idempotency-Key: $REQUEST_ID"
-  ```
-
-- **Notes**: Finalization strategy obeys `PERSIST_STRATEGY`. Missing chain configuration causes the trade to transition to `failed` with an error message in the response.
-
-### POST /api/v1/tradeforms/{uid}/finalize/retry
-
-- **Summary**: Retry a failed finalization attempt (platform-only).
-- **Auth**: `Authorization: Bearer <JWT>` (platform role)
-- **Query Params**: None
-- **Path Params**
-
-  | name | type | required | description |
-  | --- | --- | --- | --- |
-  | uid | string | yes | Trade UID to retry. |
-
-- **Request Body**: None
-
-- **Responses**
-  - `200 OK`
-
-    ```json
-    {
-      "status": "failed",
-      "meta": {
-        "finalizedBy": "platform",
-        "retry": true
-      },
-      "error": "Chain configuration missing"
-    }
-    ```
-
-  - `401 Unauthorized`
-  - `403 Forbidden`
-  - `404 Not Found`
-
-- **Curl Example**
-
-  ```bash
-  curl -X POST "$BASE_URL/api/v1/tradeforms/$TRADE_UID/finalize/retry" \
-    -H "Authorization: Bearer $PLATFORM_TOKEN" \
-    -H "Idempotency-Key: $REQUEST_ID"
-  ```
-
-- **Notes**: Safe to repeat with the same `Idempotency-Key`; helpful for compensating actions after configuring chain services.
-
-### GET /api/v1/tradeforms/{uid}/audit
-
-- **Summary**: Fetch the audit trail for a trade (creation, verification, confirmations, retries).
-- **Auth**: `Authorization: Bearer <JWT>` (user role)
-- **Query Params**: None
-- **Path Params**
-
-  | name | type | required | description |
-  | --- | --- | --- | --- |
-  | uid | string | yes | Trade UID to inspect. |
-
-- **Responses**
-  - `200 OK`
-
-    ```json
-    [
-      {
-        "id": "5a9d0bf4-4135-4ca8-8b46-25b8d0f32c4f",
-        "tradeUid": "dQ7rFZc1o7g0uX9A1c2b",
-        "actorId": "35ad1c74-53f5-4fc2-849e-2e120a6a6ba9",
-        "action": "create",
-        "at": "2024-06-01T12:00:00.000Z",
-        "details": {
-          "title": "USDT OTC escrow"
-        }
-      }
-    ]
-    ```
-
-  - `401 Unauthorized`
-  - `403 Forbidden` — caller is not part of the trade.
-  - `404 Not Found`
-
-- **Curl Example**
-
-  ```bash
-  curl "$BASE_URL/api/v1/tradeforms/$TRADE_UID/audit" \
-    -H "Authorization: Bearer $USER_TOKEN"
-  ```
-
-- **Notes**: Audit events include retries/failures performed by platform users and mirror the `trade_audit_events` table.
-
-### GET /api/v1/me/tradeforms
-
-- **Summary**: List the caller’s trade forms with pagination and status filters.
-- **Auth**: `Authorization: Bearer <JWT>` (user role)
-- **Query Params**
-
-  | name | type | required | default | description |
-  | --- | --- | --- | --- | --- |
-  | status | string | no | — | Filter by trade status (`draft`…`done`). |
-  | created_from | string | no | — | ISO-8601 timestamp (inclusive). |
-  | created_to | string | no | — | ISO-8601 timestamp (inclusive). |
-  | page | integer | no | 1 | Page number (>=1). |
-  | page_size | integer | no | 20 | Page size (1-100). |
-
-- **Path Params**: None
-
-- **Responses**
-  - `200 OK`
-
-    ```json
-    {
-      "data": [
-        {
-          "uid": "dQ7rFZc1o7g0uX9A1c2b",
-          "title": "USDT OTC escrow",
-          "description": "P2P escrow with VC verification",
-          "amount": "1000.00",
-          "status": "pending",
-          "creatorId": "35ad1c74-53f5-4fc2-849e-2e120a6a6ba9",
-          "counterpartyId": null,
-          "meta": {},
-          "createdAt": "2024-06-01T12:00:00.000Z",
-          "updatedAt": "2024-06-01T12:00:00.000Z",
-          "auditLog": [],
-          "shareUrl": "https://app.example.com/join/dQ7rFZc1o7g0uX9A1c2b"
-        }
-      ],
-      "page": 1,
-      "pageSize": 20,
-      "total": 1
-    }
-    ```
-
-  - `401 Unauthorized`
-
-- **Curl Example**
-
-  ```bash
-  curl "$BASE_URL/api/v1/me/tradeforms?page=1&page_size=20&status=pending" \
-    -H "Authorization: Bearer $USER_TOKEN"
-  ```
-
-- **Notes**: `created_from`/`created_to` are converted to `Date` objects server-side; pass ISO timestamps to avoid parsing failures. Pagination metadata mirrors the `Paged<T>` structure used across list endpoints.
-
-### GET /health
-
-- **Summary**: Lightweight service liveness check.
-- **Auth**: None
-- **Query Params**: None
-- **Path Params**: None
-
-- **Responses**
-  - `200 OK` — `{"status":"ok"}`
-
-- **Curl Example**
-
-  ```bash
-  curl "$BASE_URL/health"
-  ```
-
-- **Notes**: Endpoint is mounted outside `/api/v1` (path `/health`). Useful for container orchestrators.
-
-### GET /health/db
-
-- **Summary**: Database readiness probe that executes `SELECT 1`.
-- **Auth**: None
-- **Query Params**: None
-- **Path Params**: None
-
-- **Responses**
-  - `200 OK` — `{"ok":true}`
-  - `503 Service Unavailable` — `{"ok":false,"error":"database not ready"}` or underlying connection error message.
-
-- **Curl Example**
-
-  ```bash
-  curl "$BASE_URL/health/db"
-  ```
-
-- **Notes**: Returns `503` until the TypeORM data source initializes. Logs detailed failures under the `verifytrade-backend` logger.
-
-## Auth Guide
-
-1. Seed local fixtures (optional but convenient):
-
-   ```bash
-   pnpm --filter backend db:seed
-   ```
-
-   The command prints user IDs, roles, and ready-to-use JWTs for `alice`, `bob`, and `platform`.
-
-2. Generate ad-hoc tokens:
-
-   ```bash
-   USER_ID=$(uuidgen)
-   curl -X POST "$BASE_URL/api/v1/auth/dev-token" \
-     -H "Content-Type: application/json" \
-     -d '{"userId":"'"$USER_ID"'","role":"user","email":"user@example.com","name":"Example User"}'
-   ```
-
-3. Platform-only flows: supply `"role":"platform"` and ensure `PLATFORM_JWT_SECRET` is set (defaults to `JWT_SECRET`).
-
-4. Tokens expire after `1h`; request a new token or rerun the seed script to refresh.
-
-**Store local tokens safely**
-
-```env
-# .env.local (never commit)
-USER_TOKEN=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
-PLATFORM_TOKEN=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
-BASE_URL=http://localhost:3000
+### `GET /ready`
+
+- Ensures this instance can serve traffic by issuing `SELECT 1` through TypeORM with a 400 ms PostgreSQL statement timeout (future dependencies will appear under `checks`).
+- Returns `200 OK` when every check passes and `503 Service Unavailable` with details when any check fails.
+- Automatically flips to `503` when the service begins shutdown and closes the shared TypeORM data source.
+
+```bash
+curl -i http://localhost:${PORT:-3000}/ready
+http --timeout=2 GET :${PORT:-3000}/ready
 ```
 
-## Local Dev Recipes
+Healthy response:
 
-- **Reset DB and reseed**: `pnpm --filter backend dev:compose:down && pnpm --filter backend dev:compose:up && pnpm --filter backend migration:run && pnpm --filter backend db:seed`
-- **Change DB port**: `HOST_DB_PORT=5433 pnpm --filter backend dev:compose:up` (updates the forwarded host port while retaining container port 5432).
-- **Point the app at a remote Postgres**: set `DATABASE_URL=postgres://user:pass@host:5432/dbname` in `.env` and skip Docker.
-- **Run Jest suite**: `pnpm --filter backend test` (requires Docker for Testcontainers; ensure port 5432 is free).
-- **Regenerate OpenAPI & routes**: `pnpm --filter backend openapi` after modifying controllers or DTOs.
+```json
+{
+  "status": "ok",
+  "checks": {
+    "db": { "ok": true }
+  }
+}
+```
 
-## Changelog Note
+Degraded response (example):
 
-Auto-updated on 2025-11-04 based on the current controllers, TypeORM schema, and `openapi.json` (`pnpm --filter backend openapi`).
+```json
+{
+  "status": "degraded",
+  "checks": {
+    "db": { "ok": false, "reason": "timeout" }
+  }
+}
+```
+
+### Deployment probes
+
+Docker Compose (`docker-compose.yml`):
+
+```yaml
+healthcheck:
+  test: ["CMD", "curl", "-fsS", "http://localhost:3000/healthz"]
+  interval: 10s
+  timeout: 2s
+  retries: 3
+```
+
+Kubernetes:
+
+```yaml
+livenessProbe:
+  httpGet:
+    path: /healthz
+    port: 3000
+  initialDelaySeconds: 5
+  periodSeconds: 10
+readinessProbe:
+  httpGet:
+    path: /ready
+    port: 3000
+  initialDelaySeconds: 5
+  periodSeconds: 10
+```
+
+### Troubleshooting readiness failures
+
+- Confirm the PostgreSQL instance is reachable, credentials are correct, and migrations have been applied.
+- Check for log entries such as `readiness check failed` (includes `requestId`) to identify the dependency that timed out.
+- Make sure the service can reach required networks (VPN, VPC, security groups) and that connection limits are not exceeded.
+- Retry locally with `curl -v` or `http --timeout=2` against `/ready` to confirm the failure reproduces outside of the load balancer.
+
+## Authentication
+
+All business APIs require `Authorization: Bearer <JWT>` headers.
+
+For local development, request a short-lived JWT via the dev token endpoint (disabled when `NODE_ENV=production`):
+
+```bash
+curl -X POST http://localhost:3000/api/v1/auth/dev-token \
+  -H 'Content-Type: application/json' \
+  -d '{
+        "userId": "8c0cf2f6-4050-4c6d-9a53-1b38eb8f2e28",
+        "role": "user",
+        "email": "amy.chen@example.com",
+        "name": "Amy Chen"
+      }'
+```
+
+```bash
+http POST :3000/api/v1/auth/dev-token \
+  userId=8c0cf2f6-4050-4c6d-9a53-1b38eb8f2e28 \
+  role=user \
+  email=amy.chen@example.com \
+  name='Amy Chen'
+```
+
+Store the returned `token` and pass it in subsequent requests:
+
+```bash
+export VERIFYTRADE_TOKEN="<JWT from dev-token>"
+curl http://localhost:3000/api/v1/tradeforms \
+  -H "Authorization: Bearer ${VERIFYTRADE_TOKEN}"
+```
+
+Platform services may authenticate with platform-signed JWTs when `PLATFORM_JWT_SECRET` differs from `JWT_SECRET`.
+
+## API Reference
+
+### TradeForm endpoints
+
+| Method | Path | Summary | Auth | Notes |
+| --- | --- | --- | --- | --- |
+| `GET` | `/api/v1/tradeforms` | List trade forms with optional filters | Bearer | Supports `itemCondition`, `tradeChannel`, `paymentMethod`, `matchmakingChannel`, `identityRequirement` query params. |
+| `POST` | `/api/v1/tradeforms` | Create a trade form | Bearer | Body must satisfy `CreateTradeFormDto`; returns 201 with full record. |
+| `GET` | `/api/v1/tradeforms/{id}` | Retrieve by numeric ID | Bearer | Path param `id` (number); returns `404` if missing. |
+| `GET` | `/api/v1/tradeforms/{uid}` | Retrieve by share UID | Bearer | Participants receive the full payload, others see the limited view. Alias of `/api/v1/tradeforms/uid/{uid}`. |
+| `PUT` | `/api/v1/tradeforms/{id}` | Update fields | Bearer | Accepts partial `UpdateTradeFormDto`. |
+| `DELETE` | `/api/v1/tradeforms/{id}` | Delete a trade form | Bearer | Responds with `204 No Content`. |
+| `POST` | `/api/v1/tradeforms/{uid}/verify-vc` | Validate VC proof | Bearer | Counterparty-only; accepts `{ "vcProof": {...} }`, enforces rate limit & idempotency. |
+| `POST` | `/api/v1/tradeforms/{uid}/confirm` | Confirm participation | Bearer | Requires authenticated participant; finalizes trade once both sides confirm. |
+
+Sample create request:
+
+```bash
+curl -X POST http://localhost:3000/api/v1/tradeforms \
+  -H "Authorization: Bearer ${VERIFYTRADE_TOKEN}" \
+  -H 'Content-Type: application/json' \
+  -d '{
+        "creatorVerifiedIdentities": ["StudentID", "CompanyEmail"],
+        "itemName": "iPad Pro 11\"",
+        "itemDescription": "盒裝完整，含原廠鍵盤",
+        "itemCondition": "LIKE_NEW",
+        "amount": "22000",
+        "tradeChannel": "IN_PERSON",
+        "paymentMethod": "BANK_TRANSFER",
+        "matchmakingChannel": "SOCIAL_PLATFORM",
+        "identityRequirements": ["STUDENT_ID", "PROOF_OF_ORIGIN"],
+        "userRating": 5
+      }'
+```
+
+```bash
+http POST :3000/api/v1/tradeforms \
+  Authorization:"Bearer ${VERIFYTRADE_TOKEN}" \
+  creatorVerifiedIdentities:='["StudentID","CompanyEmail"]' \
+  itemName='"iPad Pro 11\""' \
+  itemDescription='盒裝完整，含原廠鍵盤' \
+  itemCondition=LIKE_NEW \
+  amount=22000 \
+  tradeChannel=IN_PERSON \
+  paymentMethod=BANK_TRANSFER \
+  matchmakingChannel=SOCIAL_PLATFORM \
+  identityRequirements:='["STUDENT_ID","PROOF_OF_ORIGIN"]' \
+  userRating:=5
+```
+
+To perform VC verification with idempotency:
+
+```bash
+curl -X POST http://localhost:3000/api/v1/tradeforms/seed-trade-001/verify-vc \
+  -H "Authorization: Bearer ${VERIFYTRADE_TOKEN}" \
+  -H 'Content-Type: application/json' \
+  -H 'Idempotency-Key: verify-vc-001' \
+  -d '{"vcProof":{"claims":["kyc_passed","jurisdiction_tw"],"issuer":"did:example:issuer","credentialType":"KYC","level":3}}'
+```
+
+```bash
+http POST :3000/api/v1/tradeforms/seed-trade-001/verify-vc \
+  Authorization:"Bearer ${VERIFYTRADE_TOKEN}" \
+  Idempotency-Key:verify-vc-001 \
+  vcProof:='{"claims":["kyc_passed","jurisdiction_tw"],"issuer":"did:example:issuer","credentialType":"KYC","level":3}'
+```
+
+### Authentication endpoints
+
+| Method | Path | Summary | Auth | Notes |
+| --- | --- | --- | --- | --- |
+| `POST` | `/api/v1/auth/dev-token` | Issue a local development JWT | Public (disabled in prod) | Body must contain a UUID `userId`; optional `role`, `email`, `name`. Responds with `{ token, expiresIn, role }`. |
+
+### Health endpoints
+
+| Method | Path | Summary | Auth | Notes |
+| --- | --- | --- | --- | --- |
+| `GET` | `/health` | Basic liveness probe | None | Returns `{ "status": "ok" }`. |
+| `GET` | `/health/db` | Database readiness probe | None | Checks the TypeORM connection; returns 503 with error details if unavailable. |
+
+Refer to Swagger UI for the complete schema (DTO definitions, enum values, and example payloads).
+
+## Error Handling
+
+All errors flow through `src/middleware/errorHandler.ts`, producing JSON responses shaped as:
+
+```json
+{
+  "error": "Validation failed",
+  "details": {
+    "...": "..."
+  },
+  "requestId": "3f685b60-..."
+}
+```
+
+Key status codes:
+
+- `401 Unauthorized` when the bearer token is missing or invalid.
+- `403 Forbidden` for dev-token access in production or role-restricted actions.
+- `404 Not Found` when a trade form is missing.
+- `409 Conflict` for idempotency violations or conflicting confirmations.
+- `410 Gone` when a trade UID has expired.
+- `422 Unprocessable Entity` for DTO/class-validator/zod validation failures.
+- `429 Too Many Requests` when rate limits are exceeded.
+- `500 Internal Server Error` for unexpected failures (includes `requestId` for log correlation).
+
+## Testing
+
+```bash
+pnpm --filter @verifytrade/backend test
+```
+
+- Uses Jest with `ts-jest` and Supertest.
+- Some tests spin up ephemeral PostgreSQL instances via `@testcontainers/postgresql`; ensure Docker is running and your user can access the Docker socket.
+- Coverage reports are written to `app/backend/coverage/`.
+
+## Code Quality
+
+- Lint: `pnpm --filter @verifytrade/backend lint`
+- Format: enforced through ESLint + Prettier config
+- Type-check & build: `pnpm --filter @verifytrade/backend build` (outputs `dist/`)
+- Start compiled bundle: `pnpm --filter @verifytrade/backend start` (runs `node dist/server.js`)
+
+## Deployment Notes
+
+1. Build the project: `pnpm --filter @verifytrade/backend build`
+2. Ensure migrations are applied (either rely on the startup auto-run or execute `pnpm --filter @verifytrade/backend typeorm:migrate:run` during deploy).
+3. Set production environment:
+   - `NODE_ENV=production`
+   - Provide strong `JWT_SECRET` / `PLATFORM_JWT_SECRET`
+   - Point `DATABASE_URL` or discrete DB variables to your managed Postgres
+   - Set `API_BASE_URL` and `SWAGGER_PATH` to match the deployed hostname/path
+4. Behind reverse proxies, configure `TRUST_PROXY` to preserve client IPs.
+5. Customize retry knobs (`DB_INIT_*`) when databases take longer than 30 seconds to accept connections.
+
+## Troubleshooting
+
+- **Cannot connect to Postgres:** Confirm the DB container is healthy (`pnpm --filter @verifytrade/backend dev:compose:up`), verify `DB_HOST`/`DATABASE_URL`, and check logs for SSL or authentication errors.
+- **Server exits complaining about `JWT_SECRET`:** The key is mandatory in production; set a secure value before starting.
+- **Frequent 429 responses:** Increase `RATE_LIMIT_MAX` or widen `RATE_LIMIT_WINDOW_MS` for your environment.
+- **Idempotency conflicts (409):** Ensure `Idempotency-Key` headers are unique per logical operation and routed to the same actor.
+- **Swagger assets blocked:** When hosting under HTTPS with a proxy, set `DEV_HTTPS=true` (for local) and ensure the proxy forwards `X-Forwarded-*` headers with `TRUST_PROXY` configured.
+- **Dev token returns 403:** Confirm `NODE_ENV` is not set to `production` and the server is restarted after changing env vars.
+
+## License & Credits
+
+- **License:** Not specified. Contact the VerifyTrade maintainers for usage terms.
+- **Credits:** VerifyTrade engineering team and contributors.

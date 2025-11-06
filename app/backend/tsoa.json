@@ -15,8 +15,8 @@
     ],
     "tags": [
       {
-        "name": "tradeforms",
-        "description": "Trade form lifecycle"
+        "name": "TradeForm",
+        "description": "Trade form marketplace operations"
       }
     ],
     "name": "VerifyTrade API",

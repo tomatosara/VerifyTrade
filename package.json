@@ -2,6 +2,9 @@
   "name": "verifytrade-monorepo",
   "private": true,
   "version": "0.1.0",
+  "scripts": {
+    "env:check": "pnpm --filter @verifytrade/backend env:check"
+  },
   "packageManager": "pnpm@10.20.0",
   "pnpm": {
     "overrides": {

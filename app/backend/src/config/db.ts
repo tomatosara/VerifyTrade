@@ -1,4 +1,4 @@
-import './env';
+import './env.bootstrap';
 import { z } from 'zod';
 
 const dbEnvSchema = z.object({

@@ -12,21 +12,21 @@ export class IdempotencyKeyEntity {
   @Column({ type: 'varchar', length: 256 })
   route!: string;
 
-  @Column({ type: 'uuid' })
+  @Column({ type: 'uuid', name: 'actor_id' })
   actorId!: string;
 
-  @Column({ type: 'integer' })
+  @Column({ type: 'integer', name: 'status_code' })
   statusCode!: number;
 
-  @Column({ type: 'jsonb' })
+  @Column({ type: 'jsonb', name: 'response_body' })
   responseBody!: unknown;
 
-  @Column({ type: 'varchar', length: 128 })
+  @Column({ type: 'varchar', length: 128, name: 'result_hash' })
   resultHash!: string;
 
-  @CreateDateColumn({ type: 'timestamp with time zone' })
+  @CreateDateColumn({ type: 'timestamp with time zone', name: 'created_at' })
   createdAt!: Date;
 
-  @Column({ type: 'timestamp with time zone' })
+  @Column({ type: 'timestamp with time zone', name: 'expires_at' })
   expiresAt!: Date;
 }
