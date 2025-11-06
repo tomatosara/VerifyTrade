@@ -340,34 +340,34 @@ export default function RentTemplate({
                                 ></textarea>
                             </div>
                         </div>
-                    </section>
 
-                    {/* 四、政府規定 */}
-                    <section className="pb-6">
-                        <div className="bg-yellow-50 border border-yellow-300 rounded-xl shadow-inner max-w-3xl mx-auto p-6">
-                            <p className="text-gray-800 leading-relaxed">
+                        <div className="bg-yellow-50 border border-yellow-300 rounded-xl shadow-inner max-w-3xl mx-auto p-6 mt-10">
+                            <p className="text-gray-800 leading-relaxed text-center">
                                 📢 <span className="font-semibold">租屋補貼已強制開放：</span>
                                 依政府規定，所有出租物件皆須同步開放房客申請租金補貼。
                             </p>
                         </div>
+
+                        {/* ✅ 把送出按鈕放在同一區塊底部 */}
+                        <div className="text-center mt-8">
+                            {!transactionLocked && (
+                                <button
+                                    onClick={() => {
+                                        generateTradeId();
+                                        setTransactionLocked(true);
+                                        window.scrollTo({ top: 0, behavior: "smooth" });
+                                    }}
+                                    className="w-[60%] md:w-[30%] bg-[var(--color-primary)] text-white py-3 rounded-full hover:bg-[var(--color-secondary)] transition"
+                                >
+                                    確定送出
+                                </button>
+                            )}
+                        </div>
+
+
                     </section>
 
-                    {/* ✅ 最後的送出按鈕 */}
-                    <section className="text-center pb-6">
-                        {!transactionLocked && (
-                            <button
-                                onClick={() => {
-                                    generateTradeId();
-                                    setTransactionLocked(true);
-                                    // ✅ 自動滾到頁面最上方
-                                    window.scrollTo({ top: 0, behavior: "smooth" });
-                                }}
-                                className="mt-6 w-[60%] md:w-[30%] bg-[var(--color-primary)] text-white py-3 rounded-full hover:bg-[var(--color-secondary)] transition"
-                            >
-                                確定送出
-                            </button>
-                        )}
-                    </section>
+
                 </>
             ) : (
                 <div className="text-center text-gray-500 py-8 border-t border-gray-200">

@@ -3,6 +3,8 @@ import Navbar from "./components/navbar";
 import Home from "./pages/home";
 import Login from "./pages/login";
 import NewForm from "./pages/newform";
+import OpenForm from "./pages/openform";
+import MyAccount from "./pages/myaccount";
 
 
 
@@ -17,6 +19,8 @@ function App() {
         <Route path="/" element={<Home />} />   {/* ← 顯示 Home.tsx */}
         <Route path="/login" element={<Login />} />  
         <Route path="/newform" element={<NewForm />} />   
+        <Route path="/openform" element={<OpenForm />} />
+        <Route path="/myaccount" element={<MyAccount />} />   
         
       </Routes>
     </BrowserRouter>
