@@ -46,7 +46,7 @@ export default function NewForm() {
 
         {transactionLocked && !transactionSuccess && (
           <div className="bg-yellow-50 border border-yellow-300 text-black py-4 px-6 rounded-xl text-center font-semibold text-lg shadow-inner">
-            交易內容已鎖定。請確認方使用交易序號進入表單並開啟數位憑證皮夾掃描 QR Code 完成身分驗證。<br/> 
+            交易內容已鎖定。請確認方使用交易序號進入表單並開啟數位憑證皮夾掃描 QR Code 完成身分驗證。<br />
             注意！掃描 QR Code 代表您已閱讀並同意交易內容。
           </div>
         )}
@@ -106,7 +106,9 @@ export default function NewForm() {
             <h2 className="text-lg font-semibold mb-6 text-gray-800">
               請選擇交易類型
             </h2>
-            <div className="flex justify-center gap-4">
+
+            <div className="flex justify-center gap-8">
+              {/* 租約 */}
               <button
                 onClick={() => {
                   setTemplate("rent");
@@ -116,10 +118,19 @@ export default function NewForm() {
                   setInitiatorConfirmed(false);
                   setTradeId("");
                 }}
-                className="px-12 py-12 rounded-2xl bg-[var(--color-primary)] text-white text-2xl hover:bg-[var(--color-accent)]"
+                className="relative w-64 h-64 rounded-3xl overflow-hidden group transition-all duration-300"
               >
-                🏠 租約
+                <img
+                  src="/image/rent.png"
+                  alt="租約"
+                  className="absolute inset-0 w-full h-full object-cover transition-all duration-300 group-hover:brightness-75"
+                />
+                <div className="absolute bottom-4 left-1/2 -translate-x-1/2 text-white text-xl font-semibold flex items-center gap-2 drop-shadow-md">
+                 <span>租約</span>
+                </div>
               </button>
+
+              {/* 網路交易 */}
               <button
                 onClick={() => {
                   setTemplate("p2p");
@@ -129,13 +140,22 @@ export default function NewForm() {
                   setInitiatorConfirmed(false);
                   setTradeId("");
                 }}
-                className="px-8 py-8 rounded-2xl bg-[var(--color-secondary)] text-white text-2xl hover:bg-[#0d97ff]"
+                className="relative w-64 h-64 rounded-3xl overflow-hidden group transition-all duration-300"
               >
-                💰 網路交易
+                <img
+                  src="/image/internet-deal.png"
+                  alt="網路交易"
+                  className="absolute inset-0 w-full h-full object-cover transition-all duration-300 group-hover:brightness-75"
+                />
+                <div className="absolute bottom-4 left-1/2 -translate-x-1/2 text-white text-xl font-semibold flex items-center gap-2 drop-shadow-md">
+                 <span>網路交易</span>
+                </div>
               </button>
             </div>
           </section>
         )}
+
+
 
         {/* ✅ QR 驗證區：左右排列 */}
         {template && !transactionSuccess && (

@@ -37,18 +37,17 @@ export default function Navbar() {
         <img src="/logo.svg" alt="Logo" className="h-8" />
         <Link
           to="/"
-          className="font-semibold text-2xl md:text-lg text-gray-800 hover:text-[var(--color-primary)] transition-colors"
+          className="font-semibold text-xl md:text-2xl text-[var(--color-secondary)] hover:text-[var(--color-primary)] transition-colors"
         >
-          身分驗證交易平台
+          零知識防詐交易平台
         </Link>
       </div>
 
       {/* 🔹 桌機導覽連結 */}
-      <ul className="hidden md:flex space-x-8 text-basic text-gray-700 font-medium">
+      <ul className="absolute left-1/2 -translate-x-1/2 hidden md:flex space-x-8 text-basic text-gray-700 font-medium">
         <li><Link to="/newform" className="hover:text-[var(--color-primary)] transition">建立表單</Link></li>
         <li><Link to="/openform" className="hover:text-[var(--color-primary)] transition">交易序號</Link></li>
         <li><Link to="/guide" className="hover:text-[var(--color-primary)] transition">常見問題</Link></li>
-        <li><Link to="/contact" className="hover:text-[var(--color-primary)] transition">聯絡我們</Link></li>
       </ul>
 
       {/* 🔹 右側登入狀態 */}
@@ -89,7 +88,6 @@ export default function Navbar() {
           <Link to="/newform" className="text-gray-700 hover:text-[var(--color-primary)]">建立表單</Link>
           <Link to="/openform" className="text-gray-700 hover:text-[var(--color-primary)]">交易序號</Link>
           <Link to="/guide" className="text-gray-700 hover:text-[var(--color-primary)]">常見問題</Link>
-          <Link to="/contact" className="text-gray-700 hover:text-[var(--color-primary)]">聯絡我們</Link>
           <hr className="w-4/5 border-gray-200" />
 
           {user ? (
