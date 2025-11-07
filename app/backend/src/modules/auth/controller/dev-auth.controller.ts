@@ -33,10 +33,10 @@ export interface LoginResponse { accessToken: string; expiresIn: string; }
 export interface RefreshResponse { accessToken: string; expiresIn: string; }
 export interface LogoutResponse { success: true; }
 
+@Tags('Auth')
 @Route('auth')
 export class AuthController extends Controller {
   @Post('login-by-verifier')
-  @Tags('Auth')
   @OperationId('loginByVerifier')
   @SuccessResponse('200', 'Logged in')
   public async loginByVerifier(@Body() body: LoginByVerifierRequest): Promise<LoginResponse> {
@@ -78,7 +78,6 @@ export class AuthController extends Controller {
   }
 
   @Post('refresh')
-  @Tags('Auth')
   @OperationId('refreshAccessToken')
   public async refresh(@Request() req: ExpressRequest): Promise<RefreshResponse> {
     const cookie = req.headers.cookie || '';
@@ -115,15 +114,14 @@ export class AuthController extends Controller {
   }
 
   @Post('logout')
-  @Tags('Auth')
   @OperationId('logout')
+  @Security('bearerAuth', [])
   public async logout(): Promise<LogoutResponse> {
     this.setHeader('Set-Cookie', clearRefreshCookie());
     return { success: true };
   }
 
   @Get('me')
-  @Tags('Auth')
   @Security('bearerAuth', [])
   @OperationId('whoAmI')
   @SuccessResponse('200', 'OK')

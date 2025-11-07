@@ -5,7 +5,7 @@ import {
   TradeFormItemCondition,
   TradeFormMatchmakingChannel,
   TradeFormPaymentMethod
-} from '../entity/trade-form.entity';
+} from '../enums/TradeFormEnums';
 
 export class TradeFormQueryDto {
   @IsEnum(TradeFormItemCondition)

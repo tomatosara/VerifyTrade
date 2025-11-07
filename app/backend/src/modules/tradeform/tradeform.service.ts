@@ -7,9 +7,9 @@ import { AppDataSource } from '@database/data-source';
 import { featureFlags } from '@config/featureFlags';
 import {
   TradeFormEntity,
-  TradeFormStatus,
   TradeFormVCUser2Meta
 } from './entity/trade-form.entity';
+import { TradeFormStatus } from './enums/TradeFormEnums';
 import { TradeAuditAction, TradeAuditEventEntity } from './entity/trade-audit-event.entity';
 import { TradeFormFilters, TradeFormRepository } from './tradeform.repository';
 import { CreateTradeFormDto } from './dto/create-trade-form.dto';
@@ -127,7 +127,7 @@ export class TradeFormService {
 
     const entity = this.repository.create({
       uid: await this.generateUniqueUid(),
-      creatorId: creatorId ?? null,
+      creatorId: dto.creatorId ?? null,
       counterpartyId: null,
       creatorVerifiedIdentities: dto.creatorVerifiedIdentities ?? [],
       itemName: dto.itemName,

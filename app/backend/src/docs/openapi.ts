@@ -8,7 +8,7 @@ import {
   TradeFormItemCondition,
   TradeFormMatchmakingChannel,
   TradeFormPaymentMethod
-} from '@modules/tradeform/entity/trade-form.entity';
+} from '@modules/tradeform/enums/TradeFormEnums';
 
 const swaggerSpec: OpenAPIV3_1.Document = JSON.parse(
   JSON.stringify(baseDocument)

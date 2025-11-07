@@ -15,7 +15,7 @@ import {
   TradeFormItemCondition,
   TradeFormMatchmakingChannel,
   TradeFormPaymentMethod
-} from '../entity/trade-form.entity';
+} from '../enums/TradeFormEnums';
 
 export class UpdateTradeFormDto {
   @IsArray()

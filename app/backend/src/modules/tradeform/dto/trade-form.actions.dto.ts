@@ -1,4 +1,4 @@
-import type { TradeFormStatus } from '../entity/trade-form.entity';
+import type { TradeFormStatus } from '../enums/TradeFormEnums';
 import type { TradeFormResponse } from './trade-form.response';
 
 export interface VerifyVcRequestDto {

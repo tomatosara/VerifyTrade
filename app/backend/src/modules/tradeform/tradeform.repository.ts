@@ -2,14 +2,16 @@ import { DataSource, FindOptionsWhere, Repository } from 'typeorm';
 import type { QueryDeepPartialEntity } from 'typeorm/query-builder/QueryPartialEntity';
 import { AppDataSource } from '@database/data-source';
 import {
+  TradeFormEntity
+} from './entity/trade-form.entity';
+
+import {
   TradeFormChannel,
-  TradeFormEntity,
   TradeFormIdentityRequirement,
   TradeFormItemCondition,
   TradeFormMatchmakingChannel,
   TradeFormPaymentMethod
-} from './entity/trade-form.entity';
-
+} from './enums/TradeFormEnums';
 export interface TradeFormFilters {
   itemCondition?: TradeFormItemCondition;
   tradeChannel?: TradeFormChannel;

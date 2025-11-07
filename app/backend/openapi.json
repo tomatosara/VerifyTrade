@@ -313,6 +313,14 @@
 			},
 			"CreateTradeFormDto": {
 				"properties": {
+					"creatorId": {
+						"type": "string",
+						"description": "A idNumber"
+					},
+					"counterpartyId": {
+						"type": "string",
+						"description": "B idNumber"
+					},
 					"creatorVerifiedIdentities": {
 						"items": {
 							"type": "string"
@@ -596,6 +604,275 @@
 				},
 				"required": [
 					"trade"
+				],
+				"type": "object",
+				"additionalProperties": false
+			},
+			"TradeFormStatusDto": {
+				"type": "string",
+				"enum": [
+					"draft",
+					"pending",
+					"verified",
+					"confirmed",
+					"cancelled",
+					"failed",
+					"done"
+				],
+				"description": "API 專用 enum / union types\n（不要再從 entity 或其他 enums import，避免 tsoa 解析問題）"
+			},
+			"TradeFormChannelDto": {
+				"type": "string",
+				"enum": [
+					"IN_PERSON",
+					"CONVENIENCE_STORE_DELIVERY",
+					"POST_OFFICE",
+					"COURIER",
+					"OTHER"
+				]
+			},
+			"TradeFormPaymentMethodDto": {
+				"type": "string",
+				"enum": [
+					"CASH_ON_DELIVERY",
+					"BANK_TRANSFER",
+					"LINE_PAY",
+					"CRYPTO"
+				]
+			},
+			"TradeSummaryDto": {
+				"properties": {
+					"uid": {
+						"type": "string"
+					},
+					"itemName": {
+						"type": "string"
+					},
+					"amount": {
+						"type": "string"
+					},
+					"status": {
+						"$ref": "#/components/schemas/TradeFormStatusDto"
+					},
+					"tradeChannel": {
+						"$ref": "#/components/schemas/TradeFormChannelDto"
+					},
+					"paymentMethod": {
+						"$ref": "#/components/schemas/TradeFormPaymentMethodDto"
+					},
+					"createdAt": {
+						"type": "string"
+					},
+					"finalizedAt": {
+						"type": "string",
+						"nullable": true
+					},
+					"creatorName": {
+						"type": "string",
+						"nullable": true
+					},
+					"counterpartyName": {
+						"type": "string",
+						"nullable": true
+					}
+				},
+				"required": [
+					"uid",
+					"itemName",
+					"amount",
+					"status",
+					"tradeChannel",
+					"paymentMethod",
+					"createdAt",
+					"finalizedAt",
+					"creatorName",
+					"counterpartyName"
+				],
+				"type": "object",
+				"additionalProperties": false
+			},
+			"TradeFormItemConditionDto": {
+				"type": "string",
+				"enum": [
+					"SECOND_HAND",
+					"LIKE_NEW",
+					"BRAND_NEW"
+				]
+			},
+			"TradeFormMatchmakingChannelDto": {
+				"type": "string",
+				"enum": [
+					"OFFLINE_AGREEMENT",
+					"SOCIAL_PLATFORM",
+					"ONLINE_MARKETPLACE"
+				]
+			},
+			"TradeFormIdentityRequirementDto": {
+				"type": "string",
+				"enum": [
+					"STUDENT_ID",
+					"EMPLOYEE_ID",
+					"DIETITIAN_LICENSE",
+					"LAWYER_LICENSE",
+					"PROOF_OF_ORIGIN"
+				]
+			},
+			"TradeAuditActionDto": {
+				"type": "string",
+				"enum": [
+					"create",
+					"verifyVC",
+					"confirm",
+					"cancel",
+					"finalize",
+					"fail",
+					"retry"
+				]
+			},
+			"TradeAuditEventDto": {
+				"properties": {
+					"id": {
+						"type": "string"
+					},
+					"action": {
+						"$ref": "#/components/schemas/TradeAuditActionDto"
+					},
+					"at": {
+						"type": "string"
+					},
+					"actorId": {
+						"type": "string",
+						"nullable": true
+					},
+					"actorName": {
+						"type": "string",
+						"nullable": true
+					},
+					"details": {}
+				},
+				"required": [
+					"id",
+					"action",
+					"at",
+					"actorId",
+					"actorName",
+					"details"
+				],
+				"type": "object",
+				"additionalProperties": false
+			},
+			"TradeDetailDto": {
+				"properties": {
+					"uid": {
+						"type": "string"
+					},
+					"itemName": {
+						"type": "string"
+					},
+					"itemDescription": {
+						"type": "string"
+					},
+					"amount": {
+						"type": "string"
+					},
+					"itemCondition": {
+						"$ref": "#/components/schemas/TradeFormItemConditionDto"
+					},
+					"status": {
+						"$ref": "#/components/schemas/TradeFormStatusDto"
+					},
+					"creatorId": {
+						"type": "string",
+						"nullable": true
+					},
+					"creatorName": {
+						"type": "string",
+						"nullable": true
+					},
+					"counterpartyId": {
+						"type": "string",
+						"nullable": true
+					},
+					"counterpartyName": {
+						"type": "string",
+						"nullable": true
+					},
+					"tradeChannel": {
+						"$ref": "#/components/schemas/TradeFormChannelDto"
+					},
+					"paymentMethod": {
+						"$ref": "#/components/schemas/TradeFormPaymentMethodDto"
+					},
+					"matchmakingChannel": {
+						"$ref": "#/components/schemas/TradeFormMatchmakingChannelDto"
+					},
+					"identityRequirements": {
+						"items": {
+							"$ref": "#/components/schemas/TradeFormIdentityRequirementDto"
+						},
+						"type": "array"
+					},
+					"userRating": {
+						"type": "number",
+						"format": "double"
+					},
+					"meta": {},
+					"confirmedByUser1": {
+						"type": "boolean"
+					},
+					"confirmedByUser2": {
+						"type": "boolean"
+					},
+					"vcVerifiedAt": {
+						"type": "string",
+						"nullable": true
+					},
+					"uidExpiresAt": {
+						"type": "string",
+						"nullable": true
+					},
+					"finalizedAt": {
+						"type": "string",
+						"nullable": true
+					},
+					"createdAt": {
+						"type": "string"
+					},
+					"updatedAt": {
+						"type": "string"
+					},
+					"auditEvents": {
+						"items": {
+							"$ref": "#/components/schemas/TradeAuditEventDto"
+						},
+						"type": "array"
+					}
+				},
+				"required": [
+					"uid",
+					"itemName",
+					"itemDescription",
+					"amount",
+					"itemCondition",
+					"status",
+					"creatorId",
+					"creatorName",
+					"counterpartyId",
+					"counterpartyName",
+					"tradeChannel",
+					"paymentMethod",
+					"matchmakingChannel",
+					"identityRequirements",
+					"userRating",
+					"meta",
+					"confirmedByUser1",
+					"confirmedByUser2",
+					"vcVerifiedAt",
+					"uidExpiresAt",
+					"finalizedAt",
+					"createdAt",
+					"updatedAt",
+					"auditEvents"
 				],
 				"type": "object",
 				"additionalProperties": false
@@ -1214,6 +1491,168 @@
 				]
 			}
 		},
+		"/trades": {
+			"get": {
+				"operationId": "getUserTrades",
+				"responses": {
+					"200": {
+						"description": "Ok",
+						"content": {
+							"application/json": {
+								"schema": {
+									"properties": {
+										"total": {
+											"type": "number",
+											"format": "double"
+										},
+										"items": {
+											"items": {
+												"$ref": "#/components/schemas/TradeSummaryDto"
+											},
+											"type": "array"
+										}
+									},
+									"required": [
+										"total",
+										"items"
+									],
+									"type": "object"
+								}
+							}
+						}
+					},
+					"401": {
+						"description": "Unauthorized",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/ErrorResponse"
+								}
+							}
+						}
+					}
+				},
+				"tags": [
+					"Trades"
+				],
+				"security": [
+					{
+						"bearerAuth": []
+					}
+				],
+				"parameters": [
+					{
+						"in": "query",
+						"name": "status",
+						"required": false,
+						"schema": {
+							"type": "string"
+						}
+					},
+					{
+						"in": "query",
+						"name": "page",
+						"required": false,
+						"schema": {
+							"default": 1,
+							"format": "double",
+							"type": "number"
+						}
+					},
+					{
+						"in": "query",
+						"name": "pageSize",
+						"required": false,
+						"schema": {
+							"default": 20,
+							"format": "double",
+							"type": "number"
+						}
+					},
+					{
+						"in": "query",
+						"name": "from",
+						"required": false,
+						"schema": {
+							"type": "string"
+						}
+					},
+					{
+						"in": "query",
+						"name": "to",
+						"required": false,
+						"schema": {
+							"type": "string"
+						}
+					}
+				]
+			}
+		},
+		"/trades/{uid}": {
+			"get": {
+				"operationId": "getTradeDetail",
+				"responses": {
+					"200": {
+						"description": "Ok",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/TradeDetailDto"
+								}
+							}
+						}
+					},
+					"401": {
+						"description": "Unauthorized",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/ErrorResponse"
+								}
+							}
+						}
+					},
+					"403": {
+						"description": "Forbidden",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/ErrorResponse"
+								}
+							}
+						}
+					},
+					"404": {
+						"description": "Not Found",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/ErrorResponse"
+								}
+							}
+						}
+					}
+				},
+				"tags": [
+					"Trades"
+				],
+				"security": [
+					{
+						"bearerAuth": []
+					}
+				],
+				"parameters": [
+					{
+						"in": "path",
+						"name": "uid",
+						"required": true,
+						"schema": {
+							"type": "string"
+						}
+					}
+				]
+			}
+		},
 		"/Issuer/qrcode-data": {
 			"post": {
 				"operationId": "QrcodeData",
@@ -1375,7 +1814,11 @@
 				"tags": [
 					"Auth"
 				],
-				"security": [],
+				"security": [
+					{
+						"bearerAuth": []
+					}
+				],
 				"parameters": []
 			}
 		},
