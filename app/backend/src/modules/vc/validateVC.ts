@@ -20,7 +20,7 @@ export type VCCheckResult = {
   rawRef?: string;
 };
 
-type RawClaims = string[] | Record<string, unknown> | undefined;
+type RawClaims = Record<string, unknown> | Array<string | number> | undefined;
 
 const vcProofSchema = z
   .object({
@@ -47,21 +47,24 @@ type VCCriteria = {
 
 const criteria = featureFlags.vcMinCriteria as VCCriteria;
 
-const toClaimNames = (claims: RawClaims): string[] => {
+// Normalize proof.claims inputs – they can be objects or mixed arrays from various issuers.
+// We only keep string claim identifiers to avoid introducing numeric ids that downstream logic never expects.
+const normalizeClaims = (claims: RawClaims): string[] => {
   if (!claims) {
     return [];
   }
 
   if (Array.isArray(claims)) {
-    return claims
-      .map((value) => (typeof value === 'string' ? value : String(value)))
-      .filter((value) => value.length > 0);
+    return claims.filter((value): value is string => typeof value === 'string');
   }
 
   return Object.entries(claims)
     .filter(([, value]) => Boolean(value))
     .map(([key]) => key);
 };
+
+const toClaimNames = (claims: string[]): string[] =>
+  claims.map((value) => value.trim()).filter((value) => value.length > 0);
 
 const normalizeTimestamp = (value?: string | Date): string | undefined => {
   if (!value) {
@@ -85,7 +88,7 @@ export async function validateVC(input: VCCheckInput): Promise<VCCheckResult> {
   }
 
   const proof = parsed.data;
-  const claimNames = toClaimNames(proof.claims);
+  const claimNames = toClaimNames(normalizeClaims(proof.claims));
   const expiresAt = normalizeTimestamp(proof.expiresAt);
 
   if (criteria.denyUsers?.includes(userId)) {

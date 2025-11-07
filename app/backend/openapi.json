@@ -51,6 +51,7 @@
 					"PROOF_OF_ORIGIN"
 				],
 				"type": "string"
+			},
 			"VerifierQrcodeResponse": {
 				"properties": {
 					"transactionId": {
@@ -605,6 +606,7 @@
 					"user",
 					"platform"
 				]
+            },
 			"QrcodeDataBody": {
 				"properties": {},
 				"type": "object",
