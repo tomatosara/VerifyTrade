@@ -157,7 +157,7 @@ export class TradeFormEntity {
     array: true,
     enumName: 'trade_forms_identity_requirement_enum',
     name: 'identity_requirements',
-    default: () => "'{}'::trade_forms_identity_requirement_enum[]"
+    default: '{}',
   })
   identityRequirements!: TradeFormIdentityRequirement[];
 

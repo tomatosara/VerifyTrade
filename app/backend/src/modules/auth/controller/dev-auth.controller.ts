@@ -124,6 +124,7 @@ export class AuthController extends Controller {
 
   @Get('me')
   @Tags('Auth')
+  @Security('bearerAuth', [])
   @OperationId('whoAmI')
   @SuccessResponse('200', 'OK')
   public async me(@Request() req: ExpressRequest) {

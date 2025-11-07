@@ -1,22 +1,16 @@
+// src/components/navbar.tsx
 import { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Menu, X } from "lucide-react";
-import { checkLogin } from "@/utils/auth";
 import { api, setAccessToken } from "@/api/client";
+import { useAuth } from "@/context/AuthContext";
 
 export default function Navbar() {
   const [isOpen, setIsOpen] = useState(false);
-  const [user, setUser] = useState<any | null>(null);
   const navigate = useNavigate();
-
-  // 🚀 初始化檢查登入狀態
-  useEffect(() => {
-    (async () => {
-      const me = await checkLogin();
-      setUser(me); // ✅ 若有登入則更新 user
-    })();
-  }, []);
-
+  const { user, isAuthenticated, setUser } = useAuth();
+  const toggleMenu = () => setIsOpen(prev => !prev);
+  
   // 🚪 登出
   async function handleLogout() {
     try {
@@ -25,7 +19,7 @@ export default function Navbar() {
       console.warn("登出時發生錯誤:", err);
     } finally {
       setAccessToken(null); // 清除記憶體 token
-      setUser(null);
+      setUser(null);        // 清除全域 user 狀態
       navigate("/login");
     }
   }
@@ -51,13 +45,19 @@ export default function Navbar() {
         <li><Link to="/contact" className="hover:text-[var(--color-primary)] transition">聯絡我們</Link></li>
       </ul>
 
-      {/* 🔹 右側登入狀態 */}
+      {/* 🔹 右側登入狀態（桌機版） */}
       <div className="hidden md:flex space-x-8 items-center">
         {user ? (
           <>
             <span className="text-gray-700 text-basic">
               👋 您好，{user.name ?? user.idNumber ?? "使用者"}
             </span>
+            <Link
+              to="/myaccount"
+              className="text-gray-700 text-basic hover:text-[var(--color-primary)] transition"
+            >
+              我的帳號
+            </Link>
             <button
               onClick={handleLogout}
               className="bg-gray-200 text-gray-800 text-basic px-4 py-2 rounded-full hover:bg-gray-300 transition"
@@ -90,12 +90,19 @@ export default function Navbar() {
           <Link to="/openform" className="text-gray-700 hover:text-[var(--color-primary)]">交易序號</Link>
           <Link to="/guide" className="text-gray-700 hover:text-[var(--color-primary)]">常見問題</Link>
           <Link to="/contact" className="text-gray-700 hover:text-[var(--color-primary)]">聯絡我們</Link>
+
+          {user && (
+            <Link to="/myaccount" className="text-gray-700 hover:text-[var(--color-primary)]">
+              我的帳號
+            </Link>
+          )}
+
           <hr className="w-4/5 border-gray-200" />
 
           {user ? (
             <button
               onClick={handleLogout}
-              className="bg-gray-200 text-gray-800 px-8 py-2 rounded-full hover:bg-gray-300"
+              className="bg-gray-200 text-gray-800 px-8 py-2 rounded-full hover:bg-gray-300 transition"
             >
               登出
             </button>

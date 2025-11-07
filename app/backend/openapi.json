@@ -7,6 +7,38 @@
 		"requestBodies": {},
 		"responses": {},
 		"schemas": {
+			"VerifierQrcodeResponse": {
+				"properties": {
+					"transactionId": {
+						"type": "string"
+					},
+					"qrcodeImage": {
+						"type": "string"
+					},
+					"authUri": {
+						"type": "string"
+					}
+				},
+				"required": [
+					"transactionId",
+					"qrcodeImage",
+					"authUri"
+				],
+				"type": "object",
+				"additionalProperties": false
+			},
+			"VerifierResultRequest": {
+				"properties": {
+					"transactionId": {
+						"type": "string"
+					}
+				},
+				"required": [
+					"transactionId"
+				],
+				"type": "object",
+				"additionalProperties": false
+			},
 			"TradeFormItemCondition": {
 				"enum": [
 					"SECOND_HAND",
@@ -51,38 +83,6 @@
 					"PROOF_OF_ORIGIN"
 				],
 				"type": "string"
-			},
-			"VerifierQrcodeResponse": {
-				"properties": {
-					"transactionId": {
-						"type": "string"
-					},
-					"qrcodeImage": {
-						"type": "string"
-					},
-					"authUri": {
-						"type": "string"
-					}
-				},
-				"required": [
-					"transactionId",
-					"qrcodeImage",
-					"authUri"
-				],
-				"type": "object",
-				"additionalProperties": false
-			},
-			"VerifierResultRequest": {
-				"properties": {
-					"transactionId": {
-						"type": "string"
-					}
-				},
-				"required": [
-					"transactionId"
-				],
-				"type": "object",
-				"additionalProperties": false
 			},
 			"TradeFormStatus": {
 				"enum": [
@@ -600,13 +600,6 @@
 				"type": "object",
 				"additionalProperties": false
 			},
-			"UserRole": {
-				"type": "string",
-				"enum": [
-					"user",
-					"platform"
-				]
-            },
 			"QrcodeDataBody": {
 				"properties": {},
 				"type": "object",
@@ -1388,10 +1381,10 @@
 		},
 		"/auth/me": {
 			"get": {
-				"operationId": "Me",
+				"operationId": "whoAmI",
 				"responses": {
 					"200": {
-						"description": "Ok",
+						"description": "OK",
 						"content": {
 							"application/json": {
 								"schema": {}
@@ -1399,9 +1392,12 @@
 						}
 					}
 				},
+				"tags": [
+					"Auth"
+				],
 				"security": [
 					{
-						"jwt": []
+						"bearerAuth": []
 					}
 				],
 				"parameters": []

@@ -20,8 +20,8 @@ export default function Login() {
   useEffect(() => {
     (async () => {
       try {
-        console.log('[QR] fetching...');
         const data = await fetchQrCode();
+        console.log('[QR] fetching...', data);
         setQrData(data);
       } catch (err: any) {
         setError(err?.message || '無法取得 QR Code');
@@ -35,16 +35,13 @@ export default function Login() {
   // 2️⃣ 每 3 秒輪詢查結果
   useEffect(() => {
     if (!qrData?.transactionId) return;
-    console.log("[POLL] Start polling every 3s:", qrData.transactionId);
 
     // 清除舊的 interval
     if (pollerRef.current) clearInterval(pollerRef.current);
 
     pollerRef.current = window.setInterval(async () => {
       try {
-        console.log("[POLL] Checking result...");
         const result: VerifierResultResponse = await fetchVerifierResult(qrData.transactionId);
-        console.log("[POLL] Response:", result);
 
         if (result.status === "success" && result.verifyResult) {
           console.log("[POLL] ✅ Verified! Stopping poller.");
@@ -54,7 +51,7 @@ export default function Login() {
 
           // 🔑 第三步：向後端換 JWT
           const { accessToken } = await api.post<{ accessToken: string }>(
-            "auth/login-by-verifier",
+            "/auth/login-by-verifier",
             { transactionId: qrData.transactionId }
           );
           console.log("[POLL] Received Access Token:", accessToken);
@@ -62,10 +59,7 @@ export default function Login() {
           setAccessToken(accessToken);
 
           // 🔑 第四步：拿 profile
-          const me: UserProfile = await api.get<UserProfile>('auth/me', {
-            headers: { Authorization: `Bearer ${accessToken}` },
-          });
-          console.log("[POLL] Fetched profile:", me);
+          const me: UserProfile = await api.get<UserProfile>('/auth/me');
           setProfile(me);
           setIsAuthenticated(true);
 
