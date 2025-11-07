@@ -14,6 +14,7 @@
     "resolveJsonModule": true,
     "experimentalDecorators": true,
     "emitDecoratorMetadata": true,
+    "strictPropertyInitialization": false,
     "sourceMap": true,
     "types": [
       "node",
@@ -35,7 +36,12 @@
       ],
       "@database/*": [
         "database/*"
-      ]
+      ],
+      "@http/*": [
+        "http/*"
+      ],
+      "@types/*": ["types/*"],
+      "@migrations/*": ["migrations/*"]
     }
   },
   "include": [

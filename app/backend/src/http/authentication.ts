@@ -26,9 +26,12 @@ export async function expressAuthentication(
   }
 
   const claims = verifyJwt(token);
-  request.user = {
-    id: claims.sub,
-    role: claims.role
+
+  (request as any).user = {
+    idNumber: claims.idNumber,
+    name: claims.name,
+    role: claims.role,
+    birthday: claims.birthday
   };
 
   return request.user;

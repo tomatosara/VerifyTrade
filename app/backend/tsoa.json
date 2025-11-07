@@ -28,5 +28,12 @@
     "basePath": "/api/v1",
     "middleware": "express",
     "authenticationModule": "src/http/authentication.ts"
+  },
+  "security": {
+    "jwt": {
+      "type": "apiKey",
+      "name": "authorization",
+      "in": "header"
+    }
   }
 }

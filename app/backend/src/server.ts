@@ -1,3 +1,4 @@
+import 'reflect-metadata';
 import '@config/env';
 import { createApp } from './app';
 import { AppDataSource } from '@database/data-source';

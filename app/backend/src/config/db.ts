@@ -49,6 +49,13 @@ function inferConnectionInfo(urlString: string) {
   }
 }
 
+console.log('Database connection info:', {
+  host: resolvedHost,
+  port: resolvedPort,
+  user: resolvedUser,
+  database: resolvedDatabase
+});
+
 export const dbConfig = {
   host: resolvedHost,
   port: resolvedPort,
