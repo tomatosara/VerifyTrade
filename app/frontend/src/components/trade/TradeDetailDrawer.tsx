@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { Star } from "lucide-react";
-import { fetchTradeDetail } from "@/api/trades";
+import { fetchTradeDetail, rateTrade } from "@/api/trades";
 import { TradeDetail } from "@/types/trades";
 import { TradeTimeline } from "@/components/trade/TradeTimeline";
 import { RatingStars } from "@/components/trade/RatingStars";
@@ -89,9 +89,18 @@ export function TradeDetailDrawer({
               ) : onRate ? (
                 <div className="flex items-center gap-1">
                   <RatingStars
-                    size="md"
-                    onSelect={(stars) => onRate(uid!, stars)}
+                    onSelect={async (stars) => {
+                      if (!uid) return;
+                      try {
+                        await rateTrade(uid, stars);
+                        onRate?.(uid, stars); // 更新上層狀態
+                      } catch (err) {
+                        console.error("評價失敗", err);
+                        alert("評價提交失敗，請稍後再試。");
+                      }
+                    }}
                   />
+
                 </div>
               ) : (
                 <span className="text-sm text-gray-400">尚未評價</span>

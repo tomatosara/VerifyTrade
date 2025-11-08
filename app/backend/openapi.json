@@ -877,6 +877,36 @@
 				"type": "object",
 				"additionalProperties": false
 			},
+			"TradeRatingResponse": {
+				"properties": {
+					"tradeUid": {
+						"type": "string"
+					},
+					"stars": {
+						"type": "number",
+						"format": "double"
+					}
+				},
+				"required": [
+					"tradeUid",
+					"stars"
+				],
+				"type": "object",
+				"additionalProperties": false
+			},
+			"RateTradeRequest": {
+				"properties": {
+					"stars": {
+						"type": "number",
+						"format": "double"
+					}
+				},
+				"required": [
+					"stars"
+				],
+				"type": "object",
+				"additionalProperties": false
+			},
 			"QrcodeDataBody": {
 				"properties": {},
 				"type": "object",
@@ -1651,6 +1681,91 @@
 						}
 					}
 				]
+			}
+		},
+		"/trades/{uid}/rating": {
+			"post": {
+				"operationId": "rateTrade",
+				"responses": {
+					"200": {
+						"description": "OK",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/TradeRatingResponse"
+								}
+							}
+						}
+					},
+					"400": {
+						"description": "Bad Request",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/ErrorResponse"
+								}
+							}
+						}
+					},
+					"401": {
+						"description": "Unauthorized",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/ErrorResponse"
+								}
+							}
+						}
+					},
+					"403": {
+						"description": "Forbidden",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/ErrorResponse"
+								}
+							}
+						}
+					},
+					"404": {
+						"description": "Not Found",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/ErrorResponse"
+								}
+							}
+						}
+					}
+				},
+				"tags": [
+					"Trades"
+				],
+				"security": [
+					{
+						"bearerAuth": []
+					}
+				],
+				"parameters": [
+					{
+						"in": "path",
+						"name": "uid",
+						"required": true,
+						"schema": {
+							"type": "string"
+						}
+					}
+				],
+				"requestBody": {
+					"required": true,
+					"content": {
+						"application/json": {
+							"schema": {
+								"$ref": "#/components/schemas/RateTradeRequest"
+							}
+						}
+					}
+				}
 			}
 		},
 		"/Issuer/qrcode-data": {

@@ -5,6 +5,7 @@ import { TradeFormEntity } from '@modules/tradeform/entity/trade-form.entity';
 import { TradeFormStatus } from '@modules/tradeform/enums/TradeFormEnums';
 import { TradeAuditEventEntity } from '@modules/tradeform/entity/trade-audit-event.entity';
 import { UserEntity } from '@modules/auth/entity/user.entity';
+import { TradeRatingEntity } from '@modules/trade/entity/trade-rating.entity';
 import { TradeDetailDto } from '@modules/trade/dto/trade-detail.dto';
 import { TradeSummaryDto } from './dto/trade-summary.dto';
 import { TradeAuditEventDto } from './dto/trade-audit-event.dto';
@@ -14,11 +15,13 @@ export class TradeService {
   private tradeRepo: Repository<TradeFormEntity>;
   private auditRepo: Repository<TradeAuditEventEntity>;
   private userRepo: Repository<UserEntity>;
+  private ratingRepo: Repository<TradeRatingEntity>;
 
   constructor() {
     this.tradeRepo = AppDataSource.getRepository(TradeFormEntity);
     this.auditRepo = AppDataSource.getRepository(TradeAuditEventEntity);
     this.userRepo = AppDataSource.getRepository(UserEntity);
+    this.ratingRepo = AppDataSource.getRepository(TradeRatingEntity);
   }
 
   async getUserTrades(params: {
@@ -54,6 +57,20 @@ export class TradeService {
 
     const [rows, total] = await qb.getManyAndCount();
 
+    // 查出目前登入者針對這些交易的評價
+    const tradeUids = rows.map((t) => t.uid);
+    const ratingRepo = AppDataSource.getRepository(TradeRatingEntity);
+
+    const ratings = await ratingRepo
+      .createQueryBuilder('r')
+      .where('r.tradeUid IN (:...tradeUids)', { tradeUids })
+      .andWhere('r.fromIdNumber = :userId', { userId })
+      .getMany();
+
+    // 轉成快速查表
+    const ratingMap = new Map<string, number>();
+    ratings.forEach((r) => ratingMap.set(r.tradeUid, r.stars));
+
     const items: TradeSummaryDto[] = rows.map((t) => ({
       uid: t.uid,
       itemName: t.itemName,
@@ -65,6 +82,7 @@ export class TradeService {
       finalizedAt: t.finalizedAt ? t.finalizedAt.toISOString() : null,
       creatorName: t.creator?.name ?? null,
       counterpartyName: t.counterparty?.name ?? null,
+      stars: ratingMap.get(t.uid) ?? null, // ✅ 加入評價
     }));
 
     return { items, total };
@@ -78,7 +96,7 @@ export class TradeService {
 
     if (!trade) throw createHttpError(404, 'Trade not found');
     console.log("trade.creatorId", trade.creatorId)
-    console.log("trade.userId",userId)
+    console.log("trade.userId", userId)
     const isParticipant =
       trade.creatorId === userId || trade.counterpartyId === userId;
     // 如果之後有 admin role，可以在這裡放行
@@ -130,7 +148,110 @@ export class TradeService {
 
       auditEvents,
     };
-
     return dto;
   }
+
+  async rateTrade(params: {
+    tradeUid: string;
+    raterIdNumber: string;
+    stars: number;
+  }): Promise<number> {
+    const { tradeUid, raterIdNumber, stars } = params;
+
+    if (!Number.isInteger(stars) || stars < 1 || stars > 5) {
+      throw createHttpError(400, 'stars must be between 1 and 5');
+    }
+
+    const trade = await this.tradeRepo.findOne({
+      where: { uid: tradeUid },
+    });
+
+    if (!trade) {
+      throw createHttpError(404, 'Trade not found');
+    }
+
+    // 確認是交易雙方之一（用 idNumber）
+    const isCreator = trade.creatorId === raterIdNumber;
+    const isCounterparty = trade.counterpartyId === raterIdNumber;
+
+    if (!isCreator && !isCounterparty) {
+      throw createHttpError(403, 'Not a participant of this trade');
+    }
+
+    // 可選：只允許已完成交易
+    if (
+      trade.status !== TradeFormStatus.CONFIRMED &&
+      trade.status !== TradeFormStatus.DONE
+    ) {
+      // 依你實際 enum 調整
+      throw createHttpError(400, 'Trade not completed, cannot rate');
+    }
+
+    // 被評價者 idNumber
+    const rateeIdNumber = isCreator
+      ? trade.counterpartyId
+      : trade.creatorId;
+
+    if (!rateeIdNumber) {
+      throw createHttpError(400, 'No counterparty to rate');
+    }
+
+    // 在 transaction 裡處理 rating + user.score
+    await AppDataSource.transaction(async (manager) => {
+      const ratingRepo = manager.getRepository(TradeRatingEntity);
+      const userRepo = manager.getRepository(UserEntity);
+
+      const existing = await ratingRepo.findOne({
+        where: {
+          tradeUid,
+          fromIdNumber: raterIdNumber,
+          toIdNumber: rateeIdNumber,
+        },
+        lock: { mode: 'pessimistic_write' },
+      });
+
+      const ratee = await userRepo.findOne({
+        where: { idNumber: rateeIdNumber },
+        lock: { mode: 'pessimistic_write' },
+      });
+
+      if (!ratee) {
+        throw createHttpError(500, 'Rate target user not found');
+      }
+
+      if (!existing) {
+        // 新增
+        const rating = ratingRepo.create({
+          tradeUid,
+          fromIdNumber: raterIdNumber,
+          toIdNumber: rateeIdNumber,
+          stars,
+        });
+        await ratingRepo.save(rating);
+
+        ratee.ratingSum += stars;
+        ratee.ratingCount += 1;
+      } else {
+        // 更新
+        const diff = stars - existing.stars;
+        existing.stars = stars;
+        await ratingRepo.save(existing);
+
+        ratee.ratingSum += diff;
+      }
+
+      // 重算分數（保留兩位）
+      if (ratee.ratingCount <= 0) {
+        ratee.score = 0 as any;
+      } else {
+        const avg = ratee.ratingSum / ratee.ratingCount;
+        ratee.score = Number(avg.toFixed(2)) as any;
+      }
+
+      await userRepo.save(ratee);
+    });
+
+    return stars;
+  }
+
 }

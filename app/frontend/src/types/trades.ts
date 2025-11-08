@@ -19,6 +19,7 @@ export interface TradeSummary {
   finalizedAt: string | null;
   creatorName: string | null;
   counterpartyName: string | null;
+  stars?: number | null;
 }
 
 export type TradeAuditAction =

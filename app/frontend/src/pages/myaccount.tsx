@@ -55,12 +55,6 @@ function MyAccount() {
             <p className="text-gray-600 text-sm">
               身分證號：{user?.idNumber ?? "-"}
             </p>
-            <p className="text-gray-600 text-sm">
-              角色：{user?.role ?? "user"}
-            </p>
-            <p className="text-gray-600 text-sm">
-              生日：{user?.birthday ?? "-"}
-            </p>
           </div>
         </div>
 

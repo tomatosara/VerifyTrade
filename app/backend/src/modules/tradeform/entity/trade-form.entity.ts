@@ -5,7 +5,8 @@ import {
   JoinColumn,
   ManyToOne,
   PrimaryGeneratedColumn,
-  UpdateDateColumn
+  UpdateDateColumn,
+  OneToMany
 } from 'typeorm';
 import { UserEntity } from '@modules/auth/entity/user.entity';
 import {
@@ -16,6 +17,8 @@ import {
   TradeFormMatchmakingChannel,
   TradeFormIdentityRequirement
 } from '../enums/TradeFormEnums';
+import { TradeRatingEntity } from '@modules/trade/entity/trade-rating.entity';
+
 
 export interface TradeFormIdentityRequirementsMeta {
   requiredClaims?: string[];
@@ -166,6 +169,9 @@ counterparty?: UserEntity | null;
 
   @Column({ type: 'text', name: 'finalize_error', nullable: true })
   finalizeError!: string | null;
+
+  @OneToMany(() => TradeRatingEntity, (rating) => rating.trade)
+  ratings!: TradeRatingEntity[];
 
   @CreateDateColumn({ type: 'timestamp with time zone', name: 'created_at' })
   createdAt!: Date;

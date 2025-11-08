@@ -350,6 +350,23 @@ const models: TsoaRoute.Models = {
         "additionalProperties": false,
     },
     // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+    "TradeRatingResponse": {
+        "dataType": "refObject",
+        "properties": {
+            "tradeUid": {"dataType":"string","required":true},
+            "stars": {"dataType":"double","required":true},
+        },
+        "additionalProperties": false,
+    },
+    // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+    "RateTradeRequest": {
+        "dataType": "refObject",
+        "properties": {
+            "stars": {"dataType":"double","required":true},
+        },
+        "additionalProperties": false,
+    },
+    // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
     "QrcodeDataBody": {
         "dataType": "refObject",
         "properties": {
@@ -820,6 +837,39 @@ export function RegisterRoutes(app: Router) {
                 next,
                 validatedArgs,
                 successStatus: undefined,
+              });
+            } catch (err) {
+                return next(err);
+            }
+        });
+        // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+        const argsTradeController_rateTrade: Record<string, TsoaRoute.ParameterSchema> = {
+                uid: {"in":"path","name":"uid","required":true,"dataType":"string"},
+                req: {"in":"request","name":"req","required":true,"dataType":"object"},
+                body: {"in":"body","name":"body","required":true,"ref":"RateTradeRequest"},
+        };
+        app.post('/api/v1/trades/:uid/rating',
+            authenticateMiddleware([{"bearerAuth":[]}]),
+            ...(fetchMiddlewares<RequestHandler>(TradeController)),
+            ...(fetchMiddlewares<RequestHandler>(TradeController.prototype.rateTrade)),
+
+            async function TradeController_rateTrade(request: ExRequest, response: ExResponse, next: any) {
+
+            // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+
+            let validatedArgs: any[] = [];
+            try {
+                validatedArgs = templateService.getValidatedArgs({ args: argsTradeController_rateTrade, request, response });
+
+                const controller = new TradeController();
+
+              await templateService.apiHandler({
+                methodName: 'rateTrade',
+                controller,
+                response,
+                next,
+                validatedArgs,
+                successStatus: 200,
               });
             } catch (err) {
                 return next(err);

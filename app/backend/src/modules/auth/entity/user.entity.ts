@@ -35,8 +35,15 @@ export class UserEntity {
   @Column({ type: 'varchar', length: 128, nullable: true })
   address!: string;
 
-  @Column({ type: 'decimal', precision: 3, scale: 2, default: 3.0 })
-  score: number;
+  @Column({ name: 'score', type: 'numeric', precision: 3, scale: 2, default: 0 })
+  score!: number;
+
+   @Column({ name: 'rating_sum', type: 'int', default: 0 })
+  ratingSum!: number;
+
+  @Column({ name: 'rating_count', type: 'int', default: 0 })
+  ratingCount!: number;
+
   @CreateDateColumn({ type: 'timestamptz', name: 'created_at' })
   createdAt!: Date;
 

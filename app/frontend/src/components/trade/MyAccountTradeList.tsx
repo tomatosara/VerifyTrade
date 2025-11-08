@@ -13,6 +13,7 @@ export function MyAccountTradeList() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  // uid -> stars
   const [ratings, setRatings] = useState<Record<string, number>>({});
   const [selectedUid, setSelectedUid] = useState<string | null>(null);
 
@@ -20,8 +21,6 @@ export function MyAccountTradeList() {
 
   const primary = "var(--color-primary, #F15B6C)";
   const accent = "var(--color-accent, #FF8E8E)";
-  const background = "var(--color-background, #FDF8F8)";
-  const textColor = "var(--color-text, #2B2B2B)";
 
   async function load() {
     try {
@@ -31,8 +30,17 @@ export function MyAccountTradeList() {
         page,
         pageSize: ITEMS_PER_PAGE,
       });
+
       setTrades(res.items);
       setTotal(res.total);
+
+      // 從後端初始化已評星數
+      const initRatings = Object.fromEntries(
+        res.items
+          .filter((t) => typeof t.stars === "number")
+          .map((t) => [t.uid, t.stars as number])
+      );
+      setRatings(initRatings);
     } catch (err) {
       console.error(err);
       setError("載入交易紀錄時發生錯誤");
@@ -47,7 +55,7 @@ export function MyAccountTradeList() {
   }, [page]);
 
   const handleRate = (uid: string, stars: number) => {
-    setRatings(prev => ({ ...prev, [uid]: stars }));
+    setRatings((prev) => ({ ...prev, [uid]: stars }));
   };
 
   const goToPage = (p: number) => {
@@ -85,6 +93,9 @@ export function MyAccountTradeList() {
     }
   };
 
+  const formatDate = (iso?: string | null) =>
+    iso ? new Date(iso).toLocaleString("zh-TW") : "-";
+
   return (
     <>
       <div className="space-y-5">
@@ -94,54 +105,61 @@ export function MyAccountTradeList() {
           return (
             <div
               key={t.uid}
-              className="flex justify-between items-start rounded-2xl shadow-sm px-6 py-4 cursor-pointer transition hover:shadow-md"
+              className="flex justify-between items-center rounded-2xl bg-white shadow-sm px-6 py-4 cursor-pointer transition hover:shadow-md"
               style={{
-                backgroundColor: "white",
-                border: `1px solid color-mix(in srgb, ${primary} 15%, transparent)`,
+                border: `1px solid color-mix(in srgb, ${primary} 12%, transparent)`,
               }}
               onClick={() => setSelectedUid(t.uid)}
             >
-              {/* 左側資訊 */}
+              {/* 左側：只顯示基本資訊 */}
               <div className="space-y-1">
-                <p className="text-sm text-gray-500">
+                <p className="text-sm text-gray-800 font-semibold">
                   交易序號：
-                  <span className="font-medium" style={{ color: textColor }}>
+                  <span className="ml-1 text-[var(--color-secondary,#246BCE)]">
                     {t.uid}
                   </span>
                 </p>
-                <p className="text-sm" style={{ color: textColor }}>
-                  商品：{t.itemName ?? "-"}
-                </p>
-                <p className="text-sm" style={{ color: textColor }}>
-                  金額：{t.amount ?? "-"}
-                </p>
-                <p className="text-sm" style={{ color: textColor }}>
-                  雙方：{t.creatorName || "-"} / {t.counterpartyName || "-"}
+                <p className="text-sm text-gray-600">
+                  狀態：{statusText(t.status)}
                 </p>
                 <p className="text-xs text-gray-400">
-                  建立時間：
-                  {t.createdAt
-                    ? new Date(t.createdAt).toLocaleString("zh-TW")
-                    : "-"}
-                </p>
-                <p className="text-xs font-medium" style={{ color: primary }}>
-                  狀態：{statusText(t.status)}
+                  更新日期：{formatDate(t.createdAt)}
                 </p>
               </div>
 
-              {/* 右側：顯示評價結果 */}
-              <div className="flex flex-col items-end gap-2">
+              {/* 右側：已評顯示星星 / 未評顯示「評價」按鈕 */}
+              <div
+                className="flex items-center gap-2"
+                onClick={(e) => e.stopPropagation()} // 避免點按鈕時也打開 drawer
+              >
                 {typeof rating === "number" ? (
-                  <div className="flex items-center gap-1 text-yellow-500">
-                    {Array.from({ length: rating }).map((_, i) => (
-                      <Star key={i} className="w-5 h-5 fill-yellow-400" />
-                    ))}
-                    <span className="text-xs text-gray-600 ml-1">
+                  <>
+                    <div className="flex items-center gap-1 text-yellow-500">
+                      {Array.from({ length: rating }).map((_, i) => (
+                        <Star
+                          key={i}
+                          className="w-5 h-5 fill-yellow-400"
+                        />
+                      ))}
+                    </div>
+                    <span className="text-sm text-gray-700">
                       {rating} 星
                     </span>
-                  </div>
+                  </>
                 ) : (
-                  <p className="text-xs text-gray-400 italic">尚未評價</p>
+                  <button
+                    className="px-4 py-1.5 rounded-full text-sm text-white transition"
+                    style={{ backgroundColor: primary }}
+                    onMouseEnter={(e) =>
+                      (e.currentTarget.style.backgroundColor = accent)
+                    }
+                    onMouseLeave={(e) =>
+                      (e.currentTarget.style.backgroundColor = primary)
+                    }
+                    onClick={() => setSelectedUid(t.uid)}
+                  >
+                    評價
+                  </button>
                 )}
               </div>
             </div>
@@ -206,15 +224,13 @@ export function MyAccountTradeList() {
         </div>
       </div>
 
-      {/* 抽屜：交易詳情 + 評價 */}
+      {/* 抽屜：交易詳情 + 評價（實際打 API 在 Drawer 裡） */}
       <TradeDetailDrawer
         uid={selectedUid}
         open={!!selectedUid}
         onClose={() => setSelectedUid(null)}
-        onRate={handleRate} // 新增這個 props
-        currentRating={
-          selectedUid && ratings[selectedUid] ? ratings[selectedUid] : null
-        }
+        onRate={handleRate}
+        currentRating={selectedUid ? ratings[selectedUid] ?? null : null}
       />
     </>
   );
