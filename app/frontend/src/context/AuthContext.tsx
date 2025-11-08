@@ -8,6 +8,7 @@ interface AuthContextType {
   isAuthenticated: boolean;
   loading: boolean;
   setUser: (user: UserProfile | null) => void;
+  refreshUser: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType>({
@@ -15,31 +16,45 @@ const AuthContext = createContext<AuthContextType>({
   isAuthenticated: false,
   loading: true,
   setUser: () => {},
+  refreshUser: async () => {},
 });
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(true);
 
-  // 初始化檢查登入狀態
+  // ✅ 提取成可重用的函數
+  const refreshUser = async () => {
+    try {
+      const me = await api.get<UserProfile>("/auth/me");
+      setUser(me);
+      console.log("[AuthProvider] 已登入使用者:", me);
+    } catch (err) {
+      setUser(null);
+      console.log("[AuthProvider] 尚未登入");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // ✅ 啟動時自動檢查登入狀態
   useEffect(() => {
-    (async () => {
-      try {
-        const res = await api.get<UserProfile>("/auth/me");
-        setUser(res);
-      } catch (err) {
-        console.error("[AuthProvider] checkLogin failed:", err);
-        setUser(null);
-      } finally {
-        setLoading(false);
-      }
-    })();
+    refreshUser();
+
+    // ✅ 監聽全域登入事件（例如登入成功後 dispatch）
+    const handleAuthUpdated = () => {
+      console.log("[AuthProvider] 收到 auth-updated 事件，重新載入使用者");
+      refreshUser();
+    };
+
+    window.addEventListener("auth-updated", handleAuthUpdated);
+    return () => window.removeEventListener("auth-updated", handleAuthUpdated);
   }, []);
 
   const isAuthenticated = !!user;
 
   return (
-    <AuthContext.Provider value={{ user, isAuthenticated, loading, setUser }}>
+    <AuthContext.Provider value={{ user, isAuthenticated, loading, setUser, refreshUser }}>
       {children}
     </AuthContext.Provider>
   );

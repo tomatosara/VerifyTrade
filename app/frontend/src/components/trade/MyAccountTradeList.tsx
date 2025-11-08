@@ -1,9 +1,7 @@
-// src/compoents/trade/MyAccountTradeLinst.tsx
 import { useEffect, useState } from "react";
 import { Star } from "lucide-react";
 import { fetchTrades } from "@/api/trades";
 import { TradeSummary } from "@/types/trades";
-import { RatingStars } from "@/components/trade/RatingStars";
 import { TradeDetailDrawer } from "@/components/trade/TradeDetailDrawer";
 
 const ITEMS_PER_PAGE = 5;
@@ -15,14 +13,15 @@ export function MyAccountTradeList() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  // uid -> rating
   const [ratings, setRatings] = useState<Record<string, number>>({});
-  // 哪一筆在顯示星星評價
-  const [activeRatingUid, setActiveRatingUid] = useState<string | null>(null);
-  // Drawer
   const [selectedUid, setSelectedUid] = useState<string | null>(null);
 
   const totalPages = Math.max(1, Math.ceil(total / ITEMS_PER_PAGE));
+
+  const primary = "var(--color-primary, #F15B6C)";
+  const accent = "var(--color-accent, #FF8E8E)";
+  const background = "var(--color-background, #FDF8F8)";
+  const textColor = "var(--color-text, #2B2B2B)";
 
   async function load() {
     try {
@@ -49,8 +48,6 @@ export function MyAccountTradeList() {
 
   const handleRate = (uid: string, stars: number) => {
     setRatings(prev => ({ ...prev, [uid]: stars }));
-    setActiveRatingUid(null);
-    // TODO: 之後要打 API，可以在這裡呼叫
   };
 
   const goToPage = (p: number) => {
@@ -97,24 +94,28 @@ export function MyAccountTradeList() {
           return (
             <div
               key={t.uid}
-              className="flex justify-between items-start rounded-2xl bg-white shadow-sm border border-pink-100 px-6 py-4 cursor-pointer hover:shadow-md hover:border-pink-200 transition"
+              className="flex justify-between items-start rounded-2xl shadow-sm px-6 py-4 cursor-pointer transition hover:shadow-md"
+              style={{
+                backgroundColor: "white",
+                border: `1px solid color-mix(in srgb, ${primary} 15%, transparent)`,
+              }}
               onClick={() => setSelectedUid(t.uid)}
             >
               {/* 左側資訊 */}
               <div className="space-y-1">
                 <p className="text-sm text-gray-500">
-                  交易序號：{" "}
-                  <span className="font-medium text-gray-800">
+                  交易序號：
+                  <span className="font-medium" style={{ color: textColor }}>
                     {t.uid}
                   </span>
                 </p>
-                <p className="text-sm text-gray-600">
+                <p className="text-sm" style={{ color: textColor }}>
                   商品：{t.itemName ?? "-"}
                 </p>
-                <p className="text-sm text-gray-600">
+                <p className="text-sm" style={{ color: textColor }}>
                   金額：{t.amount ?? "-"}
                 </p>
-                <p className="text-sm text-gray-600">
+                <p className="text-sm" style={{ color: textColor }}>
                   雙方：{t.creatorName || "-"} / {t.counterpartyName || "-"}
                 </p>
                 <p className="text-xs text-gray-400">
@@ -123,60 +124,25 @@ export function MyAccountTradeList() {
                     ? new Date(t.createdAt).toLocaleString("zh-TW")
                     : "-"}
                 </p>
-                <p className="text-xs text-pink-500">
+                <p className="text-xs font-medium" style={{ color: primary }}>
                   狀態：{statusText(t.status)}
                 </p>
               </div>
 
-              {/* 右側：評價 + 查看詳情 */}
-              <div
-                className="flex flex-col items-end gap-2"
-                onClick={(e) => e.stopPropagation()} // 避免點按鈕時觸發開 Drawer
-              >
-                {/* 評價區塊 */}
+              {/* 右側：顯示評價結果 */}
+              <div className="flex flex-col items-end gap-2">
                 {typeof rating === "number" ? (
                   <div className="flex items-center gap-1 text-yellow-500">
                     {Array.from({ length: rating }).map((_, i) => (
-                      <Star
-                        key={i}
-                        className="w-5 h-5 fill-yellow-400"
-                      />
+                      <Star key={i} className="w-5 h-5 fill-yellow-400" />
                     ))}
                     <span className="text-xs text-gray-600 ml-1">
                       {rating} 星
                     </span>
                   </div>
                 ) : (
-                  <>
-                    {activeRatingUid === t.uid ? (
-                      <RatingStars
-                        size="sm"
-                        onSelect={(stars) =>
-                          handleRate(t.uid, stars)
-                        }
-                      />
-                    ) : (
-                      <button
-                        className="text-xs text-white bg-pink-400 hover:bg-pink-500 rounded-full px-3 py-1 transition"
-                        onClick={() =>
-                          setActiveRatingUid(
-                            activeRatingUid === t.uid ? null : t.uid
-                          )
-                        }
-                      >
-                        評價
-                      </button>
-                    )}
-                  </>
+                  <p className="text-xs text-gray-400 italic">尚未評價</p>
                 )}
-
-                {/* 查看詳情按鈕 */}
-                <button
-                  className="mt-1 text-[11px] text-pink-500 underline underline-offset-2 hover:text-pink-600"
-                  onClick={() => setSelectedUid(t.uid)}
-                >
-                  查看詳情
-                </button>
               </div>
             </div>
           );
@@ -187,28 +153,38 @@ export function MyAccountTradeList() {
           <button
             onClick={() => goToPage(page - 1)}
             disabled={page === 1}
-            className={`px-4 py-1 rounded-md border text-sm transition
-              ${
-                page === 1
-                  ? "border-gray-200 text-gray-300 cursor-not-allowed"
-                  : "border-pink-300 text-pink-500 hover:bg-pink-50"
-              }`}
+            className="px-4 py-1 rounded-md border text-sm transition"
+            style={{
+              borderColor: page === 1 ? "#ddd" : primary,
+              color: page === 1 ? "#aaa" : primary,
+              opacity: page === 1 ? 0.5 : 1,
+            }}
           >
             ← 上一頁
           </button>
 
           {Array.from({ length: totalPages }).map((_, i) => {
             const p = i + 1;
+            const isActive = p === page;
             return (
               <button
                 key={p}
                 onClick={() => goToPage(p)}
-                className={`w-8 h-8 flex items-center justify-center rounded-md text-sm border transition
-                  ${
-                    p === page
-                      ? "bg-pink-400 text-white border-pink-400"
-                      : "border-pink-200 text-pink-500 hover:bg-pink-50"
-                  }`}
+                className="w-8 h-8 flex items-center justify-center rounded-md text-sm border transition"
+                style={{
+                  backgroundColor: isActive ? primary : "transparent",
+                  color: isActive ? "#fff" : primary,
+                  borderColor: primary,
+                }}
+                onMouseEnter={(e) =>
+                  !isActive &&
+                  (e.currentTarget.style.backgroundColor =
+                    "var(--color-accent)")
+                }
+                onMouseLeave={(e) =>
+                  !isActive &&
+                  (e.currentTarget.style.backgroundColor = "transparent")
+                }
               >
                 {p}
               </button>
@@ -218,23 +194,27 @@ export function MyAccountTradeList() {
           <button
             onClick={() => goToPage(page + 1)}
             disabled={page === totalPages}
-            className={`px-4 py-1 rounded-md border text-sm transition
-              ${
-                page === totalPages
-                  ? "border-gray-200 text-gray-300 cursor-not-allowed"
-                  : "border-pink-300 text-pink-500 hover:bg-pink-50"
-              }`}
+            className="px-4 py-1 rounded-md border text-sm transition"
+            style={{
+              borderColor: page === totalPages ? "#ddd" : primary,
+              color: page === totalPages ? "#aaa" : primary,
+              opacity: page === totalPages ? 0.5 : 1,
+            }}
           >
             下一頁 →
           </button>
         </div>
       </div>
 
-      {/* 抽屜：交易詳情 */}
+      {/* 抽屜：交易詳情 + 評價 */}
       <TradeDetailDrawer
         uid={selectedUid}
         open={!!selectedUid}
         onClose={() => setSelectedUid(null)}
+        onRate={handleRate} // 新增這個 props
+        currentRating={
+          selectedUid && ratings[selectedUid] ? ratings[selectedUid] : null
+        }
       />
     </>
   );

@@ -1,16 +1,25 @@
-// src/components/trade/TradeDetailDrawer.tsx
 import { useEffect, useState } from "react";
+import { Star } from "lucide-react";
 import { fetchTradeDetail } from "@/api/trades";
 import { TradeDetail } from "@/types/trades";
 import { TradeTimeline } from "@/components/trade/TradeTimeline";
+import { RatingStars } from "@/components/trade/RatingStars";
 
 interface Props {
   uid: string | null;
   open: boolean;
   onClose: () => void;
+  onRate?: (uid: string, stars: number) => void;
+  currentRating?: number | null;
 }
 
-export function TradeDetailDrawer({ uid, open, onClose }: Props) {
+export function TradeDetailDrawer({
+  uid,
+  open,
+  onClose,
+  onRate,
+  currentRating,
+}: Props) {
   const [data, setData] = useState<TradeDetail | null>(null);
   const [loading, setLoading] = useState(false);
 
@@ -32,33 +41,67 @@ export function TradeDetailDrawer({ uid, open, onClose }: Props) {
 
   if (!open) return null;
 
-  const accent = "var(--color-accent, #0bb292)";
+  const primary = "var(--color-primary, #F15B6C)";
+  const accent = "var(--color-accent, #FF8E8E)";
+  const textColor = "var(--color-text, #2B2B2B)";
+
+  const handleRateSelect = (stars: number) => {
+    if (!onRate || !uid) return;
+    onRate(uid, stars);
+  };
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
-      {/* 中央白色卡片 */}
-      <div className="w-full max-w-3xl max-h-[80vh] bg-white rounded-2xl shadow-2xl flex flex-col overflow-hidden">
-        {/* Header */}
-        <div className="px-6 py-4 border-b border-gray-100 flex items-center justify-between">
-          <div>
-            <div className="text-xs font-semibold text-gray-800">
+      <div className="w-full max-w-3xl max-h-[85vh] bg-white rounded-2xl shadow-2xl flex flex-col overflow-hidden">
+        {/* HEADER */}
+        <div className="px-6 py-5 border-b border-gray-100 flex items-center justify-between">
+          {/* 左側：標題 + UID */}
+          <div className="flex flex-col">
+            <h2 className="text-lg font-bold text-gray-900 tracking-wide">
               交易內容
-            </div>
-            <div className="mt-1 text-[10px] text-gray-500">
-              交易 UID：
+            </h2>
+            <div className="mt-0.5 text-[12px] text-gray-500">
+              UID：
               <span className="font-mono break-all">{uid}</span>
             </div>
           </div>
-          <button
-            onClick={onClose}
-            className="w-8 h-8 flex items-center justify-center rounded-full text-gray-400 hover:text-gray-700 hover:bg-gray-100 transition"
-            aria-label="關閉"
-          >
-            ✕
-          </button>
+
+          {/* 右側：評價 + 關閉 */}
+          <div className="flex items-center gap-4">
+            {/* 評價區塊 */}
+            <div className="flex items-center gap-2">
+              <span
+                className="text-sm font-semibold"
+                style={{ color: "var(--color-primary)" }}
+              >
+                評價
+              </span>
+
+              {typeof currentRating === "number" ? (
+                <div className="flex items-center gap-1 text-yellow-500">
+                  {Array.from({ length: currentRating }).map((_, i) => (
+                    <Star key={i} className="w-6 h-6 fill-yellow-400" />
+                  ))}
+                  <span className="text-sm text-gray-700 ml-1">
+                    {currentRating} 星
+                  </span>
+                </div>
+              ) : onRate ? (
+                <div className="flex items-center gap-1">
+                  <RatingStars
+                    size="md"
+                    onSelect={(stars) => onRate(uid!, stars)}
+                  />
+                </div>
+              ) : (
+                <span className="text-sm text-gray-400">尚未評價</span>
+              )}
+            </div>
+          </div>
         </div>
 
-        {/* Body */}
+
+        {/* BODY */}
         <div className="flex-1 overflow-y-auto px-6 py-4 space-y-6 text-sm">
           {loading && (
             <div className="text-gray-500 text-sm">載入中...</div>
@@ -66,8 +109,8 @@ export function TradeDetailDrawer({ uid, open, onClose }: Props) {
 
           {!loading && data && (
             <>
-              {/* 基本資訊區：做成表單風 */}
-              <SectionTitle accent={accent}>基本資訊</SectionTitle>
+              {/* 基本資訊 */}
+              <SectionTitle accent={primary}>基本資訊</SectionTitle>
               <div className="space-y-2">
                 <InfoRow label="商品名稱" value={data.itemName} />
                 <InfoRow
@@ -82,15 +125,14 @@ export function TradeDetailDrawer({ uid, open, onClose }: Props) {
               </div>
 
               {/* 雙方資訊 */}
-              <SectionTitle accent={accent}>雙方資訊</SectionTitle>
+              <SectionTitle accent={primary}>雙方資訊</SectionTitle>
               <div className="space-y-2">
                 <InfoRow
                   label="發起人"
                   value={
                     data.creatorName || data.creatorId
-                      ? `${data.creatorName || ""}${
-                          data.creatorId ? `（${data.creatorId}）` : ""
-                        }`
+                      ? `${data.creatorName || ""}${data.creatorId ? `（${data.creatorId}）` : ""
+                      }`
                       : "-"
                   }
                 />
@@ -98,24 +140,23 @@ export function TradeDetailDrawer({ uid, open, onClose }: Props) {
                   label="相對方"
                   value={
                     data.counterpartyName || data.counterpartyId
-                      ? `${data.counterpartyName || ""}${
-                          data.counterpartyId
-                            ? `（${data.counterpartyId}）`
-                            : ""
-                        }`
+                      ? `${data.counterpartyName || ""}${data.counterpartyId
+                        ? `（${data.counterpartyId}）`
+                        : ""
+                      }`
                       : "-"
                   }
                 />
               </div>
 
               {/* 身分 / 條件 */}
-              <SectionTitle accent={accent}>身分 / 條件</SectionTitle>
+              <SectionTitle accent={primary}>身分 / 條件</SectionTitle>
               <div className="space-y-2">
                 <InfoRow
                   label="身分要求"
                   value={
                     data.identityRequirements &&
-                    data.identityRequirements.length
+                      data.identityRequirements.length
                       ? data.identityRequirements.join("、")
                       : "無"
                   }
@@ -133,16 +174,10 @@ export function TradeDetailDrawer({ uid, open, onClose }: Props) {
               </div>
 
               {/* 時間紀錄 */}
-              <SectionTitle accent={accent}>時間紀錄</SectionTitle>
+              <SectionTitle accent={primary}>時間紀錄</SectionTitle>
               <div className="space-y-1.5">
-                <InfoRow
-                  label="建立時間"
-                  value={formatTs(data.createdAt)}
-                />
-                <InfoRow
-                  label="更新時間"
-                  value={formatTs(data.updatedAt)}
-                />
+                <InfoRow label="建立時間" value={formatTs(data.createdAt)} />
+                <InfoRow label="更新時間" value={formatTs(data.updatedAt)} />
                 <InfoRow
                   label="VC 驗證時間"
                   value={formatTs(data.vcVerifiedAt)}
@@ -151,14 +186,11 @@ export function TradeDetailDrawer({ uid, open, onClose }: Props) {
                   label="UID 過期時間"
                   value={formatTs(data.uidExpiresAt)}
                 />
-                <InfoRow
-                  label="完成時間"
-                  value={formatTs(data.finalizedAt)}
-                />
+                <InfoRow label="完成時間" value={formatTs(data.finalizedAt)} />
               </div>
 
               {/* 操作紀錄 */}
-              <SectionTitle accent={accent}>操作紀錄</SectionTitle>
+              <SectionTitle accent={primary}>操作紀錄</SectionTitle>
               {data.auditEvents && data.auditEvents.length ? (
                 <TradeTimeline events={data.auditEvents} />
               ) : (
@@ -170,12 +202,12 @@ export function TradeDetailDrawer({ uid, open, onClose }: Props) {
           )}
         </div>
 
-        {/* Footer：單純關閉按鈕 */}
-        <div className="px-6 py-3 border-t border-gray-100 flex justify-end">
+        {/* FOOTER */}
+        <div className="px-6 py-3 border-top border-gray-100 flex justify-end">
           <button
             onClick={onClose}
-            className="px-5 py-2 rounded-full text-sm font-medium text-white"
-            style={{ backgroundColor: accent }}
+            className="px-5 py-2 rounded-full text-sm font-medium text-white transition hover:opacity-90"
+            style={{ backgroundColor: primary }}
           >
             關閉
           </button>
@@ -185,11 +217,11 @@ export function TradeDetailDrawer({ uid, open, onClose }: Props) {
   );
 }
 
+/* Utils */
+
 function formatTs(v: string | null): string {
   return v ? new Date(v).toLocaleString("zh-TW") : "-";
 }
-
-/* 小元件 */
 
 function SectionTitle({
   children,
@@ -200,10 +232,13 @@ function SectionTitle({
 }) {
   return (
     <div
-      className="text-xs font-semibold mt-2 mb-1 flex items-center gap-2"
+      className="mt-2 mb-1 flex items-center gap-2 text-sm font-semibold"
       style={{ color: accent }}
     >
-      <span className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: accent }} />
+      <span
+        className="w-1.5 h-1.5 rounded-full"
+        style={{ backgroundColor: accent }}
+      />
       {children}
     </div>
   );
@@ -219,14 +254,13 @@ function InfoRow({
   multiline?: boolean;
 }) {
   return (
-    <div className="flex items-start text-xs text-gray-800">
-      <div className="w-24 text-gray-500 flex-shrink-0">
+    <div className="flex items-start text-sm">
+      <div className="w-28 text-gray-500 flex-shrink-0">
         {label}：
       </div>
       <div
-        className={`flex-1 ${
-          multiline ? "whitespace-pre-wrap break-words" : ""
-        }`}
+        className={`flex-1 text-[13px] text-gray-800 ${multiline ? "whitespace-pre-wrap break-words" : ""
+          }`}
       >
         {value ?? "-"}
       </div>

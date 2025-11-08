@@ -1,7 +1,6 @@
 import React, { useEffect, useState, useRef } from "react";
 import { FlickeringGrid } from "@/components/ui/flickering-grid";
 import { BorderBeam } from "@/components/ui/border-beam";
-import { QRCode } from '@/components/ui/qr-code';
 import { fetchQrCode, fetchVerifierResult } from "@/api/qr";
 import { api, setAccessToken } from "@/api/client";
 import type { QrCodeResponse, VerifierResultResponse, UserProfile } from '@/types/verifier';
@@ -47,7 +46,6 @@ export default function Login() {
           console.log("[POLL] ✅ Verified! Stopping poller.");
           clearInterval(pollerRef.current!);
           pollerRef.current = null;
-          alert(`歡迎 ${result.user?.name ?? result.user?.idNumber ?? ""} 登入成功！`);
 
           // 🔑 第三步：向後端換 JWT
           const { accessToken } = await api.post<{ accessToken: string }>(
@@ -63,6 +61,8 @@ export default function Login() {
           setProfile(me);
           setIsAuthenticated(true);
 
+          // ✅ 通知 AuthProvider 重新拉 /auth/me
+          window.dispatchEvent(new Event("auth-updated"));
           // ✅ 登入後想導向其他頁面
           navigate('/');
         }

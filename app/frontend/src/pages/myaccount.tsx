@@ -26,9 +26,9 @@ function MyAccount() {
   }
 
   const displayAvatar = avatar || DEFAULT_AVATAR;
-
+  const primary = "var(--color-primary)";
   return (
-    <div className="min-h-screen bg-[#FFF5F7]">
+    <div className="min-h-screen">
       <div className="max-w-5xl mx-auto px-8 py-10">
         {/* 頭像 + 基本資料 */}
         <div className="flex items-center gap-8 mb-10">
@@ -36,9 +36,9 @@ function MyAccount() {
             <img
               src={displayAvatar}
               alt="avatar"
-              className="w-28 h-28 rounded-full bg-pink-200 object-cover shadow-md"
+              className="w-28 h-28 rounded-full bg-[var(--color-primary)] object-cover shadow-md"
             />
-            <label className="absolute bottom-0 right-0 bg-pink-400 text-white text-xs py-1 px-3 rounded-full cursor-pointer hover:bg-pink-500 transition">
+            <label className="absolute bottom-0 right-0 bg-[var(--color-primary)] text-white text-xs py-1 px-3 rounded-full cursor-pointer hover:bg-[var(--color-primary)]/80 transition">
               更換
               <input
                 type="file"

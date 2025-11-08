@@ -4,28 +4,13 @@ import { Link, useNavigate } from "react-router-dom";
 import { Menu, X } from "lucide-react";
 import { api, setAccessToken } from "@/api/client";
 import { useAuth } from "@/context/AuthContext";
-import { mockUser } from "@/mocks/mockUser"; // ✅ 引入 mock 資料
 
 export default function Navbar() {
   const [isOpen, setIsOpen] = useState(false);
   const navigate = useNavigate();
   const { user, isAuthenticated, setUser } = useAuth();
   const toggleMenu = () => setIsOpen(prev => !prev);
-  
 
-  // 🚀 初始化檢查登入狀態
-  useEffect(() => {
-    (async () => {
-      try {
-        // ⚙️ 若要切換為實際登入檢查，把 mockUser 註解掉、開啟 checkLogin
-        const me = await checkLogin();
-        setUser(me);
-        // setUser(mockUser); // ✅ 假登入用
-      } catch (err) {
-        console.warn("檢查登入狀態時發生錯誤：", err);
-      }
-    })();
-  }, []);
 
   // 🚪 登出
   async function handleLogout() {
