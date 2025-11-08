@@ -16,8 +16,8 @@ export default function Carousel() {
       buttonColor: "bg-[var(--color-primary)] hover:bg-[var(--color-secondary)] text-white",
     },
     {
-      bgImage: "/image/trust-bg-desktop.jpg",
-      bgImageMobile: "/image/trust-bg-mobile.jpg",
+      bgImage: "/image/advantages.png",
+      bgImageMobile: "/image/advantages.png",
       buttonText: "建立表單",
       buttonLink: "/newform",
       buttonColor: "bg-[var(--color-secondary)] hover:bg-[var(--color-secondary)] text-white",

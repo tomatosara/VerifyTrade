@@ -7,10 +7,10 @@
   },
   "packageManager": "pnpm@10.20.0",
   "pnpm": {
-    "overrides": {
+  "overrides": {
       "glob": "^10.3.12",
       "rimraf": "^5.0.5"
-    }
+  }
   },
   "dependencies": {
     "dotenv": "^16.6.1"
@@ -18,4 +18,5 @@
   "devDependencies": {
     "@types/http-errors": "^2.0.5"
   }
+
 }

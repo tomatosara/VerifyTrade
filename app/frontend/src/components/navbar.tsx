@@ -4,6 +4,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { Menu, X } from "lucide-react";
 import { api, setAccessToken } from "@/api/client";
 import { useAuth } from "@/context/AuthContext";
+import { mockUser } from "@/mocks/mockUser"; // ✅ 引入 mock 資料
 
 export default function Navbar() {
   const [isOpen, setIsOpen] = useState(false);
@@ -11,6 +12,21 @@ export default function Navbar() {
   const { user, isAuthenticated, setUser } = useAuth();
   const toggleMenu = () => setIsOpen(prev => !prev);
   
+
+  // 🚀 初始化檢查登入狀態
+  useEffect(() => {
+    (async () => {
+      try {
+        // ⚙️ 若要切換為實際登入檢查，把 mockUser 註解掉、開啟 checkLogin
+        const me = await checkLogin();
+        setUser(me);
+        // setUser(mockUser); // ✅ 假登入用
+      } catch (err) {
+        console.warn("檢查登入狀態時發生錯誤：", err);
+      }
+    })();
+  }, []);
+
   // 🚪 登出
   async function handleLogout() {
     try {
@@ -28,21 +44,32 @@ export default function Navbar() {
     <nav className="flex items-center justify-between px-6 py-4 bg-white shadow-sm relative">
       {/* 🔹 左側 Logo */}
       <div className="flex items-center space-x-2">
-        <img src="/logo.svg" alt="Logo" className="h-8" />
+        <img src="/image/icon.png" alt="Logo" className="h-8" />
         <Link
           to="/"
-          className="font-semibold text-2xl md:text-lg text-gray-800 hover:text-[var(--color-primary)] transition-colors"
+          className="font-semibold text-xl md:text-2xl text-[var(--color-secondary)] hover:text-[var(--color-primary)] transition-colors"
         >
-          身分驗證交易平台
+          零知識防詐交易平台
         </Link>
       </div>
 
       {/* 🔹 桌機導覽連結 */}
-      <ul className="hidden md:flex space-x-8 text-basic text-gray-700 font-medium">
-        <li><Link to="/newform" className="hover:text-[var(--color-primary)] transition">建立表單</Link></li>
-        <li><Link to="/openform" className="hover:text-[var(--color-primary)] transition">交易序號</Link></li>
-        <li><Link to="/guide" className="hover:text-[var(--color-primary)] transition">常見問題</Link></li>
-        <li><Link to="/contact" className="hover:text-[var(--color-primary)] transition">聯絡我們</Link></li>
+      <ul className="absolute left-1/2 -translate-x-1/2 hidden md:flex space-x-8 text-basic text-gray-700 font-medium">
+        <li>
+          <Link to="/newform" className="hover:text-[var(--color-primary)] transition">
+            建立表單
+          </Link>
+        </li>
+        <li>
+          <Link to="/openform" className="hover:text-[var(--color-primary)] transition">
+            交易序號
+          </Link>
+        </li>
+        <li>
+          <Link to="/guide" className="hover:text-[var(--color-primary)] transition">
+            常見問題
+          </Link>
+        </li>
       </ul>
 
       {/* 🔹 右側登入狀態（桌機版） */}
@@ -52,12 +79,16 @@ export default function Navbar() {
             <span className="text-gray-700 text-basic">
               👋 您好，{user.name ?? user.idNumber ?? "使用者"}
             </span>
+
+            {/* 我的帳號按鈕 */}
             <Link
               to="/myaccount"
-              className="text-gray-700 text-basic hover:text-[var(--color-primary)] transition"
+              className="text-[var(--color-primary)] font-semibold hover:text-[var(--color-secondary)] text-basic"
             >
               我的帳號
             </Link>
+
+            {/* 登出按鈕 */}
             <button
               onClick={handleLogout}
               className="bg-gray-200 text-gray-800 text-basic px-4 py-2 rounded-full hover:bg-gray-300 transition"
@@ -86,26 +117,32 @@ export default function Navbar() {
       {/* 🔹 手機版展開選單 */}
       {isOpen && (
         <div className="absolute top-full left-0 w-full bg-white shadow-md flex flex-col items-center py-4 space-y-6 md:hidden z-50">
-          <Link to="/newform" className="text-gray-700 hover:text-[var(--color-primary)]">建立表單</Link>
-          <Link to="/openform" className="text-gray-700 hover:text-[var(--color-primary)]">交易序號</Link>
-          <Link to="/guide" className="text-gray-700 hover:text-[var(--color-primary)]">常見問題</Link>
-          <Link to="/contact" className="text-gray-700 hover:text-[var(--color-primary)]">聯絡我們</Link>
-
-          {user && (
-            <Link to="/myaccount" className="text-gray-700 hover:text-[var(--color-primary)]">
-              我的帳號
-            </Link>
-          )}
-
+          <Link to="/newform" className="text-gray-700 hover:text-[var(--color-primary)]">
+            建立表單
+          </Link>
+          <Link to="/openform" className="text-gray-700 hover:text-[var(--color-primary)]">
+            交易序號
+          </Link>
+          <Link to="/guide" className="text-gray-700 hover:text-[var(--color-primary)]">
+            常見問題
+          </Link>
           <hr className="w-4/5 border-gray-200" />
 
           {user ? (
-            <button
-              onClick={handleLogout}
-              className="bg-gray-200 text-gray-800 px-8 py-2 rounded-full hover:bg-gray-300 transition"
-            >
-              登出
-            </button>
+            <>
+              <Link
+                to="/myaccount"
+                className="text-[var(--color-primary)] font-semibold hover:text-[var(--color-secondary)]"
+              >
+                我的帳號
+              </Link>
+              <button
+                onClick={handleLogout}
+                className="bg-gray-200 text-gray-800 px-8 py-2 rounded-full hover:bg-gray-300"
+              >
+                登出
+              </button>
+            </>
           ) : (
             <Link
               to="/login"
