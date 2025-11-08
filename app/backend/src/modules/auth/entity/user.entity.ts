@@ -5,7 +5,7 @@ import {
   Entity,
   Index,
   PrimaryGeneratedColumn,
-  UpdateDateColumn,
+  UpdateDateColumn
 } from 'typeorm';
 
 export type UserRole = 'user' | 'platform';
@@ -22,21 +22,29 @@ export class UserEntity {
   @Column({
     type: 'enum',
     enum: ['user', 'platform'],
+    enumName: 'user_role_enum',
     default: 'user',
+    name: 'role'
   })
   role!: UserRole;
 
-  @Column({ type: 'varchar', length: 20, unique: true })
-  idNumber!: string;        // 不應為 null，改成必填
+  @Column({ type: 'varchar', length: 20, unique: true, name: 'id_number' })
+  idNumber!: string;
 
-  @Column({ type: 'varchar', length: 20, nullable: true })
-  birthday!: string;
+  @Column({ type: 'varchar', length: 20, nullable: true, name: 'birthday' })
+  birthday!: string | null;
 
-  @Column({ type: 'varchar', length: 128, nullable: true })
-  address!: string;
+  @Column({ type: 'varchar', length: 128, nullable: true, name: 'address' })
+  address!: string | null;
 
-  @Column({ type: 'decimal', precision: 3, scale: 2, default: 3.0 })
-  score: number;
+  @Column({
+    type: 'numeric',
+    precision: 3,
+    scale: 2,
+    default: () => '3.00',
+    name: 'score'
+  })
+  score!: number;
   @CreateDateColumn({ type: 'timestamptz', name: 'created_at' })
   createdAt!: Date;
 

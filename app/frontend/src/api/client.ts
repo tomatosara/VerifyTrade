@@ -1,6 +1,6 @@
 // src/api/client.ts
 const API_BASE_URL =
-  import.meta.env.VITE_API_BASE_URL || "http://localhost:3000/api/v1";
+  import.meta.env.VITE_API_BASE_URL || "http://localhost:3000/api/v1/";
 
 // ---- Access Token 只放在記憶體（最安全，關頁即失） ----
 let ACCESS_TOKEN: string | null = null;

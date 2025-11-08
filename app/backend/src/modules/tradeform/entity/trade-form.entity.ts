@@ -1,7 +1,9 @@
 import {
+  Check,
   Column,
   CreateDateColumn,
   Entity,
+  Index,
   JoinColumn,
   ManyToOne,
   PrimaryGeneratedColumn,
@@ -82,13 +84,16 @@ export type TradeFormMeta = {
 };
 
 @Entity({ name: 'trade_forms' })
+@Check('CHK_trade_forms_user_rating_range', '"user_rating" BETWEEN 1 AND 5')
 export class TradeFormEntity {
   @PrimaryGeneratedColumn()
   id!: number;
 
+  @Index('UQ_trade_forms_uid_unique', { unique: true })
   @Column({ type: 'varchar', length: 32, unique: true })
   uid!: string;
 
+  @Index('IDX_trade_forms_creator_id')
   @Column({ type: 'uuid', name: 'creator_id', nullable: true })
   creatorId!: string | null;
 
@@ -96,6 +101,7 @@ export class TradeFormEntity {
   @JoinColumn({ name: 'creator_id' })
   creator?: UserEntity | null;
 
+  @Index('IDX_trade_forms_counterparty_id')
   @Column({ type: 'uuid', name: 'counterparty_id', nullable: true })
   counterpartyId!: string | null;
 
@@ -106,7 +112,7 @@ export class TradeFormEntity {
   @Column({
     type: 'jsonb',
     name: 'creator_verified_identities',
-    default: () => "'[]'"
+    default: () => "'[]'::jsonb"
   })
   creatorVerifiedIdentities!: string[];
 
@@ -116,6 +122,7 @@ export class TradeFormEntity {
   @Column({ type: 'text', name: 'item_description' })
   itemDescription!: string;
 
+  @Index('IDX_trade_forms_item_condition')
   @Column({
     type: 'enum',
     enum: TradeFormItemCondition,
@@ -127,6 +134,7 @@ export class TradeFormEntity {
   @Column({ type: 'varchar', length: 64 })
   amount!: string;
 
+  @Index('IDX_trade_forms_trade_channel')
   @Column({
     type: 'enum',
     enum: TradeFormChannel,
@@ -135,6 +143,7 @@ export class TradeFormEntity {
   })
   tradeChannel!: TradeFormChannel;
 
+  @Index('IDX_trade_forms_payment_method')
   @Column({
     type: 'enum',
     enum: TradeFormPaymentMethod,
@@ -157,7 +166,7 @@ export class TradeFormEntity {
     array: true,
     enumName: 'trade_forms_identity_requirement_enum',
     name: 'identity_requirements',
-    default: '{}',
+    default: () => "'{}'::\"public\".\"trade_forms_identity_requirement_enum\"[]"
   })
   identityRequirements!: TradeFormIdentityRequirement[];
 
@@ -167,6 +176,7 @@ export class TradeFormEntity {
   })
   userRating!: number;
 
+  @Index('IDX_trade_forms_status_pending')
   @Column({
     type: 'enum',
     enum: TradeFormStatus,
@@ -177,7 +187,7 @@ export class TradeFormEntity {
 
   @Column({
     type: 'jsonb',
-    default: () => "'{}'"
+    default: () => "'{}'::jsonb"
   })
   meta!: TradeFormMeta;
 

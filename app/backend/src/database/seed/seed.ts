@@ -1,45 +1,21 @@
 import '@config/env';
-import type { DataSource, EntityManager } from 'typeorm';
+import type { DataSource } from 'typeorm';
+import { In } from 'typeorm';
 import { AppDataSource } from '@database/data-source';
+import { dbConfig } from '@config/db';
 import { logger } from '@utils/logger';
 import { clearAllForSeed } from './utils/clear';
 import { UserEntity } from '@modules/auth/entity/user.entity';
-import {
-  TradeFormChannel,
-  TradeFormEntity,
-  TradeFormIdentityRequirement,
-  TradeFormItemCondition,
-  TradeFormMatchmakingChannel,
-  TradeFormPaymentMethod
-} from '@modules/tradeform/entity/trade-form.entity';
+import { TradeFormEntity } from '@modules/tradeform/entity/trade-form.entity';
+import type { SeedProfile, SeedSummary, UserSeed } from './types';
+import { buildUserSeeds } from './factories/users.factory';
+import { buildTradeSeeds } from './factories/trade-forms.factory';
+
+const profile: SeedProfile = (process.env.SEED_PROFILE as SeedProfile) ?? 'dev';
 
 interface RunSeedOptions {
   dataSource?: DataSource;
   manageConnection?: boolean;
-}
-
-interface SeededUserInfo {
-  id: string;
-  idNumber: string;
-  name: string;
-  role: UserEntity['role'];
-}
-
-type SeedConnectionOptions = PostgresConnectionOptions & { searchPath?: string };
-
-interface RunSeedResult {
-  summary: SeedSummary;
-  usersByKey: Record<string, SeededUserInfo>;
-  tradeUids: string[];
-}
-
-function getPostgresOptions(dataSource: DataSource): SeedConnectionOptions {
-  return dataSource.options as SeedConnectionOptions;
-}
-
-function getSchemaName(dataSource: DataSource): string {
-  const configured = getPostgresOptions(dataSource).schema;
-  return typeof configured === 'string' && configured.length ? configured : 'public';
 }
 
 function describeMixedList(value: unknown): string[] {
@@ -57,30 +33,25 @@ function describeMixedList(value: unknown): string[] {
     if (typeof item === 'string') {
       return item;
     }
-
     if (typeof item === 'function') {
       return item.name ?? '[Function anonymous]';
     }
-
     return String(item);
   });
 }
 
 function logDataSourceDetails(dataSource: DataSource) {
-  const options = getPostgresOptions(dataSource);
   logger.info(
     {
       connection: {
         host: dbConfig.connectionInfo.host,
         port: dbConfig.connectionInfo.port,
-        database: dbConfig.connectionInfo.database,
-        schema: getSchemaName(dataSource),
-        searchPath: options.searchPath ?? getSchemaName(dataSource)
+        database: dbConfig.connectionInfo.database
       },
       paths: {
-        entities: describeMixedList(options.entities),
-        migrations: describeMixedList(options.migrations),
-        subscribers: describeMixedList(options.subscribers)
+        entities: describeMixedList(dataSource.options.entities),
+        migrations: describeMixedList(dataSource.options.migrations),
+        subscribers: describeMixedList(dataSource.options.subscribers)
       }
     },
     'initializing data source for seed'
@@ -88,62 +59,11 @@ function logDataSourceDetails(dataSource: DataSource) {
 }
 
 async function assertUsersTableExists(dataSource: DataSource) {
-  const schemaName = getSchemaName(dataSource);
-  const tableIdentifier = `${schemaName}.users`;
-  const result = await dataSource.query('SELECT to_regclass($1) as identifier', [tableIdentifier]);
-  const exists = result?.[0]?.identifier;
-
-  if (!exists) {
-    const options = getPostgresOptions(dataSource);
-    const migrationPaths = describeMixedList(options.migrations).join(', ') || 'none';
-    throw new Error(
-      [
-        `users table not found (expected identifier "${tableIdentifier}")`,
-        'Pending migrations may not be configured correctly.',
-        `Resolved migration paths: ${migrationPaths}`
-      ].join(' ')
-    );
+  const schema = (dataSource.options as { schema?: string }).schema ?? 'public';
+  const result = await dataSource.query('SELECT to_regclass($1) as identifier', [`${schema}.users`]);
+  if (!result?.[0]?.identifier) {
+    throw new Error('users table not found. Did you run migrations?');
   }
-}
-
-async function deleteStaleAuditEvents(
-  manager: EntityManager,
-  tradeUids: string[],
-  retainedIds: string[]
-) {
-  if (!tradeUids.length) {
-    return;
-  }
-  const qb = manager
-    .createQueryBuilder()
-    .delete()
-    .from(TradeAuditEventEntity)
-    .where('tradeUid IN (:...tradeUids)', { tradeUids });
-
-  if (retainedIds.length) {
-    qb.andWhere('id NOT IN (:...ids)', { ids: retainedIds });
-  }
-
-  await qb.execute();
-}
-
-async function seedTradeForms(
-  manager: EntityManager,
-  users: UserEntity[]
-): Promise<number> {
-  const tradeRepo = manager.getRepository(TradeFormEntity);
-
-  const owner = users[0] ?? null;
-
-  const entities = tradeFormSeeds.map((seed) =>
-    tradeRepo.create({
-      ...seed,
-      creatorId: owner ? owner.id : null
-    })
-  );
-
-  await tradeRepo.save(entities);
-  return entities.length;
 }
 
 export async function runSeed(options: RunSeedOptions = {}): Promise<SeedSummary> {
@@ -155,142 +75,54 @@ export async function runSeed(options: RunSeedOptions = {}): Promise<SeedSummary
   }
 
   try {
+    logDataSourceDetails(dataSource);
     await dataSource.runMigrations();
+    await assertUsersTableExists(dataSource);
 
     const summary = await dataSource.transaction<SeedSummary>(async (manager) => {
+      await clearAllForSeed(manager);
+
       const userRepo = manager.getRepository(UserEntity);
       const tradeRepo = manager.getRepository(TradeFormEntity);
-      const auditRepo = manager.getRepository(TradeAuditEventEntity);
-      const confirmationRepo = manager.getRepository(TradeConfirmationEntity);
 
       const userSeeds = buildUserSeeds(profile);
-      // ===== 取代 email → idNumber =====
       await userRepo.upsert(userSeeds, ['idNumber']);
 
       const persistedUsers = await userRepo.find({
-        where: {
-          idNumber: In(userSeeds.map((u) => u.idNumber)),
-        },
+        where: { idNumber: In(userSeeds.map((seed) => seed.idNumber)) }
       });
-
-      const persistedById = new Map(persistedUsers.map((u) => [u.idNumber!, u]));
+      const persistedByIdNumber = new Map(persistedUsers.map((user) => [user.idNumber, user]));
 
       const resolvedUsers: UserSeed[] = userSeeds.map((seed) => {
-        const entity = persistedById.get(seed.idNumber);
-        if (!entity) throw new Error(`Failed to resolve seeded user ${seed.idNumber}`);
+        const persisted = persistedByIdNumber.get(seed.idNumber);
+        if (!persisted) {
+          throw new Error(`Failed to resolve seeded user ${seed.idNumber}`);
+        }
 
         return {
           ...seed,
-          id: entity.id,
-          role: entity.role,
-          createdAt: entity.createdAt,
-          updatedAt: entity.updatedAt,
+          id: persisted.id,
+          createdAt: persisted.createdAt,
+          updatedAt: persisted.updatedAt
         };
       });
 
-      const usersByKey = Object.fromEntries(
-        resolvedUsers.map((u) => [u.key, { id: u.id, idNumber: u.idNumber, role: u.role }]),
-      );
-
-      const tradeSeeds = buildTradeSeeds(profile, faker, resolvedUsers);
-      tradeUids = tradeSeeds.map((seed) => seed.record.uid);
-
-      const tradeUpserts: QueryDeepPartialEntity<TradeFormEntity>[] = tradeSeeds.map((seed) => {
-        const { auditLog, ...rest } = seed.record;
-        return {
-          ...rest,
-          auditLog: auditLog.map((entry) => ({
-            ...entry,
-            at: new Date(entry.at).toISOString()
-          }))
-        } as QueryDeepPartialEntity<TradeFormEntity>;
-      });
-
-      await tradeRepo.upsert(tradeUpserts, ['uid']);
-
-      const allAuditEvents = tradeSeeds.flatMap((seed) => seed.auditEvents);
-      const auditIds = allAuditEvents.map((event) => event.id);
-
-      await deleteStaleAuditEvents(manager, tradeUids, auditIds);
-      if (allAuditEvents.length) {
-        const auditUpserts: QueryDeepPartialEntity<TradeAuditEventEntity>[] = allAuditEvents.map(
-          (event) =>
-            ({
-              id: event.id,
-              tradeUid: event.tradeUid,
-              actorId: event.actorId,
-              action: event.action,
-              at: event.at,
-              details: event.details ?? null
-            }) as QueryDeepPartialEntity<TradeAuditEventEntity>
-        );
-
-        await auditRepo.upsert(auditUpserts, ['id']);
-      }
-
-      const confirmationSeeds = tradeSeeds.flatMap((seed) => seed.confirmations);
-      const confirmationPairs = confirmationSeeds.map((seed) => ({
-        tradeUid: seed.tradeUid,
-        actorId: seed.actorId
-      }));
-
-      await deleteStaleConfirmations(manager, tradeUids, confirmationPairs);
-      if (confirmationSeeds.length) {
-        await confirmationRepo.upsert(
-          confirmationSeeds.map((seed) => ({
-            id: seed.id,
-            tradeUid: seed.tradeUid,
-            actorId: seed.actorId,
-            role: seed.role,
-            confirmedAt: seed.confirmedAt
-          })),
-          ['tradeUid', 'actorId']
-        );
+      const tradeSeeds = buildTradeSeeds(profile, resolvedUsers);
+      if (tradeSeeds.length) {
+        const tradeEntities = tradeSeeds.map((seed) => tradeRepo.create(seed.record));
+        await tradeRepo.save(tradeEntities);
       }
 
       return {
-        users: users.length,
-        tradeForms: tradeFormCount
+        profile,
+        users: resolvedUsers.length,
+        tradeForms: tradeSeeds.length,
+        auditEvents: 0
       };
     });
 
     logger.info(summary, 'database seed completed');
-
-    if (profile === 'dev') {
-      const alice = usersByKey['alice'];
-      const bob = usersByKey['bob'];
-      const platform = usersByKey['platform'];
-      if (alice && bob && platform) {
-        const tokens = {
-          alice: signJwt({
-            sub: alice.id,
-            role: alice.role,
-            name: alice.name
-          }),
-          bob: signJwt({
-            sub: bob.id,
-            role: bob.role,
-            name: bob.name
-          }),
-          platform: signPlatformJwt({
-            sub: platform.id,
-            role: platform.role,
-            name: platform.name
-          })
-        };
-
-        // eslint-disable-next-line no-console
-        console.log('Dev profile JWTs (1h expiry):', tokens);
-      }
-      // eslint-disable-next-line no-console
-      console.log('Seeded trade UIDs:', tradeUids);
-    }
-
-    return {
-      summary,
-      usersByKey,
-      tradeUids
-    };
+    return summary;
   } catch (error) {
     logger.error({ err: error }, 'seed script failed');
     throw error;
@@ -307,3 +139,4 @@ if (require.main === module) {
     process.exitCode = 1;
   });
 }
+

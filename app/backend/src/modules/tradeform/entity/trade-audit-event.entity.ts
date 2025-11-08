@@ -2,6 +2,7 @@ import {
   Column,
   CreateDateColumn,
   Entity,
+  Index,
   JoinColumn,
   ManyToOne,
   PrimaryGeneratedColumn
@@ -24,6 +25,7 @@ export class TradeAuditEventEntity {
   @PrimaryGeneratedColumn('uuid')
   id!: string;
 
+  @Index('IDX_trade_audit_trade_uid')
   @Column({ type: 'varchar', length: 32, name: 'trade_uid' })
   tradeUid!: string;
 
@@ -31,6 +33,7 @@ export class TradeAuditEventEntity {
   @JoinColumn({ name: 'trade_uid', referencedColumnName: 'uid' })
   trade?: TradeFormEntity;
 
+  @Index('IDX_trade_audit_actor')
   @Column({ type: 'uuid', name: 'actor_id', nullable: true })
   actorId!: string | null;
 
@@ -38,6 +41,7 @@ export class TradeAuditEventEntity {
   @JoinColumn({ name: 'actor_id' })
   actor?: UserEntity | null;
 
+  @Index('IDX_trade_audit_action')
   @Column({
     type: 'enum',
     enum: TradeAuditAction,

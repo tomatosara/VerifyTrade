@@ -1,6 +1,14 @@
-import type { AuditAction, AuditEvent, TradeFormStatus } from '@modules/tradeform/entity/tradeform.entity';
-import type { TradeConfirmationRole } from '@modules/tradeform/entity/trade-confirmation.entity';
 import type { UserRole } from '@modules/auth/entity/user.entity';
+import type {
+  TradeFormChannel,
+  TradeFormIdentityRequirement,
+  TradeFormItemCondition,
+  TradeFormMatchmakingChannel,
+  TradeFormMeta,
+  TradeFormPaymentMethod,
+  TradeFormStatus
+} from '@modules/tradeform/entity/trade-form.entity';
+import type { TradeAuditAction } from '@modules/tradeform/entity/trade-audit-event.entity';
 
 export type SeedProfile = 'dev' | 'test';
 
@@ -18,14 +26,20 @@ export interface UserSeed {
 
 export interface TradeRecordSeed {
   uid: string;
-  creatorId: string;
+  creatorId: string | null;
   counterpartyId: string | null;
-  title: string;
-  description: string;
-  amount: string | null;
+  creatorVerifiedIdentities: string[];
+  itemName: string;
+  itemDescription: string;
+  itemCondition: TradeFormItemCondition;
+  amount: string;
+  tradeChannel: TradeFormChannel;
+  paymentMethod: TradeFormPaymentMethod;
+  matchmakingChannel: TradeFormMatchmakingChannel;
+  identityRequirements: TradeFormIdentityRequirement[];
+  userRating: number;
   status: TradeFormStatus;
-  meta: Record<string, unknown>;
-  auditLog: AuditEvent[];
+  meta: TradeFormMeta;
   confirmedByUser1: boolean;
   confirmedByUser2: boolean;
   vcVerifiedAt: Date | null;
@@ -42,24 +56,15 @@ export interface AuditEventSeed {
   id: string;
   tradeUid: string;
   actorId: string;
-  action: AuditAction;
+  action: TradeAuditAction;
   at: Date;
   details: Record<string, unknown> | null;
-}
-
-export interface ConfirmationSeed {
-  id: string;
-  tradeUid: string;
-  actorId: string;
-  role: TradeConfirmationRole;
-  confirmedAt: Date;
 }
 
 export interface TradeSeed {
   key: string;
   record: TradeRecordSeed;
   auditEvents: AuditEventSeed[];
-  confirmations: ConfirmationSeed[];
 }
 
 export interface SeedSummary {
@@ -67,5 +72,4 @@ export interface SeedSummary {
   users: number;
   tradeForms: number;
   auditEvents: number;
-  confirmations: number;
 }

@@ -16,7 +16,7 @@ interface UserBlueprint {
 
 const devUsers: UserBlueprint[] = [
   {
-    key: 'user1',
+    key: 'alice',
     id: '5d466f8d-67fd-4eef-90d4-1f7502c4d1f2',
     idNumber: 'A123456789',
     name: 'Alice Rivers',
@@ -27,7 +27,7 @@ const devUsers: UserBlueprint[] = [
     updatedAt: '2024-05-07T09:30:00.000Z',
   },
   {
-    key: 'user1',
+    key: 'bob',
     id: 'e641706c-97ee-402d-908a-5c2fc36505f3',
     idNumber: "B123456781",
     name: 'Bob Markets',
@@ -38,7 +38,7 @@ const devUsers: UserBlueprint[] = [
     updatedAt: '2024-05-06T13:45:00.000Z'
   },
   {
-    key: 'user1',
+    key: 'platform',
     id: 'fbcf2f44-cb2a-4a00-aea4-9ddb051a6e78',
     name: 'Platform Operations',
     idNumber: "C123456781",
@@ -52,7 +52,7 @@ const devUsers: UserBlueprint[] = [
 
 const testUsers: UserBlueprint[] = [
   {
-    key: 'user1',
+    key: 'creator',
     id: '0f4d8ae2-7d36-4f14-b7a4-eab1c1764d9d',
     name: 'Test Creator',
     idNumber: "D123456781",
@@ -63,7 +63,7 @@ const testUsers: UserBlueprint[] = [
     updatedAt: '2024-01-12T12:05:00.000Z'
   },
   {
-    key: 'user1',
+    key: 'counterparty',
     id: '2f1c36d0-b7fc-4e6c-9e15-231a6d36bbfc',
     idNumber: "E123456781",
     name: 'Test Counterparty',
@@ -74,7 +74,7 @@ const testUsers: UserBlueprint[] = [
     updatedAt: '2024-01-12T12:10:00.000Z'
   },
   {
-    key: 'user1',
+    key: 'platform',
     id: '603d2fa6-9026-4b1f-a0fd-51ac3aaee47a',
     idNumber: "F123456781",
     name: 'Test Platform Ops',

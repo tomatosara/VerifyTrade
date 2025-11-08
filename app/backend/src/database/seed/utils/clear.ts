@@ -1,14 +1,9 @@
 import { DataSource, EntityManager, type EntityMetadata } from 'typeorm';
 
-const DEFAULT_INTENDED_TABLES = [
-  'trade_audit_events',
-  'trade_confirmations',
-  'trade_forms'
-] as const;
+const DEFAULT_INTENDED_TABLES = ['trade_audit_events', 'trade_forms'] as const;
 
 const MANUAL_DEPENDENCIES: Record<string, string[]> = {
-  trade_audit_events: ['trade_forms'],
-  trade_confirmations: ['trade_forms']
+  trade_audit_events: ['trade_forms']
 };
 
 const normalize = (value: string): string => value.replace(/["`]/g, '').toLowerCase();

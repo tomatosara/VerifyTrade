@@ -2,7 +2,11 @@
 import axios, { AxiosError } from 'axios';
 import { v4 as uuidv4 } from 'uuid';
 import { AppDataSource } from '@database/data-source';
-import { VerificationTx } from '@modules/verifier/entity/verification-tx.entity';
+import {
+  VerificationTx,
+  VerificationTxKind,
+  VerificationTxStatus
+} from '@modules/verifier/entity/verification-tx.entity';
 import { UserEntity } from '@modules/auth/entity/user.entity';
 
 type VerifierRaw = {
@@ -38,9 +42,9 @@ export default class VerifierService {
 
     await AppDataSource.getRepository(VerificationTx).insert({
       transactionId: txId,
-      kind: 'verifier',
+      kind: VerificationTxKind.VERIFIER,
       ref,
-      status: 'pending',
+      status: VerificationTxStatus.PENDING
     });
 
     return { transactionId: txId, qrcodeImage: data.qrcodeImage, authUri: data.authUri };
@@ -63,7 +67,7 @@ export default class VerifierService {
       await this.txRepo.update(
         { transactionId },
         {
-          status: ok ? 'success' : 'failed',
+          status: ok ? VerificationTxStatus.SUCCESS : VerificationTxStatus.FAILED,
           // resultJson: JSON.stringify(data),
           resultJson: data as any,
         }
@@ -158,7 +162,9 @@ export default class VerifierService {
    * 找不到或交易未成功 → 回 null
    */
 async getClaimsByTransactionId(transactionId: string): Promise<IdClaims | null> {
-    const tx = await this.txRepo.findOne({ where: { transactionId, status: 'success' } });
+    const tx = await this.txRepo.findOne({
+      where: { transactionId, status: VerificationTxStatus.SUCCESS }
+    });
     if (!tx) return null;
 
     let json = (tx as any).resultJson;
