@@ -8,51 +8,14 @@ import {
   UpdateDateColumn
 } from 'typeorm';
 import { UserEntity } from '@modules/auth/entity/user.entity';
-
-export enum TradeFormItemCondition {
-  SECOND_HAND = 'SECOND_HAND',
-  LIKE_NEW = 'LIKE_NEW',
-  BRAND_NEW = 'BRAND_NEW'
-}
-
-export enum TradeFormChannel {
-  IN_PERSON = 'IN_PERSON',
-  CONVENIENCE_STORE_DELIVERY = 'CONVENIENCE_STORE_DELIVERY',
-  POST_OFFICE = 'POST_OFFICE',
-  COURIER = 'COURIER',
-  OTHER = 'OTHER'
-}
-
-export enum TradeFormPaymentMethod {
-  CASH_ON_DELIVERY = 'CASH_ON_DELIVERY',
-  BANK_TRANSFER = 'BANK_TRANSFER',
-  LINE_PAY = 'LINE_PAY',
-  CRYPTO = 'CRYPTO'
-}
-
-export enum TradeFormMatchmakingChannel {
-  OFFLINE_AGREEMENT = 'OFFLINE_AGREEMENT',
-  SOCIAL_PLATFORM = 'SOCIAL_PLATFORM',
-  ONLINE_MARKETPLACE = 'ONLINE_MARKETPLACE'
-}
-
-export enum TradeFormIdentityRequirement {
-  STUDENT_ID = 'STUDENT_ID',
-  EMPLOYEE_ID = 'EMPLOYEE_ID',
-  DIETITIAN_LICENSE = 'DIETITIAN_LICENSE',
-  LAWYER_LICENSE = 'LAWYER_LICENSE',
-  PROOF_OF_ORIGIN = 'PROOF_OF_ORIGIN'
-}
-
-export enum TradeFormStatus {
-  DRAFT = 'draft',
-  PENDING = 'pending',
-  VERIFIED = 'verified',
-  CONFIRMED = 'confirmed',
-  CANCELLED = 'cancelled',
-  FAILED = 'failed',
-  DONE = 'done'
-}
+import {
+  TradeFormStatus,
+  TradeFormChannel,
+  TradeFormPaymentMethod,
+  TradeFormItemCondition,
+  TradeFormMatchmakingChannel,
+  TradeFormIdentityRequirement
+} from '../enums/TradeFormEnums';
 
 export interface TradeFormIdentityRequirementsMeta {
   requiredClaims?: string[];
@@ -85,23 +48,22 @@ export type TradeFormMeta = {
 export class TradeFormEntity {
   @PrimaryGeneratedColumn()
   id!: number;
-
-  @Column({ type: 'varchar', length: 32, unique: true })
+  @Column({ type: 'varchar', length: 32, unique: true})
   uid!: string;
 
-  @Column({ type: 'uuid', name: 'creator_id', nullable: true })
-  creatorId!: string | null;
+@Column({ type: 'string', name: 'creator_id', nullable: true })
+creatorId!: string | null;
 
-  @ManyToOne(() => UserEntity, { nullable: true, onDelete: 'SET NULL' })
-  @JoinColumn({ name: 'creator_id' })
-  creator?: UserEntity | null;
+@ManyToOne(() => UserEntity, { nullable: true, onDelete: 'SET NULL' })
+@JoinColumn({ name: 'creator_id', referencedColumnName: 'idNumber' })
+creator?: UserEntity | null;
 
-  @Column({ type: 'uuid', name: 'counterparty_id', nullable: true })
-  counterpartyId!: string | null;
+@Column({ type: 'string', name: 'counterparty_id', nullable: true })
+counterpartyId!: string | null;
 
-  @ManyToOne(() => UserEntity, { nullable: true, onDelete: 'SET NULL' })
-  @JoinColumn({ name: 'counterparty_id' })
-  counterparty?: UserEntity | null;
+@ManyToOne(() => UserEntity, { nullable: true, onDelete: 'SET NULL' })
+@JoinColumn({ name: 'counterparty_id', referencedColumnName: 'idNumber' })
+counterparty?: UserEntity | null;
 
   @Column({
     type: 'jsonb',

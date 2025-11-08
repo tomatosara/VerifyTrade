@@ -8,6 +8,8 @@ import { VerifierController } from './../modules/verifier/controller/verifier.co
 // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
 import { TradeFormController } from './../modules/tradeform/controller/tradeform.controller';
 // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+import { TradeController } from './../modules/trade/controller/trade.controller';
+// WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
 import { IssuerController } from './../modules/issuer/controller/issuer.controller';
 // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
 import { AuthController } from './../modules/auth/controller/dev-auth.controller';
@@ -144,6 +146,8 @@ const models: TsoaRoute.Models = {
     "CreateTradeFormDto": {
         "dataType": "refObject",
         "properties": {
+            "creatorId": {"dataType":"string"},
+            "counterpartyId": {"dataType":"string"},
             "creatorVerifiedIdentities": {"dataType":"array","array":{"dataType":"string"}},
             "itemName": {"dataType":"string","required":true},
             "itemDescription": {"dataType":"string","required":true},
@@ -246,6 +250,102 @@ const models: TsoaRoute.Models = {
         "dataType": "refObject",
         "properties": {
             "trade": {"ref":"TradeFormResponse","required":true},
+        },
+        "additionalProperties": false,
+    },
+    // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+    "TradeFormStatusDto": {
+        "dataType": "refAlias",
+        "type": {"dataType":"union","subSchemas":[{"dataType":"enum","enums":["draft"]},{"dataType":"enum","enums":["pending"]},{"dataType":"enum","enums":["verified"]},{"dataType":"enum","enums":["confirmed"]},{"dataType":"enum","enums":["cancelled"]},{"dataType":"enum","enums":["failed"]},{"dataType":"enum","enums":["done"]}],"validators":{}},
+    },
+    // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+    "TradeFormChannelDto": {
+        "dataType": "refAlias",
+        "type": {"dataType":"union","subSchemas":[{"dataType":"enum","enums":["IN_PERSON"]},{"dataType":"enum","enums":["CONVENIENCE_STORE_DELIVERY"]},{"dataType":"enum","enums":["POST_OFFICE"]},{"dataType":"enum","enums":["COURIER"]},{"dataType":"enum","enums":["OTHER"]}],"validators":{}},
+    },
+    // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+    "TradeFormPaymentMethodDto": {
+        "dataType": "refAlias",
+        "type": {"dataType":"union","subSchemas":[{"dataType":"enum","enums":["CASH_ON_DELIVERY"]},{"dataType":"enum","enums":["BANK_TRANSFER"]},{"dataType":"enum","enums":["LINE_PAY"]},{"dataType":"enum","enums":["CRYPTO"]}],"validators":{}},
+    },
+    // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+    "TradeSummaryDto": {
+        "dataType": "refObject",
+        "properties": {
+            "uid": {"dataType":"string","required":true},
+            "itemName": {"dataType":"string","required":true},
+            "amount": {"dataType":"string","required":true},
+            "status": {"ref":"TradeFormStatusDto","required":true},
+            "tradeChannel": {"ref":"TradeFormChannelDto","required":true},
+            "paymentMethod": {"ref":"TradeFormPaymentMethodDto","required":true},
+            "createdAt": {"dataType":"string","required":true},
+            "finalizedAt": {"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"enum","enums":[null]}],"required":true},
+            "creatorName": {"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"enum","enums":[null]}],"required":true},
+            "counterpartyName": {"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"enum","enums":[null]}],"required":true},
+        },
+        "additionalProperties": false,
+    },
+    // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+    "TradeFormItemConditionDto": {
+        "dataType": "refAlias",
+        "type": {"dataType":"union","subSchemas":[{"dataType":"enum","enums":["SECOND_HAND"]},{"dataType":"enum","enums":["LIKE_NEW"]},{"dataType":"enum","enums":["BRAND_NEW"]}],"validators":{}},
+    },
+    // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+    "TradeFormMatchmakingChannelDto": {
+        "dataType": "refAlias",
+        "type": {"dataType":"union","subSchemas":[{"dataType":"enum","enums":["OFFLINE_AGREEMENT"]},{"dataType":"enum","enums":["SOCIAL_PLATFORM"]},{"dataType":"enum","enums":["ONLINE_MARKETPLACE"]}],"validators":{}},
+    },
+    // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+    "TradeFormIdentityRequirementDto": {
+        "dataType": "refAlias",
+        "type": {"dataType":"union","subSchemas":[{"dataType":"enum","enums":["STUDENT_ID"]},{"dataType":"enum","enums":["EMPLOYEE_ID"]},{"dataType":"enum","enums":["DIETITIAN_LICENSE"]},{"dataType":"enum","enums":["LAWYER_LICENSE"]},{"dataType":"enum","enums":["PROOF_OF_ORIGIN"]}],"validators":{}},
+    },
+    // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+    "TradeAuditActionDto": {
+        "dataType": "refAlias",
+        "type": {"dataType":"union","subSchemas":[{"dataType":"enum","enums":["create"]},{"dataType":"enum","enums":["verifyVC"]},{"dataType":"enum","enums":["confirm"]},{"dataType":"enum","enums":["cancel"]},{"dataType":"enum","enums":["finalize"]},{"dataType":"enum","enums":["fail"]},{"dataType":"enum","enums":["retry"]}],"validators":{}},
+    },
+    // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+    "TradeAuditEventDto": {
+        "dataType": "refObject",
+        "properties": {
+            "id": {"dataType":"string","required":true},
+            "action": {"ref":"TradeAuditActionDto","required":true},
+            "at": {"dataType":"string","required":true},
+            "actorId": {"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"enum","enums":[null]}],"required":true},
+            "actorName": {"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"enum","enums":[null]}],"required":true},
+            "details": {"dataType":"any","required":true},
+        },
+        "additionalProperties": false,
+    },
+    // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+    "TradeDetailDto": {
+        "dataType": "refObject",
+        "properties": {
+            "uid": {"dataType":"string","required":true},
+            "itemName": {"dataType":"string","required":true},
+            "itemDescription": {"dataType":"string","required":true},
+            "amount": {"dataType":"string","required":true},
+            "itemCondition": {"ref":"TradeFormItemConditionDto","required":true},
+            "status": {"ref":"TradeFormStatusDto","required":true},
+            "creatorId": {"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"enum","enums":[null]}],"required":true},
+            "creatorName": {"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"enum","enums":[null]}],"required":true},
+            "counterpartyId": {"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"enum","enums":[null]}],"required":true},
+            "counterpartyName": {"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"enum","enums":[null]}],"required":true},
+            "tradeChannel": {"ref":"TradeFormChannelDto","required":true},
+            "paymentMethod": {"ref":"TradeFormPaymentMethodDto","required":true},
+            "matchmakingChannel": {"ref":"TradeFormMatchmakingChannelDto","required":true},
+            "identityRequirements": {"dataType":"array","array":{"dataType":"refAlias","ref":"TradeFormIdentityRequirementDto"},"required":true},
+            "userRating": {"dataType":"double","required":true},
+            "meta": {"dataType":"any","required":true},
+            "confirmedByUser1": {"dataType":"boolean","required":true},
+            "confirmedByUser2": {"dataType":"boolean","required":true},
+            "vcVerifiedAt": {"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"enum","enums":[null]}],"required":true},
+            "uidExpiresAt": {"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"enum","enums":[null]}],"required":true},
+            "finalizedAt": {"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"enum","enums":[null]}],"required":true},
+            "createdAt": {"dataType":"string","required":true},
+            "updatedAt": {"dataType":"string","required":true},
+            "auditEvents": {"dataType":"array","array":{"dataType":"refObject","ref":"TradeAuditEventDto"},"required":true},
         },
         "additionalProperties": false,
     },
@@ -658,6 +758,74 @@ export function RegisterRoutes(app: Router) {
             }
         });
         // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+        const argsTradeController_getUserTrades: Record<string, TsoaRoute.ParameterSchema> = {
+                req: {"in":"request","name":"req","required":true,"dataType":"object"},
+                status: {"in":"query","name":"status","dataType":"string"},
+                page: {"default":1,"in":"query","name":"page","dataType":"double"},
+                pageSize: {"default":20,"in":"query","name":"pageSize","dataType":"double"},
+                from: {"in":"query","name":"from","dataType":"string"},
+                to: {"in":"query","name":"to","dataType":"string"},
+        };
+        app.get('/api/v1/trades',
+            authenticateMiddleware([{"bearerAuth":[]}]),
+            ...(fetchMiddlewares<RequestHandler>(TradeController)),
+            ...(fetchMiddlewares<RequestHandler>(TradeController.prototype.getUserTrades)),
+
+            async function TradeController_getUserTrades(request: ExRequest, response: ExResponse, next: any) {
+
+            // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+
+            let validatedArgs: any[] = [];
+            try {
+                validatedArgs = templateService.getValidatedArgs({ args: argsTradeController_getUserTrades, request, response });
+
+                const controller = new TradeController();
+
+              await templateService.apiHandler({
+                methodName: 'getUserTrades',
+                controller,
+                response,
+                next,
+                validatedArgs,
+                successStatus: undefined,
+              });
+            } catch (err) {
+                return next(err);
+            }
+        });
+        // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+        const argsTradeController_getTradeDetail: Record<string, TsoaRoute.ParameterSchema> = {
+                uid: {"in":"path","name":"uid","required":true,"dataType":"string"},
+                req: {"in":"request","name":"req","required":true,"dataType":"object"},
+        };
+        app.get('/api/v1/trades/:uid',
+            authenticateMiddleware([{"bearerAuth":[]}]),
+            ...(fetchMiddlewares<RequestHandler>(TradeController)),
+            ...(fetchMiddlewares<RequestHandler>(TradeController.prototype.getTradeDetail)),
+
+            async function TradeController_getTradeDetail(request: ExRequest, response: ExResponse, next: any) {
+
+            // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+
+            let validatedArgs: any[] = [];
+            try {
+                validatedArgs = templateService.getValidatedArgs({ args: argsTradeController_getTradeDetail, request, response });
+
+                const controller = new TradeController();
+
+              await templateService.apiHandler({
+                methodName: 'getTradeDetail',
+                controller,
+                response,
+                next,
+                validatedArgs,
+                successStatus: undefined,
+              });
+            } catch (err) {
+                return next(err);
+            }
+        });
+        // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
         const argsIssuerController_qrcodeData: Record<string, TsoaRoute.ParameterSchema> = {
                 body: {"in":"body","name":"body","required":true,"ref":"QrcodeDataBody"},
         };
@@ -811,6 +979,7 @@ export function RegisterRoutes(app: Router) {
         const argsAuthController_logout: Record<string, TsoaRoute.ParameterSchema> = {
         };
         app.post('/api/v1/auth/logout',
+            authenticateMiddleware([{"bearerAuth":[]}]),
             ...(fetchMiddlewares<RequestHandler>(AuthController)),
             ...(fetchMiddlewares<RequestHandler>(AuthController.prototype.logout)),
 

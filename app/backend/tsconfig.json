@@ -48,7 +48,7 @@
     "src/**/*.ts",
     "src/**/*.d.ts",
     "tsoa.json"
-  ],
+, "src/modules/trade/controller"  ],
   "exclude": [
     "dist",
     "node_modules"

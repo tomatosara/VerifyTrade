@@ -23,6 +23,7 @@
     "db:seed:test": "cross-env SEED_PROFILE=test tsx -r dotenv/config -r tsconfig-paths/register src/database/seed/seed.ts",
     "env:check": "tsx -r dotenv/config -r tsconfig-paths/register src/scripts/print-env.ts",
     "db:reset": "pnpm typeorm:migrate:revert -- --all && pnpm typeorm:migrate:run && pnpm db:seed",
+    "db:drop": "pnpm typeorm schema:drop -d src/database/data-source.ts",
     "openapi": "tsoa spec-and-routes --configuration tsoa.json",
     "openapi:print": "curl -s http://localhost:4000/openapi.json | jq '.'",
     "tsoa:routes": "tsoa routes",

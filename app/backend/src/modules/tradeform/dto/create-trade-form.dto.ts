@@ -15,9 +15,25 @@ import {
   TradeFormItemCondition,
   TradeFormMatchmakingChannel,
   TradeFormPaymentMethod
-} from '../entity/trade-form.entity';
+} from '../enums/TradeFormEnums';
 
 export class CreateTradeFormDto {
+  /** 
+   * A idNumber
+   * @example A131095852
+   */
+  @IsString()
+  @IsOptional()
+  creatorId?: string;
+
+  /** 
+   * B idNumber
+   * @example F123456789
+   */
+  @IsString()
+  @IsOptional()
+  counterpartyId?: string;
+
   /**
    * 已驗證身分(創建者) / Creator verified identities
    * @example ["StudentID", "CompanyEmail"]

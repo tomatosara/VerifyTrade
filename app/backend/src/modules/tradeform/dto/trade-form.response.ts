@@ -3,10 +3,10 @@ import {
   TradeFormIdentityRequirement,
   TradeFormItemCondition,
   TradeFormMatchmakingChannel,
-  TradeFormMeta,
   TradeFormPaymentMethod,
   TradeFormStatus
-} from '../entity/trade-form.entity';
+} from '../enums/TradeFormEnums';
+import {TradeFormMeta} from '../entity/trade-form.entity' 
 
 export interface TradeFormResponse {
   id: number;
