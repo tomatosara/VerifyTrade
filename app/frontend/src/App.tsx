@@ -6,6 +6,8 @@ import NewForm from "./pages/newform";
 import OpenForm from "./pages/openform";
 import MyAccount from "./pages/myaccount";
 import { AuthProvider } from "./context/AuthContext";
+import Question from "./pages/question";
+
 
 
 function App() {
@@ -22,6 +24,7 @@ function App() {
           <Route path="/newform" element={<NewForm />} />
           <Route path="/openform" element={<OpenForm />} />
           <Route path="/myaccount" element={<MyAccount />} />
+          <Route path="/question" element={<Question />} />   
 
         </Routes>
       </BrowserRouter>

@@ -23,11 +23,11 @@ export default function Carousel() {
       buttonColor: "bg-[var(--color-secondary)] hover:bg-[var(--color-secondary)] text-white",
     },
     {
-      bgImage: "/images/security-bg-desktop.jpg",
-      bgImageMobile: "/images/security-bg-mobile.jpg",
+      bgImage: "/image/fraud.png",
+      bgImageMobile: "/image/fraud.png",
       buttonText: "查詢交易序號",
       buttonLink: "/openform",
-      buttonColor: "bg-gradient-to-r from-[var(--color-primary)] to-[var(--color-secondary)] text-white",
+      buttonColor: "bg-gradient-to-r from-[var(--color-primary)] to-[var(--color-accent)] text-white",
     },
   ];
 
