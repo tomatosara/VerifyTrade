@@ -5,6 +5,7 @@ import Login from "./pages/login";
 import NewForm from "./pages/newform";
 import OpenForm from "./pages/openform";
 import MyAccount from "./pages/myaccount";
+import Question from "./pages/question";
 
 
 
@@ -20,7 +21,8 @@ function App() {
         <Route path="/login" element={<Login />} />  
         <Route path="/newform" element={<NewForm />} />   
         <Route path="/openform" element={<OpenForm />} />
-        <Route path="/myaccount" element={<MyAccount />} />   
+        <Route path="/myaccount" element={<MyAccount />} />  
+        <Route path="/question" element={<Question />} />   
         
       </Routes>
     </BrowserRouter>

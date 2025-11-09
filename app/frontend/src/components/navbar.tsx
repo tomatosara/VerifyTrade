@@ -63,7 +63,7 @@ export default function Navbar() {
           </Link>
         </li>
         <li>
-          <Link to="/guide" className="hover:text-[var(--color-primary)] transition">
+          <Link to="/question" className="hover:text-[var(--color-primary)] transition">
             常見問題
           </Link>
         </li>
