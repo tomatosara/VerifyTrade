@@ -95,8 +95,6 @@ export class TradeService {
     });
 
     if (!trade) throw createHttpError(404, 'Trade not found');
-    console.log("trade.creatorId", trade.creatorId)
-    console.log("trade.userId", userId)
     const isParticipant =
       trade.creatorId === userId || trade.counterpartyId === userId;
     // 如果之後有 admin role，可以在這裡放行

@@ -33,12 +33,7 @@ import { VerifyVcRequestDto, VerifyVcResponseDto, ConfirmTradeResponseDto } from
 import type { ErrorResponse } from '../../../http/dto/error-response';
 import { verifyVCRateLimit, confirmRateLimit } from '@middleware/rateLimit';
 import { idempotencyMiddleware } from '@middleware/idempotency';
-
-type AuthenticatedRequest = {
-  user?: {
-    id: string;
-  };
-};
+import type { AuthenticatedRequest } from '@middleware/auth';
 
 @Route('tradeforms')
 @Tags('TradeForm')
@@ -55,14 +50,32 @@ export class TradeFormController extends Controller {
   @Security('bearerAuth', [])
   @SuccessResponse('201', 'Created')
   @Response<ErrorResponse>('422', 'Validation error')
+  @Response<ErrorResponse>('409', 'Trade UID already exists')
   public async create(
     @Body() body: CreateTradeFormDto,
     @Request() req: AuthenticatedRequest
   ): Promise<TradeFormResponse> {
     try {
-      const result = await this.service.create(body, req.user?.id ?? null);
+      if (!req.user?.idNumber) {
+        throw new UnauthorizedError();
+      }
+      const result = await this.service.create(body, req.user.idNumber, req.user.id);
       this.setStatus(201);
       return result;
+    } catch (error) {
+      throw mapValidationError(error);
+    }
+  }
+
+  @Put('{id}')
+  @OperationId('updateTradeForm')
+  @Security('bearerAuth', [])
+  public async update(
+    @Path() id: number,
+    @Body() body: UpdateTradeFormDto
+  ): Promise<TradeFormResponse> {
+    try {
+      return await this.service.update(id, body);
     } catch (error) {
       throw mapValidationError(error);
     }
@@ -99,21 +112,7 @@ export class TradeFormController extends Controller {
     @Path() uid: string,
     @Request() req: AuthenticatedRequest
   ): Promise<TradeFormViewResponse> {
-    return this.service.findByUidForActor(uid, req.user?.id ?? null);
-  }
-
-  @Put('{id}')
-  @OperationId('updateTradeForm')
-  @Security('bearerAuth', [])
-  public async update(
-    @Path() id: number,
-    @Body() body: UpdateTradeFormDto
-  ): Promise<TradeFormResponse> {
-    try {
-      return await this.service.update(id, body);
-    } catch (error) {
-      throw mapValidationError(error);
-    }
+    return this.service.findByUidForActor(uid, req.user?.idNumber ?? null);
   }
 
   @Delete('{id}')
@@ -142,10 +141,10 @@ export class TradeFormController extends Controller {
     @Body() body: VerifyVcRequestDto,
     @Request() req: AuthenticatedRequest
   ): Promise<VerifyVcResponseDto> {
-    if (!req.user?.id) {
+    if (!req.user?.idNumber) {
       throw new UnauthorizedError();
     }
-    return this.service.verifyVc(uid, req.user.id, body?.vcProof);
+    return this.service.verifyVc(uid, req.user.idNumber, body?.vcProof, req.user.id);
   }
 
   @Post('{uid}/confirm')
@@ -162,11 +161,11 @@ export class TradeFormController extends Controller {
     @Path() uid: string,
     @Request() req: AuthenticatedRequest
   ): Promise<ConfirmTradeResponseDto> {
-    if (!req.user?.id) {
+    if (!req.user?.idNumber) {
       throw new UnauthorizedError();
     }
 
-    return this.service.confirm(uid, req.user.id);
+    return this.service.confirm(uid, req.user.idNumber, req.user.id);
   }
 }
 

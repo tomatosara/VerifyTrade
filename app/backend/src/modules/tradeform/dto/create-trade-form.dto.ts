@@ -2,45 +2,55 @@ import {
   ArrayMinSize,
   IsArray,
   IsEnum,
-  IsInt,
   IsNotEmpty,
   IsOptional,
   IsString,
-  Max,
-  Min
+  Length,
+  Matches
 } from 'class-validator';
 import {
+  IDENTITY_REQUIREMENT_PATTERN,
   TradeFormChannel,
-  TradeFormIdentityRequirement,
   TradeFormItemCondition,
   TradeFormMatchmakingChannel,
-  TradeFormPaymentMethod
+  TradeFormPaymentMethod,
+  TradeFormIdentityRequirement
 } from '../enums/TradeFormEnums';
+import { AMOUNT_REGEX } from '../utils/amount';
+
+const UID_PATTERN = /^[A-Za-z0-9_-]+$/;
 
 export class CreateTradeFormDto {
-  /** 
-   * A idNumber
-   * @example A131095852
+  /**
+   * 前端生成的交易序號，建立雙方共用。
+   * @example "P2P-7f4c8d90"
    */
   @IsString()
-  @IsOptional()
-  creatorId?: string;
+  @Length(6, 128)
+  @Matches(UID_PATTERN, {
+    message: 'uid may only contain letters, digits, underscores, or dashes'
+  })
+  uid!: string;
 
-  /** 
-   * B idNumber
-   * @example F123456789
+  /**
+   * 建立者的使用者識別（需與 JWT 內 idNumber 一致）。
+   * @example "A131095852"
    */
   @IsString()
-  @IsOptional()
-  counterpartyId?: string;
+  @IsNotEmpty()
+  creatorId!: string;
 
   /**
    * 已驗證身分(創建者) / Creator verified identities
-   * @example ["StudentID", "CompanyEmail"]
+   * @example ["tw_national_id", "phone_verified"]
    */
   @IsArray()
   @IsOptional()
   @IsString({ each: true })
+  @Matches(IDENTITY_REQUIREMENT_PATTERN, {
+    each: true,
+    message: 'creatorVerifiedIdentities must use snake_case strings (e.g. tw_national_id)'
+  })
   creatorVerifiedIdentities?: string[];
 
   /**
@@ -59,42 +69,55 @@ export class CreateTradeFormDto {
   @IsNotEmpty()
   itemDescription!: string;
 
-  /** 商品狀態：{ 二手 || 二手近全新 || 全新 } */
+  /**
+   * 商品狀態
+   * @example "used_like_new"
+   */
   @IsEnum(TradeFormItemCondition)
   itemCondition!: TradeFormItemCondition;
 
   /**
    * 交易金額 / Amount (string to keep currency format)
-   * @example "22000"
+   * @example "22000.50"
    */
   @IsString()
   @IsNotEmpty()
+  @Matches(AMOUNT_REGEX, {
+    message: 'amount must be a positive decimal string with up to 18 decimal places'
+  })
   amount!: string;
 
-  /** 交易管道：{ 面交 || 交貨便 || 郵局 || 快遞 || 其他 } */
+  /**
+   * 交易管道
+   * @example "p2p"
+   */
   @IsEnum(TradeFormChannel)
   tradeChannel!: TradeFormChannel;
 
-  /** 付款方式：{ 面交 || 匯款 || LinePay || 加密貨幣 } */
+  /**
+   * 付款方式
+   * @example "bank_transfer"
+   */
   @IsEnum(TradeFormPaymentMethod)
   paymentMethod!: TradeFormPaymentMethod;
 
-  /** 交易媒合管道：{ 線下合議 || 社交平台 || 網路交易平台 } */
+  /**
+   * 媒合管道
+   * @example "in_app"
+   */
   @IsEnum(TradeFormMatchmakingChannel)
   matchmakingChannel!: TradeFormMatchmakingChannel;
 
   /**
    * 身份驗證條件 (複選) / Identity requirements (multi-select)
-   * @example ["STUDENT_ID", "PROOF_OF_ORIGIN"]
+   * @example ["tw_national_id", "phone_verified"]
    */
   @IsArray()
   @ArrayMinSize(1)
-  @IsEnum(TradeFormIdentityRequirement, { each: true })
+  @IsString({ each: true })
+  @Matches(IDENTITY_REQUIREMENT_PATTERN, {
+    each: true,
+    message: 'identityRequirements must use snake_case strings (e.g. tw_national_id)'
+  })
   identityRequirements!: TradeFormIdentityRequirement[];
-
-  /** 用戶評分：{1..5} */
-  @IsInt()
-  @Min(1)
-  @Max(5)
-  userRating!: number;
 }

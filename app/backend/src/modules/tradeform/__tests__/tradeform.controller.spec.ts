@@ -1,160 +1,94 @@
-import type { DataSource } from 'typeorm';
-import type { TradeFormResponse } from '../dto/trade-form.response';
+import 'reflect-metadata';
+import { ValidationError as ClassValidatorError } from 'class-validator';
+import { TradeFormController } from '../controller/tradeform.controller';
+import { TradeFormService } from '../tradeform.service';
+import { UnauthorizedError, ValidationError } from '@utils/errors';
+import { TradeFormResponse } from '../dto/trade-form.response';
 import {
   TradeFormChannel,
-  TradeFormIdentityRequirement,
   TradeFormItemCondition,
   TradeFormMatchmakingChannel,
-  TradeFormPaymentMethod,
-  TradeFormStatus
-} from '../entity/trade-form.entity';
+  TradeFormPaymentMethod
+} from '../enums/TradeFormEnums';
+import type { AuthenticatedRequest } from '@middleware/auth';
 
-const examplePayload = {
-  creatorVerifiedIdentities: ['StudentID', 'CompanyEmail'],
-  itemName: 'iPad Pro 11"',
-  itemDescription: '盒裝完整，含原廠鍵盤',
-  itemCondition: TradeFormItemCondition.LIKE_NEW,
-  amount: '22000',
-  tradeChannel: TradeFormChannel.IN_PERSON,
+const makeResponse = (): TradeFormResponse => ({
+  id: 1,
+  uid: 'trade-abc',
+  creatorId: 'A131095852',
+  counterpartyId: null,
+  creatorVerifiedIdentities: ['tw_national_id'],
+  itemName: 'Ledger',
+  itemDescription: 'Like new',
+  itemCondition: TradeFormItemCondition.NEW,
+  amount: '10',
+  tradeChannel: TradeFormChannel.P2P,
   paymentMethod: TradeFormPaymentMethod.BANK_TRANSFER,
-  matchmakingChannel: TradeFormMatchmakingChannel.SOCIAL_PLATFORM,
-  identityRequirements: [
-    TradeFormIdentityRequirement.STUDENT_ID,
-    TradeFormIdentityRequirement.PROOF_OF_ORIGIN
-  ],
-  userRating: 5
-};
+  matchmakingChannel: TradeFormMatchmakingChannel.IN_APP,
+  identityRequirements: ['tw_national_id'],
+  userRating: 0,
+  status: 'pending',
+  meta: {},
+  confirmedByUser1: false,
+  confirmedByUser2: false,
+  vcVerifiedAt: null,
+  uidExpiresAt: null,
+  finalizedAt: null,
+  createdAt: new Date(),
+  updatedAt: new Date()
+});
 
-describe('TradeForm controller integration', () => {
-  let controller: import('../controller/tradeform.controller').TradeFormController;
+describe('TradeFormController.create', () => {
+  const body = {
+    uid: 'trade-abc',
+    creatorId: 'A131095852',
+    creatorVerifiedIdentities: ['tw_national_id'],
+    itemName: 'Ledger',
+    itemDescription: 'Like new',
+    itemCondition: TradeFormItemCondition.NEW,
+    amount: '10',
+    tradeChannel: TradeFormChannel.P2P,
+    paymentMethod: TradeFormPaymentMethod.BANK_TRANSFER,
+    matchmakingChannel: TradeFormMatchmakingChannel.IN_APP,
+    identityRequirements: ['tw_national_id']
+  };
 
-  beforeEach(async () => {
-    jest.resetModules();
+  it('passes payload to the service and returns response', async () => {
+    const service = {
+      create: jest.fn().mockResolvedValue(makeResponse())
+    } as unknown as TradeFormService;
 
-    jest.doMock('../tradeform.repository', () => {
-      const store = new Map<number, TradeFormResponse>();
-      let sequence = 1;
+    const controller = new TradeFormController(service);
+    const req = { user: { idNumber: 'A131095852', id: 'user-uuid' } } as AuthenticatedRequest;
 
-      class InMemoryTradeFormRepository {
-        create(payload: Partial<TradeFormResponse>) {
-          return {
-            ...payload
-          };
-        }
-
-        async save(entity: Partial<TradeFormResponse>): Promise<TradeFormResponse> {
-          const now = new Date();
-          if (!entity.id) {
-            entity.id = sequence++;
-            entity.createdAt = now;
-            entity.uid = `uid-${entity.id}`;
-            entity.status = TradeFormStatus.PENDING;
-          } else {
-            const existing = store.get(entity.id);
-            entity.createdAt = existing?.createdAt ?? now;
-            entity.uid = existing?.uid ?? `uid-${entity.id}`;
-            entity.status = existing?.status ?? TradeFormStatus.PENDING;
-          }
-          entity.updatedAt = now;
-          const saved: TradeFormResponse = {
-            id: entity.id as number,
-            uid: entity.uid as string,
-            creatorId: entity.creatorId ?? null,
-            counterpartyId: entity.counterpartyId ?? null,
-            creatorVerifiedIdentities: entity.creatorVerifiedIdentities ?? [],
-            itemName: entity.itemName as string,
-            itemDescription: entity.itemDescription as string,
-            itemCondition: entity.itemCondition as TradeFormItemCondition,
-            amount: entity.amount as string,
-            tradeChannel: entity.tradeChannel as TradeFormChannel,
-            paymentMethod: entity.paymentMethod as TradeFormPaymentMethod,
-            matchmakingChannel: entity.matchmakingChannel as TradeFormMatchmakingChannel,
-            identityRequirements: entity.identityRequirements as TradeFormIdentityRequirement[],
-            userRating: entity.userRating as number,
-            status: entity.status as TradeFormStatus,
-            meta: entity.meta ?? {},
-            confirmedByUser1: Boolean(entity.confirmedByUser1),
-            confirmedByUser2: Boolean(entity.confirmedByUser2),
-            vcVerifiedAt: (entity.vcVerifiedAt as Date | null | undefined) ?? null,
-            uidExpiresAt: (entity.uidExpiresAt as Date | null | undefined) ?? null,
-            finalizedAt: (entity.finalizedAt as Date | null | undefined) ?? null,
-            createdAt: entity.createdAt!,
-            updatedAt: entity.updatedAt!
-          };
-          store.set(saved.id, saved);
-          return saved;
-        }
-
-        async findById(id: number) {
-          return store.get(id) ?? null;
-        }
-
-        async findByUid(uid: string) {
-          return Array.from(store.values()).find((item) => item.uid === uid) ?? null;
-        }
-
-        async findWithFilters() {
-          const values = Array.from(store.values());
-          return [values, values.length] as const;
-        }
-
-        async delete(id: number) {
-          store.delete(id);
-        }
-      }
-
-      return { TradeFormRepository: InMemoryTradeFormRepository };
-    });
-
-    const [{ TradeFormController }, { TradeFormService }, { TradeFormRepository }] = await Promise.all([
-      import('../controller/tradeform.controller'),
-      import('../tradeform.service'),
-      import('../tradeform.repository')
-    ]);
-
-    const repository = new TradeFormRepository();
-    const auditRepository = {
-      create: jest.fn((payload) => payload),
-      save: jest.fn(async (payload) => payload)
-    };
-    const dataSource = {
-      getRepository: jest.fn(() => auditRepository)
-    } as unknown as DataSource;
-
-    controller = new TradeFormController(new TradeFormService(dataSource, repository));
+    const result = await controller.create(body, req);
+    expect(result.uid).toBe('trade-abc');
+    expect(service.create).toHaveBeenCalledWith(body, 'A131095852', 'user-uuid');
   });
 
-  afterEach(() => {
-    jest.resetModules();
+  it('throws UnauthorizedError when request user missing', async () => {
+    const service = {
+      create: jest.fn()
+    } as unknown as TradeFormService;
+    const controller = new TradeFormController(service);
+
+    await expect(
+      controller.create(body, {} as AuthenticatedRequest)
+    ).rejects.toBeInstanceOf(UnauthorizedError);
   });
 
-  it('supports create → list → get → update → delete lifecycle', async () => {
-    const createResult = await controller.create(examplePayload, {
-      user: { id: 'creator-1' }
-    });
+  it('maps class-validator errors to ValidationError', async () => {
+    const classError = new ClassValidatorError();
+    classError.property = 'amount';
+    classError.constraints = { matches: 'invalid' };
 
-    expect(createResult.id).toBe(1);
-    expect(createResult.itemName).toBe('iPad Pro 11"');
+    const service = {
+      create: jest.fn().mockRejectedValue([classError])
+    } as unknown as TradeFormService;
 
-    const listResult = await controller.list({});
-    expect(listResult.total).toBe(1);
+    const controller = new TradeFormController(service);
+    const req = { user: { idNumber: 'A131095852', id: 'user-uuid' } } as AuthenticatedRequest;
 
-    const found = await controller.findOne(1);
-    expect(found.userRating).toBe(5);
-
-    const updated = await controller.update(1, {
-      userRating: 4,
-      creatorVerifiedIdentities: ['StudentID']
-    });
-    expect(updated.userRating).toBe(4);
-    expect(updated.creatorVerifiedIdentities).toEqual(['StudentID']);
-
-    await controller.remove(1);
-
-    const afterDelete = await controller.list({});
-    expect(afterDelete.total).toBe(0);
+    await expect(controller.create(body, req)).rejects.toBeInstanceOf(ValidationError);
   });
 });
-jest.mock('nanoid', () => ({
-  nanoid: () => 'mock-uid'
-}));

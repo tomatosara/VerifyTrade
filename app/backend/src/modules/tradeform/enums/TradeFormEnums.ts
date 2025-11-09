@@ -1,39 +1,30 @@
 // src/models/enums/TradeFormEnums.ts
 
 export enum TradeFormItemCondition {
-  SECOND_HAND = 'SECOND_HAND',
-  LIKE_NEW = 'LIKE_NEW',
-  BRAND_NEW = 'BRAND_NEW'
+  NEW = 'new',
+  USED_LIKE_NEW = 'used_like_new',
+  USED = 'used'
 }
 
 export enum TradeFormChannel {
-  IN_PERSON = 'IN_PERSON',
-  CONVENIENCE_STORE_DELIVERY = 'CONVENIENCE_STORE_DELIVERY',
-  POST_OFFICE = 'POST_OFFICE',
-  COURIER = 'COURIER',
-  OTHER = 'OTHER'
+  P2P = 'p2p',
+  ESCROW = 'escrow'
 }
 
 export enum TradeFormPaymentMethod {
-  CASH_ON_DELIVERY = 'CASH_ON_DELIVERY',
-  BANK_TRANSFER = 'BANK_TRANSFER',
-  LINE_PAY = 'LINE_PAY',
-  CRYPTO = 'CRYPTO'
+  BANK_TRANSFER = 'bank_transfer',
+  CASH = 'cash'
 }
 
 export enum TradeFormMatchmakingChannel {
-  OFFLINE_AGREEMENT = 'OFFLINE_AGREEMENT',
-  SOCIAL_PLATFORM = 'SOCIAL_PLATFORM',
-  ONLINE_MARKETPLACE = 'ONLINE_MARKETPLACE'
+  IN_APP = 'in_app',
+  LINE = 'line',
+  TELEGRAM = 'telegram'
 }
 
-export enum TradeFormIdentityRequirement {
-  STUDENT_ID = 'STUDENT_ID',
-  EMPLOYEE_ID = 'EMPLOYEE_ID',
-  DIETITIAN_LICENSE = 'DIETITIAN_LICENSE',
-  LAWYER_LICENSE = 'LAWYER_LICENSE',
-  PROOF_OF_ORIGIN = 'PROOF_OF_ORIGIN'
-}
+export type TradeFormIdentityRequirement = string;
+
+export const IDENTITY_REQUIREMENT_PATTERN = /^[a-z0-9_]+$/;
 
 export enum TradeFormStatus {
   DRAFT = 'draft',

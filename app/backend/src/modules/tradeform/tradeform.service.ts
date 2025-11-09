@@ -5,10 +5,7 @@ import { validateOrReject } from 'class-validator';
 import { nanoid } from 'nanoid';
 import { AppDataSource } from '@database/data-source';
 import { featureFlags } from '@config/featureFlags';
-import {
-  TradeFormEntity,
-  TradeFormVCUser2Meta
-} from './entity/trade-form.entity';
+import { TradeFormEntity, TradeFormVCUser2Meta } from './entity/trade-form.entity';
 import { TradeFormStatus } from './enums/TradeFormEnums';
 import { TradeAuditAction, TradeAuditEventEntity } from './entity/trade-audit-event.entity';
 import { TradeFormFilters, TradeFormRepository } from './tradeform.repository';
@@ -24,7 +21,14 @@ import {
 import { ConfirmTradeResponseDto, VerifyVcResponseDto } from './dto/trade-form.actions.dto';
 import { checkUser2MeetsTradeRequirements } from './tradeform.vc-requirements';
 import { getVcMeta, upsertVcMeta } from './tradeform.meta';
-import { ConflictError, ForbiddenError, GoneError, NotFoundError } from '@utils/errors';
+import {
+  ConflictError,
+  ForbiddenError,
+  GoneError,
+  NotFoundError,
+  ValidationError
+} from '@utils/errors';
+import { formatAmountForResponse, normalizeAmountString } from './utils/amount';
 
 const UID_ALPHABET = '23456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz';
 const UID_LENGTH = 24;
@@ -32,13 +36,13 @@ const UID_LENGTH = 24;
 const mapEntityToResponse = (entity: TradeFormEntity): TradeFormResponse => ({
   id: entity.id,
   uid: entity.uid,
-  creatorId: entity.creatorId,
+  creatorId: entity.creatorId ?? '',
   counterpartyId: entity.counterpartyId,
   creatorVerifiedIdentities: entity.creatorVerifiedIdentities ?? [],
   itemName: entity.itemName,
   itemDescription: entity.itemDescription,
   itemCondition: entity.itemCondition,
-  amount: entity.amount,
+  amount: formatAmountForResponse(entity.amount),
   tradeChannel: entity.tradeChannel,
   paymentMethod: entity.paymentMethod,
   matchmakingChannel: entity.matchmakingChannel,
@@ -102,6 +106,28 @@ const areStringArraysEqual = (a?: string[], b?: string[]): boolean => {
   return left.every((value, index) => value === right[index]);
 };
 
+const normalizeStringArray = (values?: string[]): string[] => {
+  if (!Array.isArray(values)) {
+    return [];
+  }
+  const normalized = values
+    .map((value) => (typeof value === 'string' ? value.trim().toLowerCase() : ''))
+    .filter((value) => value.length > 0);
+  return Array.from(new Set(normalized));
+};
+
+const ensureNonEmptyArray = (values: string[], field: string): string[] => {
+  if (values.length === 0) {
+    throw new ValidationError(`${field} must contain at least one entry`, {
+      field,
+      constraints: {
+        [field]: 'At least one value is required'
+      }
+    });
+  }
+  return values;
+};
+
 export class TradeFormService {
   private readonly repository: TradeFormRepository;
 
@@ -118,27 +144,44 @@ export class TradeFormService {
     this.auditRepository = dataSource.getRepository(TradeAuditEventEntity);
   }
 
-  async create(body: CreateTradeFormDto, creatorId?: string | null): Promise<TradeFormResponse> {
+  async create(
+    body: CreateTradeFormDto,
+    creatorId: string,
+    actorUuid?: string | null
+  ): Promise<TradeFormResponse> {
     const dto = plainToInstance(CreateTradeFormDto, body);
     await validateOrReject(dto, { whitelist: true });
+
+    if (dto.creatorId && dto.creatorId !== creatorId) {
+      throw new ForbiddenError('Authenticated user does not match creatorId', {
+        field: 'creatorId'
+      });
+    }
+
+    const normalizedCreatorIdentities = normalizeStringArray(dto.creatorVerifiedIdentities);
+    const normalizedIdentityRequirements = ensureNonEmptyArray(
+      normalizeStringArray(dto.identityRequirements),
+      'identityRequirements'
+    );
+    const amount = normalizeAmountString(dto.amount);
+    const uid = await this.resolveUid(dto.uid);
 
     const now = new Date();
     const expiresAt = new Date(now.getTime() + featureFlags.uidTtlMinutes * 60_000);
 
     const entity = this.repository.create({
-      uid: await this.generateUniqueUid(),
-      creatorId: dto.creatorId ?? null,
+      uid,
+      creatorId,
       counterpartyId: null,
-      creatorVerifiedIdentities: dto.creatorVerifiedIdentities ?? [],
+      creatorVerifiedIdentities: normalizedCreatorIdentities,
       itemName: dto.itemName,
       itemDescription: dto.itemDescription,
       itemCondition: dto.itemCondition,
-      amount: dto.amount,
+      amount,
       tradeChannel: dto.tradeChannel,
       paymentMethod: dto.paymentMethod,
       matchmakingChannel: dto.matchmakingChannel,
-      identityRequirements: dto.identityRequirements,
-      userRating: dto.userRating,
+      identityRequirements: normalizedIdentityRequirements,
       status: TradeFormStatus.PENDING,
       meta: {},
       confirmedByUser1: false,
@@ -151,8 +194,16 @@ export class TradeFormService {
       finalizeError: null
     });
 
-    const saved = await this.repository.save(entity);
-    await this.logAuditEvent(saved.uid, creatorId ?? null, TradeAuditAction.CREATE, {
+    let saved: TradeFormEntity;
+    try {
+      saved = await this.repository.save(entity);
+    } catch (error) {
+      if (this.isUniqueViolation(error)) {
+        throw new ConflictError('Trade UID already exists', { field: 'uid' });
+      }
+      throw error;
+    }
+    await this.logAuditEvent(saved.uid, actorUuid ?? null, TradeAuditAction.CREATE, {
       status: saved.status
     });
     return mapEntityToResponse(saved);
@@ -204,7 +255,8 @@ export class TradeFormService {
   async verifyVc(
     uid: string,
     actorId: string,
-    vcProof: unknown
+    vcProof: unknown,
+    actorUuid?: string | null
   ): Promise<VerifyVcResponseDto> {
     const trade = await this.repository.findByUid(uid);
     if (!trade) {
@@ -288,7 +340,7 @@ export class TradeFormService {
 
     const saved = await this.repository.save(trade);
 
-    await this.logAuditEvent(saved.uid, actorId, TradeAuditAction.VERIFY_VC, {
+    await this.logAuditEvent(saved.uid, actorUuid ?? null, TradeAuditAction.VERIFY_VC, {
       valid: true,
       issuer: publicMatched.issuer ?? null,
       credentialType: publicMatched.credentialType ?? null,
@@ -304,7 +356,11 @@ export class TradeFormService {
     };
   }
 
-  async confirm(uid: string, actorId: string): Promise<ConfirmTradeResponseDto> {
+  async confirm(
+    uid: string,
+    actorId: string,
+    actorUuid?: string | null
+  ): Promise<ConfirmTradeResponseDto> {
     const trade = await this.repository.findByUid(uid);
     if (!trade) {
       throw new NotFoundError('Trade form not found');
@@ -360,7 +416,7 @@ export class TradeFormService {
 
     const saved = await this.repository.save(trade);
 
-    await this.logAuditEvent(saved.uid, actorId, TradeAuditAction.CONFIRM, {
+    await this.logAuditEvent(saved.uid, actorUuid ?? null, TradeAuditAction.CONFIRM, {
       role: actorRole,
       alreadyConfirmed
     });
@@ -384,17 +440,32 @@ export class TradeFormService {
       throw new NotFoundError('Trade form not found');
     }
 
+    const creatorVerifiedIdentities =
+      dto.creatorVerifiedIdentities !== undefined
+        ? normalizeStringArray(dto.creatorVerifiedIdentities)
+        : existing.creatorVerifiedIdentities ?? [];
+
+    const identityRequirements =
+      dto.identityRequirements !== undefined
+        ? ensureNonEmptyArray(
+            normalizeStringArray(dto.identityRequirements),
+            'identityRequirements'
+          )
+        : existing.identityRequirements ?? [];
+
+    const amount =
+      dto.amount !== undefined ? normalizeAmountString(dto.amount) : existing.amount;
+
     Object.assign(existing, {
-      creatorVerifiedIdentities:
-        dto.creatorVerifiedIdentities ?? existing.creatorVerifiedIdentities,
+      creatorVerifiedIdentities,
       itemName: dto.itemName ?? existing.itemName,
       itemDescription: dto.itemDescription ?? existing.itemDescription,
       itemCondition: dto.itemCondition ?? existing.itemCondition,
-      amount: dto.amount ?? existing.amount,
+      amount,
       tradeChannel: dto.tradeChannel ?? existing.tradeChannel,
       paymentMethod: dto.paymentMethod ?? existing.paymentMethod,
       matchmakingChannel: dto.matchmakingChannel ?? existing.matchmakingChannel,
-      identityRequirements: dto.identityRequirements ?? existing.identityRequirements,
+      identityRequirements,
       userRating: dto.userRating ?? existing.userRating
     });
 
@@ -473,6 +544,20 @@ export class TradeFormService {
       return 'user2';
     }
     return null;
+  }
+
+  private async resolveUid(preferred?: string | null): Promise<string> {
+    const candidate = preferred?.trim();
+    if (!candidate) {
+      return this.generateUniqueUid();
+    }
+
+    const existing = await this.repository.findByUid(candidate);
+    if (existing) {
+      throw new ConflictError('Trade UID already exists', { field: 'uid' });
+    }
+
+    return candidate;
   }
 
   private async generateUniqueUid(): Promise<string> {

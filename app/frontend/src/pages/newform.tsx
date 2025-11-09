@@ -14,14 +14,21 @@
  * ---------------------------------------------------------
  */
 
-import { useState, useEffect } from "react";
-import { QRCode } from "@/components/ui/qr-code";
+import { useState, useEffect, useRef, useCallback } from "react";
 import RentTemplate from "@/components/templates/rent.template";
 import P2PTemplate from "@/components/templates/p2p.template";
 import { Copy, Check } from "lucide-react";
+import { fetchTradeFormQrCode, fetchVerifierResult } from "@/api/qr";
+import type { QrCodeResponse } from '@/types/verifier';
+import { createTradeForm } from "@/api/tradeForm";
+import type { TradeFormCreate } from "@/types/tradeForm";
+import { useAuth as useAuthContext } from "@/context/AuthContext";
+
+type VerificationPhase = "initiator" | "receiver";
 
 export default function NewForm() {
   // 🧩 所有狀態變數
+  const { user } = useAuthContext();
   const [template, setTemplate] = useState<"rent" | "p2p" | "">("");
   const [tradeId, setTradeId] = useState("");
   const [transactionLocked, setTransactionLocked] = useState(false);
@@ -30,6 +37,16 @@ export default function NewForm() {
   const [receiverAgreed, setReceiverAgreed] = useState(false);
   const [receiverVerified, setReceiverVerified] = useState(false);
   const [copied, setCopied] = useState(false);
+  const [qrData, setQrData] = useState<QrCodeResponse | null>(null);
+  const [qrPhase, setQrPhase] = useState<VerificationPhase | null>(null);
+  const [qrError, setQrError] = useState<string | null>(null);
+  const [qrLoading, setQrLoading] = useState(false);
+  const [qrReloadKey, setQrReloadKey] = useState(0);
+  const pollerRef = useRef<number | null>(null);
+  const [creatingTradeForm, setCreatingTradeForm] = useState(false);
+  const [tradeFormCreated, setTradeFormCreated] = useState(false);
+  const [tradeFormError, setTradeFormError] = useState<string | null>(null);
+  const creatorId = user?.idNumber ?? "";
 
   // ✅ 自動生成交易序號
   const generateTradeId = () => {
@@ -46,6 +63,133 @@ export default function NewForm() {
 
   // ✅ 判斷整體交易是否成功
   const transactionSuccess = initiatorVerified && receiverVerified;
+  const requiredPhase: VerificationPhase | null =
+    initiatorConfirmed && !initiatorVerified
+      ? "initiator"
+      : initiatorVerified && transactionLocked && receiverAgreed && !receiverVerified
+        ? "receiver"
+        : null;
+
+  const cleanupPoller = useCallback(() => {
+    if (pollerRef.current) {
+      clearInterval(pollerRef.current);
+      pollerRef.current = null;
+    }
+  }, []);
+
+  useEffect(() => {
+    return () => cleanupPoller();
+  }, [cleanupPoller]);
+
+  const attemptCreateTradeForm = useCallback(async () => {
+    if (!tradeId || !creatorId || !template) return;
+
+    const payload: TradeFormCreate = {
+      uid: tradeId,
+      creatorId,
+      creatorVerifiedIdentities: ["tw_national_id"],
+      itemName: template === "p2p" ? "網路交易" : "租屋交易",
+      itemDescription: "請在表單中補充交易內容與條件。",
+      itemCondition: "used",
+      amount: "1",
+      tradeChannel: template === "p2p" ? "p2p" : "escrow",
+      paymentMethod: "cash",
+      matchmakingChannel: "in_app",
+      identityRequirements: ["tw_national_id"],
+    };
+
+    setCreatingTradeForm(true);
+    setTradeFormError(null);
+    try {
+      await createTradeForm(payload);
+      setTradeFormCreated(true);
+    } catch (err: any) {
+      setTradeFormError(err?.message || "建立交易表單失敗，請稍後再試");
+    } finally {
+      setCreatingTradeForm(false);
+    }
+  }, [creatorId, template, tradeId]);
+
+  useEffect(() => {
+    if (
+      !initiatorVerified ||
+      !tradeId ||
+      tradeFormCreated ||
+      !creatorId ||
+      creatingTradeForm
+    ) {
+      return;
+    }
+    attemptCreateTradeForm();
+  }, [
+    initiatorVerified,
+    tradeId,
+    tradeFormCreated,
+    creatorId,
+    creatingTradeForm,
+    attemptCreateTradeForm,
+  ]);
+
+  // ✅ 依照目前流程動態建立 QR Code 並輪詢驗證結果
+  useEffect(() => {
+    if (!requiredPhase) {
+      cleanupPoller();
+      if (qrData) setQrData(null);
+      if (qrPhase) setQrPhase(null);
+      setQrError(null);
+      setQrLoading(false);
+      return;
+    }
+
+    if (qrPhase === requiredPhase && qrData) return;
+
+    let cancelled = false;
+
+    const fetchQr = async () => {
+      setQrLoading(true);
+      setQrError(null);
+      cleanupPoller();
+
+      try {
+        const data = await fetchTradeFormQrCode();
+        if (cancelled) return;
+
+        setQrData(data);
+        setQrPhase(requiredPhase);
+
+        pollerRef.current = window.setInterval(async () => {
+          try {
+            const result = await fetchVerifierResult(data.transactionId);
+            if (result.status === "success" && result.verifyResult) {
+              cleanupPoller();
+              if (requiredPhase === "initiator") {
+                setInitiatorVerified(true);
+              } else {
+                setReceiverVerified(true);
+              }
+              window.scrollTo({ top: 0, behavior: "smooth" });
+            }
+          } catch (err: any) {
+            setQrError(err?.message || "驗證狀態查詢失敗，請稍後再試");
+          }
+        }, 3000);
+      } catch (err: any) {
+        if (!cancelled) {
+          setQrError(err?.message || "無法取得 QR Code");
+        }
+      } finally {
+        if (!cancelled) {
+          setQrLoading(false);
+        }
+      }
+    };
+
+    fetchQr();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [requiredPhase, qrPhase, qrData, qrReloadKey, cleanupPoller]);
 
   // ✅ 複製交易序號
   const handleCopy = () => {
@@ -53,6 +197,48 @@ export default function NewForm() {
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
   };
+
+  const renderVerifierContent = (title: string, altText: string) => (
+    <>
+      <h1 className="text-lg font-semibold text-[var(--color-primary)] mb-4">
+        {title}
+      </h1>
+      {qrLoading && !qrData && (
+        <p className="text-gray-600">QR Code 產生中...</p>
+      )}
+      {qrError && (
+        <>
+          <p className="text-red-500 text-sm mb-3">{qrError}</p>
+          {!qrData && (
+            <button
+              onClick={() => setQrReloadKey((key) => key + 1)}
+              className="text-sm text-[var(--color-primary)] underline hover:text-[var(--color-secondary)]"
+            >
+              重新產生 QR Code
+            </button>
+          )}
+        </>
+      )}
+      {qrData && (
+        <>
+          <div className="p-3 bg-white rounded-xl shadow-sm">
+            <img
+              src={qrData.qrcodeImage}
+              alt={altText}
+              className="w-[220px] h-[220px] object-contain"
+            />
+          </div>
+          <p className="text-xs text-gray-700 mt-4">交易 ID：{qrData.transactionId}</p>
+          <button
+            onClick={() => setQrReloadKey((key) => key + 1)}
+            className="mt-4 text-sm text-[var(--color-primary)] underline hover:text-[var(--color-secondary)]"
+          >
+            重新產生 QR Code
+          </button>
+        </>
+      )}
+    </>
+  );
 
   return (
     <div className="min-h-screen bg-gray-50 flex justify-center items-center py-8 px-4">
@@ -109,6 +295,24 @@ export default function NewForm() {
                 </button>
               </div>
             </div>
+            {creatingTradeForm && (
+              <p className="text-sm text-gray-600 mt-2">建立交易表單中...</p>
+            )}
+            {tradeFormCreated && !tradeFormError && (
+              <p className="text-sm text-green-600 mt-2">交易表單已建立。</p>
+            )}
+            {tradeFormError && (
+              <div className="mt-3 flex flex-col items-center gap-2">
+                <p className="text-sm text-red-600">{tradeFormError}</p>
+                <button
+                  onClick={attemptCreateTradeForm}
+                  disabled={creatingTradeForm}
+                  className="text-sm text-[var(--color-primary)] underline disabled:opacity-50"
+                >
+                  重新送出交易表單
+                </button>
+              </div>
+            )}
           </section>
         )}
 
@@ -129,42 +333,12 @@ export default function NewForm() {
             <div className="w-full md:w-[400px] mx-auto flex flex-col items-center justify-center border-2 border-dashed border-gray-300 rounded-xl p-10 min-h-[300px] bg-gray-50 text-center transition-all duration-300">
 
               {/* 建立方驗證階段 */}
-              {initiatorConfirmed && !initiatorVerified && (
-                <>
-                  <QRCode value="https://verify.initiator" size="lg" />
-                  <h1 className="text-lg font-semibold text-[var(--color-primary)] mt-4">
-                    建立方驗證
-                  </h1>
-                  <button
-                    onClick={() => {
-                      setInitiatorVerified(true);
-                      window.scrollTo({ top: 0, behavior: "smooth" });
-                    }}
-                    className="mt-6 w-[60%] md:w-[40%] bg-green-500 text-white py-2 rounded-full hover:bg-green-600 transition"
-                  >
-                    模擬建立方驗證
-                  </button>
-                </>
-              )}
+              {initiatorConfirmed && !initiatorVerified &&
+                renderVerifierContent("建立方驗證", "建立方驗證 QR Code")}
 
               {/* 確認方驗證階段 */}
-              {initiatorVerified && transactionLocked && receiverAgreed && !receiverVerified && (
-                <>
-                  <QRCode value="https://verify.receiver" size="lg" />
-                  <h1 className="text-lg font-semibold text-[var(--color-primary)] mt-4">
-                    確認方驗證
-                  </h1>
-                  <button
-                    onClick={() => {
-                      setReceiverVerified(true);
-                window.scrollTo({ top: 0, behavior: "smooth" });
-                 }}
-                    className="mt-6 w-[60%] md:w-[40%] bg-green-500 text-white py-2 rounded-full hover:bg-green-600 transition"
-                  >
-                    模擬確認方驗證
-                  </button>
-                </>
-              )}
+              {initiatorVerified && transactionLocked && receiverAgreed && !receiverVerified &&
+                renderVerifierContent("確認方驗證", "確認方驗證 QR Code")}
             </div>
           </section>
         )}
@@ -221,6 +395,14 @@ export default function NewForm() {
 
   // 🧹 重設所有狀態（供 TemplateSelector 呼叫）
   function resetAllStates(type: "rent" | "p2p") {
+    cleanupPoller();
+    setQrData(null);
+    setQrPhase(null);
+    setQrError(null);
+    setQrLoading(false);
+    setTradeFormCreated(false);
+    setTradeFormError(null);
+    setCreatingTradeForm(false);
     setTemplate(type);
     setInitiatorVerified(false);
     setReceiverVerified(false);

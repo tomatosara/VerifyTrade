@@ -6,21 +6,28 @@ import {
   IsNotEmpty,
   IsOptional,
   IsString,
+  Matches,
   Max,
   Min
 } from 'class-validator';
 import {
+  IDENTITY_REQUIREMENT_PATTERN,
   TradeFormChannel,
   TradeFormIdentityRequirement,
   TradeFormItemCondition,
   TradeFormMatchmakingChannel,
   TradeFormPaymentMethod
 } from '../enums/TradeFormEnums';
+import { AMOUNT_REGEX } from '../utils/amount';
 
 export class UpdateTradeFormDto {
   @IsArray()
   @IsOptional()
   @IsString({ each: true })
+  @Matches(IDENTITY_REQUIREMENT_PATTERN, {
+    each: true,
+    message: 'creatorVerifiedIdentities must use snake_case strings (e.g. tw_national_id)'
+  })
   creatorVerifiedIdentities?: string[];
 
   @IsString()
@@ -40,6 +47,9 @@ export class UpdateTradeFormDto {
   @IsString()
   @IsNotEmpty()
   @IsOptional()
+  @Matches(AMOUNT_REGEX, {
+    message: 'amount must be a positive decimal string with up to 18 decimal places'
+  })
   amount?: string;
 
   @IsEnum(TradeFormChannel)
@@ -56,7 +66,11 @@ export class UpdateTradeFormDto {
 
   @IsArray()
   @ArrayMinSize(1)
-  @IsEnum(TradeFormIdentityRequirement, { each: true })
+  @IsString({ each: true })
+  @Matches(IDENTITY_REQUIREMENT_PATTERN, {
+    each: true,
+    message: 'identityRequirements must use snake_case strings (e.g. tw_national_id)'
+  })
   @IsOptional()
   identityRequirements?: TradeFormIdentityRequirement[];
 

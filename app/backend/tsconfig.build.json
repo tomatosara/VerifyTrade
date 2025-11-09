@@ -19,6 +19,6 @@
     "src/**/__tests__/**",
     "src/http/routes.ts",
     "src/database/seed/**",
-    "jest.config.ts"
+    "jest.config.js"
   ]
 }

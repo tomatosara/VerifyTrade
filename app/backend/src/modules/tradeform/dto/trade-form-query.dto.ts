@@ -1,5 +1,6 @@
-import { IsEnum, IsOptional } from 'class-validator';
+import { IsEnum, IsOptional, IsString, Matches } from 'class-validator';
 import {
+  IDENTITY_REQUIREMENT_PATTERN,
   TradeFormChannel,
   TradeFormIdentityRequirement,
   TradeFormItemCondition,
@@ -24,7 +25,10 @@ export class TradeFormQueryDto {
   @IsOptional()
   matchmakingChannel?: TradeFormMatchmakingChannel;
 
-  @IsEnum(TradeFormIdentityRequirement)
+  @IsString()
+  @Matches(IDENTITY_REQUIREMENT_PATTERN, {
+    message: 'identityRequirement must use snake_case strings (e.g. tw_national_id)'
+  })
   @IsOptional()
   identityRequirement?: TradeFormIdentityRequirement;
 }

@@ -1,5 +1,65 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Trash2 } from "lucide-react";
+import type { TradeFormDraft } from "@/types/tradeForm";
+import { emptyTradeForm } from "@/types/tradeForm";
+
+type PaymentMethodOption = {
+  value: string;
+  label: string;
+  backend?: TradeFormDraft["paymentMethod"];
+};
+
+type TradeChannelOption = {
+  value: string;
+  label: string;
+  backend?: TradeFormDraft["tradeChannel"];
+};
+
+type MatchmakingOption = {
+  value: string;
+  label: string;
+  backend?: TradeFormDraft["matchmakingChannel"];
+};
+
+const paymentMethodOptions: PaymentMethodOption[] = [
+  { value: "", label: "請選擇交易管道" },
+  { value: "cash", label: "現金", backend: "cash" },
+  { value: "deposit", label: "匯款", backend: "bank_transfer" },
+  { value: "linepay", label: "Line Pay", backend: "bank_transfer" },
+  { value: "crypto", label: "加密貨幣", backend: "bank_transfer" },
+];
+
+const tradeChannelOptions: TradeChannelOption[] = [
+  { value: "", label: "請選擇交易管道" },
+  { value: "see", label: "面交", backend: "p2p" },
+  { value: "seven-eleven", label: "交貨便", backend: "p2p" },
+  { value: "post", label: "郵局", backend: "p2p" },
+  { value: "express", label: "快遞", backend: "p2p" },
+  { value: "delivery-other", label: "其他", backend: "escrow" },
+];
+
+const matchmakingOptions: MatchmakingOption[] = [
+  { value: "", label: "請選擇交易媒合管道" },
+  { value: "private", label: "線下合議", backend: "in_app" },
+  { value: "social-platform", label: "社交平台", backend: "line" },
+  { value: "dealing-platform", label: "網路交易平台", backend: "telegram" },
+];
+
+const findUiValue = <T extends string>(
+  options: { value: string; backend?: T }[],
+  backendValue: T | undefined
+) => options.find((opt) => opt.backend === backendValue)?.value ?? "";
+
+interface P2PTemplateProps {
+  tradeId: string;
+  initiatorVerified: boolean;
+  setInitiatorVerified: (value: boolean) => void;
+  transactionLocked: boolean;
+  setTransactionLocked: (value: boolean) => void;
+  generateTradeId: () => void;
+  initiatorConfirmed: boolean;
+  setInitiatorConfirmed: (value: boolean) => void;
+}
 
 export default function P2PTemplate({
   tradeId,
@@ -10,12 +70,27 @@ export default function P2PTemplate({
   generateTradeId,
   initiatorConfirmed,
   setInitiatorConfirmed,
-}: any) {
+}: P2PTemplateProps) {
+  const [form, setForm] = useState<TradeFormDraft>(emptyTradeForm);
+  const handleDraftChange = (patch: Partial<TradeFormDraft>) => {
+    setForm((prev) => ({ ...prev, ...patch }));
+  };
   const [initiator, setInitiator] = useState({ name: "", method: "" });
   const [receiver, setReceiver] = useState({ name: "", method: "" });
-  const [formData, setFormData] = useState({ address: "", rent: "", duration: "" });
   const [initiatorExtraList, setInitiatorExtraList] = useState([""]);
   const [receiverExtraList, setReceiverExtraList] = useState([""]);
+  const paymentSelectionRef = useRef<string | null>(null);
+  const tradeChannelSelectionRef = useRef<string | null>(null);
+  const matchmakingSelectionRef = useRef<string | null>(null);
+  const [paymentMethodUi, setPaymentMethodUi] = useState<string>(() =>
+    findUiValue(paymentMethodOptions, form.paymentMethod)
+  );
+  const [tradeChannelUi, setTradeChannelUi] = useState<string>(() =>
+    findUiValue(tradeChannelOptions, form.tradeChannel)
+  );
+  const [matchmakingUi, setMatchmakingUi] = useState<string>(() =>
+    findUiValue(matchmakingOptions, form.matchmakingChannel)
+  );
 
   const inputClass = (disabled = false) =>
     `border border-gray-300 rounded-lg w-full px-3 py-2 mb-3 text-gray-800 ${disabled
@@ -34,6 +109,82 @@ export default function P2PTemplate({
       window.scrollTo({ top: 0, behavior: "smooth" });
     }
   }, [transactionLocked]);
+
+  useEffect(() => {
+    setForm(() => ({ ...emptyTradeForm }));
+  }, [tradeId]);
+
+  useEffect(() => {
+    paymentSelectionRef.current = null;
+    tradeChannelSelectionRef.current = null;
+    matchmakingSelectionRef.current = null;
+    setPaymentMethodUi(findUiValue(paymentMethodOptions, form.paymentMethod));
+    setTradeChannelUi(findUiValue(tradeChannelOptions, form.tradeChannel));
+    setMatchmakingUi(findUiValue(matchmakingOptions, form.matchmakingChannel));
+  }, [tradeId, form.paymentMethod, form.tradeChannel, form.matchmakingChannel]);
+
+  useEffect(() => {
+    const last = paymentSelectionRef.current;
+    if (last) {
+      const mapped = paymentMethodOptions.find((opt) => opt.value === last)?.backend;
+      if (mapped === form.paymentMethod) {
+        setPaymentMethodUi(last);
+        return;
+      }
+    }
+    setPaymentMethodUi(findUiValue(paymentMethodOptions, form.paymentMethod));
+  }, [form.paymentMethod]);
+
+  useEffect(() => {
+    const last = tradeChannelSelectionRef.current;
+    if (last) {
+      const mapped = tradeChannelOptions.find((opt) => opt.value === last)?.backend;
+      if (mapped === form.tradeChannel) {
+        setTradeChannelUi(last);
+        return;
+      }
+    }
+    setTradeChannelUi(findUiValue(tradeChannelOptions, form.tradeChannel));
+  }, [form.tradeChannel]);
+
+  useEffect(() => {
+    const last = matchmakingSelectionRef.current;
+    if (last) {
+      const mapped = matchmakingOptions.find((opt) => opt.value === last)?.backend;
+      if (mapped === form.matchmakingChannel) {
+        setMatchmakingUi(last);
+        return;
+      }
+    }
+    setMatchmakingUi(findUiValue(matchmakingOptions, form.matchmakingChannel));
+  }, [form.matchmakingChannel]);
+
+  const handlePaymentMethodChange = (value: string) => {
+    paymentSelectionRef.current = value;
+    setPaymentMethodUi(value);
+    const backend = paymentMethodOptions.find((opt) => opt.value === value)?.backend;
+    if (backend) {
+      handleDraftChange({ paymentMethod: backend });
+    }
+  };
+
+  const handleTradeChannelChange = (value: string) => {
+    tradeChannelSelectionRef.current = value;
+    setTradeChannelUi(value);
+    const backend = tradeChannelOptions.find((opt) => opt.value === value)?.backend;
+    if (backend) {
+      handleDraftChange({ tradeChannel: backend });
+    }
+  };
+
+  const handleMatchmakingChange = (value: string) => {
+    matchmakingSelectionRef.current = value;
+    setMatchmakingUi(value);
+    const backend = matchmakingOptions.find((opt) => opt.value === value)?.backend;
+    if (backend) {
+      handleDraftChange({ matchmakingChannel: backend });
+    }
+  };
   return (
     <>
       {/* 二、身分驗證區（僅在交易內容送出後才顯示） */}
@@ -219,17 +370,25 @@ export default function P2PTemplate({
               type="text"
               placeholder="請輸入商品名稱"
               className={inputClass(transactionLocked)}
+              value={form.itemName}
+              onChange={(e) => handleDraftChange({ itemName: e.target.value })}
               disabled={transactionLocked}
             />
           </div>
 
           <div>
             <label className="block text-gray-700 font-medium mb-1">商品狀態</label>
-            <select className={inputClass(transactionLocked)} disabled={transactionLocked}>
-              <option value="">請選擇商品狀態</option>
+            <select
+              className={inputClass(transactionLocked)}
+              value={form.itemCondition}
+              onChange={(e) =>
+                handleDraftChange({ itemCondition: e.target.value as TradeFormDraft["itemCondition"] })
+              }
+              disabled={transactionLocked}
+            >
               <option value="new">全新</option>
               <option value="used">二手</option>
-              <option value="like-new">二手近全新</option>
+              <option value="used_like_new">二手近全新</option>
             </select>
           </div>
 
@@ -239,40 +398,57 @@ export default function P2PTemplate({
               type="number"
               placeholder="請輸入商品金額"
               className={inputClass(transactionLocked)}
+              value={form.amount}
+              onChange={(e) => handleDraftChange({ amount: e.target.value })}
               disabled={transactionLocked}
             />
           </div>
 
           <div>
             <label className="block text-gray-700 font-medium mb-1">付款方式</label>
-            <select className={inputClass(transactionLocked)} disabled={transactionLocked}>
-              <option value="">請選擇交易管道</option>
-              <option value="cash">現金</option>
-              <option value="deposit">匯款</option>
-              <option value="linepay">Line Pay</option>
-              <option value="crypto">加密貨幣</option>
+            <select
+              className={inputClass(transactionLocked)}
+              value={paymentMethodUi}
+              onChange={(e) => handlePaymentMethodChange(e.target.value)}
+              disabled={transactionLocked}
+            >
+              {paymentMethodOptions.map((opt) => (
+                <option key={opt.value} value={opt.value}>
+                  {opt.label}
+                </option>
+              ))}
             </select>
           </div>
 
           <div>
             <label className="block text-gray-700 font-medium mb-1">交易管道</label>
-            <select className={inputClass(transactionLocked)} disabled={transactionLocked}>
-              <option value="">請選擇交易管道</option>
-              <option value="see">面交</option>
-              <option value="seven-eleven">交貨便</option>
-              <option value="post">郵局</option>
-              <option value="express">快遞</option>
-              <option value="delivery-other">其他</option>
+            <select
+              className={inputClass(transactionLocked)}
+              value={tradeChannelUi}
+              onChange={(e) => handleTradeChannelChange(e.target.value)}
+              disabled={transactionLocked}
+            >
+              {tradeChannelOptions.map((opt) => (
+                <option key={opt.value} value={opt.value}>
+                  {opt.label}
+                </option>
+              ))}
             </select>
           </div>
 
           <div>
             <label className="block text-gray-700 font-medium mb-1">交易媒合管道</label>
-            <select className={inputClass(transactionLocked)} disabled={transactionLocked}>
-              <option value="">請選擇交易媒合管道</option>
-              <option value="private">線下合議</option>
-              <option value="social-platform">社交平台</option>
-              <option value="dealing-platform">網路交易平台</option>
+            <select
+              className={inputClass(transactionLocked)}
+              value={matchmakingUi}
+              onChange={(e) => handleMatchmakingChange(e.target.value)}
+              disabled={transactionLocked}
+            >
+              {matchmakingOptions.map((opt) => (
+                <option key={opt.value} value={opt.value}>
+                  {opt.label}
+                </option>
+              ))}
             </select>
           </div>
 
@@ -282,6 +458,8 @@ export default function P2PTemplate({
               placeholder="請輸入商品說明（3000 字以內）"
               className={`${inputClass(transactionLocked)} h-32 resize-none`}
               maxLength={3000}
+              value={form.itemDescription}
+              onChange={(e) => handleDraftChange({ itemDescription: e.target.value })}
               disabled={transactionLocked}
             ></textarea>
           </div>

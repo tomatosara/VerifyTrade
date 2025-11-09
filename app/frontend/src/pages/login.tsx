@@ -1,7 +1,7 @@
 import React, { useEffect, useState, useRef } from "react";
 import { FlickeringGrid } from "@/components/ui/flickering-grid";
 import { BorderBeam } from "@/components/ui/border-beam";
-import { fetchQrCode, fetchVerifierResult } from "@/api/qr";
+import { fetchLoginQrCode, fetchVerifierResult } from "@/api/qr";
 import { api, setAccessToken } from "@/api/client";
 import type { QrCodeResponse, VerifierResultResponse, UserProfile } from '@/types/verifier';
 import { useNavigate } from "react-router-dom";
@@ -19,7 +19,7 @@ export default function Login() {
   useEffect(() => {
     (async () => {
       try {
-        const data = await fetchQrCode();
+        const data = await fetchLoginQrCode();
         console.log('[QR] fetching...', data);
         setQrData(data);
       } catch (err: any) {

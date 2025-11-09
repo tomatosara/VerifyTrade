@@ -4,6 +4,8 @@ import { Link, useNavigate } from "react-router-dom";
 import { Menu, X } from "lucide-react";
 import { api, setAccessToken } from "@/api/client";
 import { useAuth } from "@/context/AuthContext";
+import { checkLogin } from "@/utils/auth";
+// import { mockUser } from "@/mocks/mockUser"; // ✅ 引入 mock 資料
 
 export default function Navbar() {
   const [isOpen, setIsOpen] = useState(false);

@@ -11,7 +11,7 @@ import {TradeFormMeta} from '../entity/trade-form.entity'
 export interface TradeFormResponse {
   id: number;
   uid: string;
-  creatorId: string | null;
+  creatorId: string;
   counterpartyId: string | null;
   creatorVerifiedIdentities: string[];
   itemName: string;

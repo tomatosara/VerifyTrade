@@ -25,10 +25,14 @@ export async function expressAuthentication(
     throw new UnauthorizedError();
   }
 
-  const claims = verifyJwt(token);
+  const claims = verifyJwt<{ sub?: string; idNumber?: string; role?: string; name?: string; birthday?: string }>(token);
+  if (!claims) {
+    throw new UnauthorizedError();
+  }
 
   (request as any).user = {
-    idNumber: claims.idNumber,
+    id: claims.sub,
+    idNumber: claims.idNumber ?? claims.sub,
     name: claims.name,
     role: claims.role,
     birthday: claims.birthday

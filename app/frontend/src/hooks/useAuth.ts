@@ -1,6 +1,6 @@
 // src/hooks/useAuth.ts
 import { useEffect, useState } from "react";
-import { isLoggedIn, getAccessToken, setAccessToken, clearAccessToken } from "@/utils/auth";
+import { isLoggedIn, getAccessToken, setAccessToken, clearAccessToken } from "@/api/client";
 
 export function useAuth() {
   const [loggedIn, setLoggedIn] = useState(isLoggedIn());

@@ -4,14 +4,7 @@ import { AppDataSource } from '@database/data-source';
 import { logger } from '@utils/logger';
 import { clearAllForSeed } from './utils/clear';
 import { UserEntity } from '@modules/auth/entity/user.entity';
-import {
-  TradeFormChannel,
-  TradeFormEntity,
-  TradeFormIdentityRequirement,
-  TradeFormItemCondition,
-  TradeFormMatchmakingChannel,
-  TradeFormPaymentMethod
-} from '@modules/tradeform/entity/trade-form.entity';
+import { TradeFormEntity } from '@modules/tradeform/entity/trade-form.entity';
 
 interface RunSeedOptions {
   dataSource?: DataSource;

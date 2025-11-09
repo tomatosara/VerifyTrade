@@ -41,47 +41,35 @@
 			},
 			"TradeFormItemCondition": {
 				"enum": [
-					"SECOND_HAND",
-					"LIKE_NEW",
-					"BRAND_NEW"
+					"new",
+					"used_like_new",
+					"used"
 				],
 				"type": "string"
 			},
 			"TradeFormChannel": {
 				"enum": [
-					"IN_PERSON",
-					"CONVENIENCE_STORE_DELIVERY",
-					"POST_OFFICE",
-					"COURIER",
-					"OTHER"
+					"p2p",
+					"escrow"
 				],
 				"type": "string"
 			},
 			"TradeFormPaymentMethod": {
 				"enum": [
-					"CASH_ON_DELIVERY",
-					"BANK_TRANSFER",
-					"LINE_PAY",
-					"CRYPTO"
+					"bank_transfer",
+					"cash"
 				],
 				"type": "string"
 			},
 			"TradeFormMatchmakingChannel": {
 				"enum": [
-					"OFFLINE_AGREEMENT",
-					"SOCIAL_PLATFORM",
-					"ONLINE_MARKETPLACE"
+					"in_app",
+					"line",
+					"telegram"
 				],
 				"type": "string"
 			},
 			"TradeFormIdentityRequirement": {
-				"enum": [
-					"STUDENT_ID",
-					"EMPLOYEE_ID",
-					"DIETITIAN_LICENSE",
-					"LAWYER_LICENSE",
-					"PROOF_OF_ORIGIN"
-				],
 				"type": "string"
 			},
 			"TradeFormStatus": {
@@ -187,8 +175,7 @@
 						"type": "string"
 					},
 					"creatorId": {
-						"type": "string",
-						"nullable": true
+						"type": "string"
 					},
 					"counterpartyId": {
 						"type": "string",
@@ -313,13 +300,15 @@
 			},
 			"CreateTradeFormDto": {
 				"properties": {
+					"uid": {
+						"type": "string",
+						"description": "前端生成的交易序號，建立雙方共用。",
+						"example": "P2P-7f4c8d90"
+					},
 					"creatorId": {
 						"type": "string",
-						"description": "A idNumber"
-					},
-					"counterpartyId": {
-						"type": "string",
-						"description": "B idNumber"
+						"description": "建立者的使用者識別（需與 JWT 內 idNumber 一致）。",
+						"example": "A131095852"
 					},
 					"creatorVerifiedIdentities": {
 						"items": {
@@ -328,8 +317,8 @@
 						"type": "array",
 						"description": "已驗證身分(創建者) / Creator verified identities",
 						"example": [
-							"StudentID",
-							"CompanyEmail"
+							"tw_national_id",
+							"phone_verified"
 						]
 					},
 					"itemName": {
@@ -344,24 +333,28 @@
 					},
 					"itemCondition": {
 						"$ref": "#/components/schemas/TradeFormItemCondition",
-						"description": "商品狀態：{ 二手 || 二手近全新 || 全新 }"
+						"description": "商品狀態",
+						"example": "used_like_new"
 					},
 					"amount": {
 						"type": "string",
 						"description": "交易金額 / Amount (string to keep currency format)",
-						"example": "22000"
+						"example": "22000.50"
 					},
 					"tradeChannel": {
 						"$ref": "#/components/schemas/TradeFormChannel",
-						"description": "交易管道：{ 面交 || 交貨便 || 郵局 || 快遞 || 其他 }"
+						"description": "交易管道",
+						"example": "p2p"
 					},
 					"paymentMethod": {
 						"$ref": "#/components/schemas/TradeFormPaymentMethod",
-						"description": "付款方式：{ 面交 || 匯款 || LinePay || 加密貨幣 }"
+						"description": "付款方式",
+						"example": "bank_transfer"
 					},
 					"matchmakingChannel": {
 						"$ref": "#/components/schemas/TradeFormMatchmakingChannel",
-						"description": "交易媒合管道：{ 線下合議 || 社交平台 || 網路交易平台 }"
+						"description": "媒合管道",
+						"example": "in_app"
 					},
 					"identityRequirements": {
 						"items": {
@@ -370,17 +363,14 @@
 						"type": "array",
 						"description": "身份驗證條件 (複選) / Identity requirements (multi-select)",
 						"example": [
-							"STUDENT_ID",
-							"PROOF_OF_ORIGIN"
+							"tw_national_id",
+							"phone_verified"
 						]
-					},
-					"userRating": {
-						"type": "number",
-						"format": "double",
-						"description": "用戶評分：{1..5}"
 					}
 				},
 				"required": [
+					"uid",
+					"creatorId",
 					"itemName",
 					"itemDescription",
 					"itemCondition",
@@ -388,9 +378,51 @@
 					"tradeChannel",
 					"paymentMethod",
 					"matchmakingChannel",
-					"identityRequirements",
-					"userRating"
+					"identityRequirements"
 				],
+				"type": "object",
+				"additionalProperties": false
+			},
+			"UpdateTradeFormDto": {
+				"properties": {
+					"creatorVerifiedIdentities": {
+						"items": {
+							"type": "string"
+						},
+						"type": "array"
+					},
+					"itemName": {
+						"type": "string"
+					},
+					"itemDescription": {
+						"type": "string"
+					},
+					"itemCondition": {
+						"$ref": "#/components/schemas/TradeFormItemCondition"
+					},
+					"amount": {
+						"type": "string"
+					},
+					"tradeChannel": {
+						"$ref": "#/components/schemas/TradeFormChannel"
+					},
+					"paymentMethod": {
+						"$ref": "#/components/schemas/TradeFormPaymentMethod"
+					},
+					"matchmakingChannel": {
+						"$ref": "#/components/schemas/TradeFormMatchmakingChannel"
+					},
+					"identityRequirements": {
+						"items": {
+							"$ref": "#/components/schemas/TradeFormIdentityRequirement"
+						},
+						"type": "array"
+					},
+					"userRating": {
+						"type": "number",
+						"format": "double"
+					}
+				},
 				"type": "object",
 				"additionalProperties": false
 			},
@@ -491,49 +523,6 @@
 				"type": "object",
 				"additionalProperties": false
 			},
-			"UpdateTradeFormDto": {
-				"properties": {
-					"creatorVerifiedIdentities": {
-						"items": {
-							"type": "string"
-						},
-						"type": "array"
-					},
-					"itemName": {
-						"type": "string"
-					},
-					"itemDescription": {
-						"type": "string"
-					},
-					"itemCondition": {
-						"$ref": "#/components/schemas/TradeFormItemCondition"
-					},
-					"amount": {
-						"type": "string"
-					},
-					"tradeChannel": {
-						"$ref": "#/components/schemas/TradeFormChannel"
-					},
-					"paymentMethod": {
-						"$ref": "#/components/schemas/TradeFormPaymentMethod"
-					},
-					"matchmakingChannel": {
-						"$ref": "#/components/schemas/TradeFormMatchmakingChannel"
-					},
-					"identityRequirements": {
-						"items": {
-							"$ref": "#/components/schemas/TradeFormIdentityRequirement"
-						},
-						"type": "array"
-					},
-					"userRating": {
-						"type": "number",
-						"format": "double"
-					}
-				},
-				"type": "object",
-				"additionalProperties": false
-			},
 			"VerifyVcResponseDto": {
 				"properties": {
 					"valid": {
@@ -624,20 +613,15 @@
 			"TradeFormChannelDto": {
 				"type": "string",
 				"enum": [
-					"IN_PERSON",
-					"CONVENIENCE_STORE_DELIVERY",
-					"POST_OFFICE",
-					"COURIER",
-					"OTHER"
+					"p2p",
+					"escrow"
 				]
 			},
 			"TradeFormPaymentMethodDto": {
 				"type": "string",
 				"enum": [
-					"CASH_ON_DELIVERY",
-					"BANK_TRANSFER",
-					"LINE_PAY",
-					"CRYPTO"
+					"bank_transfer",
+					"cash"
 				]
 			},
 			"TradeSummaryDto": {
@@ -674,6 +658,11 @@
 					"counterpartyName": {
 						"type": "string",
 						"nullable": true
+					},
+					"stars": {
+						"type": "number",
+						"format": "double",
+						"nullable": true
 					}
 				},
 				"required": [
@@ -694,28 +683,21 @@
 			"TradeFormItemConditionDto": {
 				"type": "string",
 				"enum": [
-					"SECOND_HAND",
-					"LIKE_NEW",
-					"BRAND_NEW"
+					"new",
+					"used_like_new",
+					"used"
 				]
 			},
 			"TradeFormMatchmakingChannelDto": {
 				"type": "string",
 				"enum": [
-					"OFFLINE_AGREEMENT",
-					"SOCIAL_PLATFORM",
-					"ONLINE_MARKETPLACE"
+					"in_app",
+					"line",
+					"telegram"
 				]
 			},
 			"TradeFormIdentityRequirementDto": {
-				"type": "string",
-				"enum": [
-					"STUDENT_ID",
-					"EMPLOYEE_ID",
-					"DIETITIAN_LICENSE",
-					"LAWYER_LICENSE",
-					"PROOF_OF_ORIGIN"
-				]
+				"type": "string"
 			},
 			"TradeAuditActionDto": {
 				"type": "string",
@@ -1088,6 +1070,29 @@
 				"parameters": []
 			}
 		},
+		"/verifier/trade-form/qrcode": {
+			"get": {
+				"operationId": "VerifyTradeFormQrcode",
+				"responses": {
+					"200": {
+						"description": "Ok",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/VerifierQrcodeResponse"
+								}
+							}
+						}
+					}
+				},
+				"description": "交易表單驗證專用 QRCode",
+				"tags": [
+					"Verifier"
+				],
+				"security": [],
+				"parameters": []
+			}
+		},
 		"/tradeforms": {
 			"post": {
 				"operationId": "createTradeForm",
@@ -1098,6 +1103,16 @@
 							"application/json": {
 								"schema": {
 									"$ref": "#/components/schemas/TradeFormResponse"
+								}
+							}
+						}
+					},
+					"409": {
+						"description": "Trade UID already exists",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/ErrorResponse"
 								}
 							}
 						}
@@ -1200,50 +1215,6 @@
 			}
 		},
 		"/tradeforms/{id}": {
-			"get": {
-				"operationId": "getTradeForm",
-				"responses": {
-					"200": {
-						"description": "Ok",
-						"content": {
-							"application/json": {
-								"schema": {
-									"$ref": "#/components/schemas/TradeFormResponse"
-								}
-							}
-						}
-					},
-					"404": {
-						"description": "Not Found",
-						"content": {
-							"application/json": {
-								"schema": {
-									"$ref": "#/components/schemas/ErrorResponse"
-								}
-							}
-						}
-					}
-				},
-				"tags": [
-					"TradeForm"
-				],
-				"security": [
-					{
-						"bearerAuth": []
-					}
-				],
-				"parameters": [
-					{
-						"in": "path",
-						"name": "id",
-						"required": true,
-						"schema": {
-							"format": "double",
-							"type": "number"
-						}
-					}
-				]
-			},
 			"put": {
 				"operationId": "updateTradeForm",
 				"responses": {
@@ -1287,6 +1258,50 @@
 						}
 					}
 				}
+			},
+			"get": {
+				"operationId": "getTradeForm",
+				"responses": {
+					"200": {
+						"description": "Ok",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/TradeFormResponse"
+								}
+							}
+						}
+					},
+					"404": {
+						"description": "Not Found",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/ErrorResponse"
+								}
+							}
+						}
+					}
+				},
+				"tags": [
+					"TradeForm"
+				],
+				"security": [
+					{
+						"bearerAuth": []
+					}
+				],
+				"parameters": [
+					{
+						"in": "path",
+						"name": "id",
+						"required": true,
+						"schema": {
+							"format": "double",
+							"type": "number"
+						}
+					}
+				]
 			},
 			"delete": {
 				"operationId": "deleteTradeForm",

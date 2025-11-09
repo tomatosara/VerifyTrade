@@ -51,4 +51,12 @@ export class VerifierController extends Controller {
   public async loginIdCardQrcode(): Promise<VerifierQrcodeResponse> {
     return this.service.loginIdCardQrcode();
   }
+
+  /**
+   * 交易表單驗證專用 QRCode
+   */
+  @Get('/trade-form/qrcode')
+  public async verifyTradeFormQrcode(): Promise<VerifierQrcodeResponse> {
+    return this.service.verifyTradeFormQrcode();
+  }
 }

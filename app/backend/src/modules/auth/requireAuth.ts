@@ -1,5 +1,7 @@
 import { NextFunction, Request, Response } from 'express';
 import { ForbiddenError, UnauthorizedError } from '@utils/errors';
+import type { AuthenticatedRequest } from '@middleware/auth';
+import type { UserRole } from './entity/user.entity';
 import { verifyJwt } from './jwt';
 
 function extractToken(req: Request): string | null {
@@ -23,10 +25,25 @@ export function requireAuth(req: Request, _res: Response, next: NextFunction): v
   }
 
   try {
-    const claims = verifyJwt(token);
-    req.user = {
+    const claims = verifyJwt<{
+      sub: string;
+      role?: UserRole;
+      idNumber?: string;
+      name?: string;
+      birthday?: string;
+    }>(token);
+    if (!claims?.sub) {
+      throw new UnauthorizedError();
+    }
+    const role = claims.role ?? 'user';
+    const typedRequest = req as AuthenticatedRequest;
+    typedRequest.user = {
       id: claims.sub,
-      role: claims.role
+      sub: claims.sub,
+      idNumber: claims.idNumber ?? claims.sub,
+      role,
+      name: claims.name ?? '',
+      birthday: claims.birthday
     };
     next();
   } catch (error) {

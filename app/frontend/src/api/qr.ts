@@ -2,8 +2,12 @@
 import { api } from "@/api/client";
 import type { QrCodeResponse, VerifierResultResponse } from '@/types/verifier';
 
-export async function fetchQrCode(): Promise<QrCodeResponse> {
+export async function fetchLoginQrCode(): Promise<QrCodeResponse> {
   return api.get<QrCodeResponse>("/verifier/id-card/qrcode");
+}
+
+export async function fetchTradeFormQrCode(): Promise<QrCodeResponse> {
+  return api.get<QrCodeResponse>("/verifier/trade-form/qrcode");
 }
 
 export async function fetchVerifierResult(transactionId: string): Promise<VerifierResultResponse> {

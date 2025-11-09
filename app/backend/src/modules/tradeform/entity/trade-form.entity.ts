@@ -51,22 +51,22 @@ export type TradeFormMeta = {
 export class TradeFormEntity {
   @PrimaryGeneratedColumn()
   id!: number;
-  @Column({ type: 'varchar', length: 32, unique: true})
+  @Column({ type: 'varchar', length: 128, unique: true })
   uid!: string;
 
-@Column({ type: 'string', name: 'creator_id', nullable: true })
-creatorId!: string | null;
+  @Column({ type: 'varchar', length: 64, name: 'creator_id' })
+  creatorId!: string;
 
-@ManyToOne(() => UserEntity, { nullable: true, onDelete: 'SET NULL' })
-@JoinColumn({ name: 'creator_id', referencedColumnName: 'idNumber' })
-creator?: UserEntity | null;
+  @ManyToOne(() => UserEntity, { nullable: true, onDelete: 'SET NULL' })
+  @JoinColumn({ name: 'creator_id', referencedColumnName: 'idNumber' })
+  creator?: UserEntity | null;
 
-@Column({ type: 'string', name: 'counterparty_id', nullable: true })
-counterpartyId!: string | null;
+  @Column({ type: 'varchar', length: 64, name: 'counterparty_id', nullable: true })
+  counterpartyId!: string | null;
 
-@ManyToOne(() => UserEntity, { nullable: true, onDelete: 'SET NULL' })
-@JoinColumn({ name: 'counterparty_id', referencedColumnName: 'idNumber' })
-counterparty?: UserEntity | null;
+  @ManyToOne(() => UserEntity, { nullable: true, onDelete: 'SET NULL' })
+  @JoinColumn({ name: 'counterparty_id', referencedColumnName: 'idNumber' })
+  counterparty?: UserEntity | null;
 
   @Column({
     type: 'jsonb',
@@ -75,60 +75,39 @@ counterparty?: UserEntity | null;
   })
   creatorVerifiedIdentities!: string[];
 
-  @Column({ type: 'varchar', length: 160, name: 'item_name' })
+  @Column({ type: 'varchar', length: 255, name: 'item_name' })
   itemName!: string;
 
   @Column({ type: 'text', name: 'item_description' })
   itemDescription!: string;
 
-  @Column({
-    type: 'enum',
-    enum: TradeFormItemCondition,
-    enumName: 'trade_forms_item_condition_enum',
-    name: 'item_condition'
-  })
+  @Column({ type: 'varchar', length: 32, name: 'item_condition' })
   itemCondition!: TradeFormItemCondition;
 
-  @Column({ type: 'varchar', length: 64 })
+  @Column({ type: 'numeric', precision: 36, scale: 18 })
   amount!: string;
 
-  @Column({
-    type: 'enum',
-    enum: TradeFormChannel,
-    enumName: 'trade_forms_channel_enum',
-    name: 'trade_channel'
-  })
+  @Column({ type: 'varchar', length: 64, name: 'trade_channel' })
   tradeChannel!: TradeFormChannel;
 
-  @Column({
-    type: 'enum',
-    enum: TradeFormPaymentMethod,
-    enumName: 'trade_forms_payment_method_enum',
-    name: 'payment_method'
-  })
+  @Column({ type: 'varchar', length: 64, name: 'payment_method' })
   paymentMethod!: TradeFormPaymentMethod;
 
-  @Column({
-    type: 'enum',
-    enum: TradeFormMatchmakingChannel,
-    enumName: 'trade_forms_matchmaking_channel_enum',
-    name: 'matchmaking_channel'
-  })
+  @Column({ type: 'varchar', length: 64, name: 'matchmaking_channel' })
   matchmakingChannel!: TradeFormMatchmakingChannel;
 
   @Column({
-    type: 'enum',
-    enum: TradeFormIdentityRequirement,
+    type: 'text',
     array: true,
-    enumName: 'trade_forms_identity_requirement_enum',
     name: 'identity_requirements',
-    default: '{}',
+    default: () => "'{}'"
   })
   identityRequirements!: TradeFormIdentityRequirement[];
 
   @Column({
     type: 'integer',
-    name: 'user_rating'
+    name: 'user_rating',
+    default: 0
   })
   userRating!: number;
 

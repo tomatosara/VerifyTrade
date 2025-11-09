@@ -73,35 +73,15 @@ export type TradeFormStatusDto =
   | 'failed'
   | 'done';
 
-export type TradeFormItemConditionDto =
-  | 'SECOND_HAND'
-  | 'LIKE_NEW'
-  | 'BRAND_NEW';
+export type TradeFormItemConditionDto = 'new' | 'used_like_new' | 'used';
 
-export type TradeFormChannelDto =
-  | 'IN_PERSON'
-  | 'CONVENIENCE_STORE_DELIVERY'
-  | 'POST_OFFICE'
-  | 'COURIER'
-  | 'OTHER';
+export type TradeFormChannelDto = 'p2p' | 'escrow';
 
-export type TradeFormPaymentMethodDto =
-  | 'CASH_ON_DELIVERY'
-  | 'BANK_TRANSFER'
-  | 'LINE_PAY'
-  | 'CRYPTO';
+export type TradeFormPaymentMethodDto = 'bank_transfer' | 'cash';
 
-export type TradeFormMatchmakingChannelDto =
-  | 'OFFLINE_AGREEMENT'
-  | 'SOCIAL_PLATFORM'
-  | 'ONLINE_MARKETPLACE';
+export type TradeFormMatchmakingChannelDto = 'in_app' | 'line' | 'telegram';
 
-export type TradeFormIdentityRequirementDto =
-  | 'STUDENT_ID'
-  | 'EMPLOYEE_ID'
-  | 'DIETITIAN_LICENSE'
-  | 'LAWYER_LICENSE'
-  | 'PROOF_OF_ORIGIN';
+export type TradeFormIdentityRequirementDto = string;
 
 export class TradeDetailDto {
   uid!: string;

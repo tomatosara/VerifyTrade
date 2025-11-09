@@ -4,7 +4,6 @@ import { version as appVersion } from '../../package.json';
 import { docsConfig } from '@config/docs';
 import {
   TradeFormChannel,
-  TradeFormIdentityRequirement,
   TradeFormItemCondition,
   TradeFormMatchmakingChannel,
   TradeFormPaymentMethod
@@ -104,21 +103,18 @@ swaggerSpec.security = swaggerSpec.security?.length
 
 const tradeFormExample = {
   id: 1,
-  uid: 'uid-1234567890abcdef',
-  creatorId: '1d1c14b2-0a3e-4a76-97a5-4e7b63e6c001',
+  uid: 'trade-7f4c8d90',
+  creatorId: 'A131095852',
   counterpartyId: null,
-  creatorVerifiedIdentities: ['StudentID', 'CompanyEmail'],
+  creatorVerifiedIdentities: ['tw_national_id', 'phone_verified'],
   itemName: 'iPad Pro 11"',
   itemDescription: '盒裝完整，含原廠鍵盤',
-  itemCondition: TradeFormItemCondition.LIKE_NEW,
-  amount: '22000',
-  tradeChannel: TradeFormChannel.IN_PERSON,
+  itemCondition: TradeFormItemCondition.USED_LIKE_NEW,
+  amount: '22000.50',
+  tradeChannel: TradeFormChannel.P2P,
   paymentMethod: TradeFormPaymentMethod.BANK_TRANSFER,
-  matchmakingChannel: TradeFormMatchmakingChannel.SOCIAL_PLATFORM,
-  identityRequirements: [
-    TradeFormIdentityRequirement.STUDENT_ID,
-    TradeFormIdentityRequirement.PROOF_OF_ORIGIN
-  ],
+  matchmakingChannel: TradeFormMatchmakingChannel.IN_APP,
+  identityRequirements: ['tw_national_id', 'phone_verified'],
   userRating: 5,
   status: 'pending',
   meta: {},
@@ -207,24 +203,25 @@ const listOperation =
 setExampleIfPresent(listOperation, { data: [tradeFormExample], total: 1 });
 
 const createOperation =
-  findPathItem('/tradeforms')?.item.post ?? findPathItem('/api/v1/tradeforms')?.item.post;
+  findPathItem('/tradeforms')?.item.post ??
+  findPathItem('/api/v1/tradeforms')?.item.post ??
+  findPathItem('/tradeforms/create')?.item.post ??
+  findPathItem('/api/v1/tradeforms/create')?.item.post;
 if (createOperation?.requestBody && 'content' in createOperation.requestBody) {
   const body = createOperation.requestBody.content?.['application/json'];
   if (body) {
     body.example = {
-      creatorVerifiedIdentities: ['StudentID', 'CompanyEmail'],
+      uid: 'trade-7f4c8d90',
+      creatorId: 'A131095852',
+      creatorVerifiedIdentities: ['tw_national_id', 'phone_verified'],
       itemName: 'iPad Pro 11"',
       itemDescription: '盒裝完整，含原廠鍵盤',
-      itemCondition: TradeFormItemCondition.LIKE_NEW,
-      amount: '22000',
-      tradeChannel: TradeFormChannel.IN_PERSON,
+      itemCondition: TradeFormItemCondition.USED_LIKE_NEW,
+      amount: '22000.50',
+      tradeChannel: TradeFormChannel.P2P,
       paymentMethod: TradeFormPaymentMethod.BANK_TRANSFER,
-      matchmakingChannel: TradeFormMatchmakingChannel.SOCIAL_PLATFORM,
-      identityRequirements: [
-        TradeFormIdentityRequirement.STUDENT_ID,
-        TradeFormIdentityRequirement.PROOF_OF_ORIGIN
-      ],
-      userRating: 5
+      matchmakingChannel: TradeFormMatchmakingChannel.IN_APP,
+      identityRequirements: ['tw_national_id', 'phone_verified']
     };
   }
 }
@@ -252,13 +249,13 @@ const verifyOperation =
 if (verifyOperation) {
   if (verifyOperation.requestBody && 'content' in verifyOperation.requestBody) {
     const body = verifyOperation.requestBody.content?.['application/json'];
-    if (body) {
-      body.example = {
-        vcProof: {
-          claims: ['STUDENT_ID', 'PROOF_OF_ORIGIN'],
-          issuer: 'did:example:issuer',
-          credentialType: 'KYC',
-          level: 3,
+      if (body) {
+        body.example = {
+          vcProof: {
+            claims: ['tw_national_id', 'phone_verified'],
+            issuer: 'did:example:issuer',
+            credentialType: 'KYC',
+            level: 3,
           expiresAt: '2026-01-01T00:00:00.000Z'
         }
       };
@@ -271,7 +268,7 @@ if (verifyOperation) {
     valid: true,
     status: 'verified',
     matched: {
-      claims: ['STUDENT_ID', 'PROOF_OF_ORIGIN'],
+      claims: ['tw_national_id', 'phone_verified'],
       issuer: 'did:example:issuer',
       credentialType: 'KYC',
       level: 3,
@@ -299,7 +296,7 @@ if (verifyOperation) {
     error: 'VC requirements not satisfied',
     details: {
       code: 'VC_REQUIREMENT_NOT_MET',
-      reason: 'Missing required claims: STUDENT_ID'
+      reason: 'Missing required claims: tw_national_id'
     }
   });
   setResponseExample(verifyOperation, '422', {

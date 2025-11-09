@@ -12,6 +12,7 @@ import { appConfig } from '@config/app';
 import { registerSwagger } from './docs/swagger';
 import { TradeFormService } from '@modules/tradeform/tradeform.service';
 import { requireAuth } from '@modules/auth/requireAuth';
+import type { AuthenticatedRequest } from '@middleware/auth';
 
 export function createApp(): Express {
   const app = express();
@@ -84,7 +85,8 @@ export function createApp(): Express {
     }
 
     try {
-      const result = await tradeFormService.findByUidForActor(uid, req.user?.id ?? null);
+      const actorId = (req as AuthenticatedRequest).user?.idNumber ?? null;
+      const result = await tradeFormService.findByUidForActor(uid, actorId);
       res.json(result);
     } catch (error) {
       next(error);
