@@ -451,6 +451,18 @@
 				"type": "object",
 				"additionalProperties": false
 			},
+			"ConfirmTradeResponseDto": {
+				"properties": {
+					"trade": {
+						"$ref": "#/components/schemas/TradeFormResponse"
+					}
+				},
+				"required": [
+					"trade"
+				],
+				"type": "object",
+				"additionalProperties": false
+			},
 			"TradeFormStatusDto": {
 				"type": "string",
 				"enum": [
@@ -867,9 +879,9 @@
 				}
 			}
 		},
-		"/verifier/result": {
+		"/verifier/id-card/result": {
 			"post": {
-				"operationId": "GetResult",
+				"operationId": "GetIdCardVerifyResult",
 				"responses": {
 					"200": {
 						"description": "Ok",
@@ -883,7 +895,7 @@
 						"description": "Invalid transactionId"
 					}
 				},
-				"description": "查詢驗證結果",
+				"description": "查詢身分證驗證結果",
 				"tags": [
 					"Verifier"
 				],
@@ -922,6 +934,40 @@
 				],
 				"security": [],
 				"parameters": []
+			}
+		},
+		"/verifier/trade-form/result": {
+			"post": {
+				"operationId": "GetTradeFormVerifyResult",
+				"responses": {
+					"200": {
+						"description": "Ok",
+						"content": {
+							"application/json": {
+								"schema": {}
+							}
+						}
+					},
+					"400": {
+						"description": "Invalid transactionId"
+					}
+				},
+				"description": "查詢身分證驗證結果",
+				"tags": [
+					"Verifier"
+				],
+				"security": [],
+				"parameters": [],
+				"requestBody": {
+					"required": true,
+					"content": {
+						"application/json": {
+							"schema": {
+								"$ref": "#/components/schemas/VerifierResultRequest"
+							}
+						}
+					}
+				}
 			}
 		},
 		"/verifier/trade-form/qrcode": {
@@ -1064,6 +1110,100 @@
 					},
 					"404": {
 						"description": "Not Found",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/ErrorResponse"
+								}
+							}
+						}
+					}
+				},
+				"tags": [
+					"TradeForm"
+				],
+				"security": [
+					{
+						"bearerAuth": []
+					}
+				],
+				"parameters": [
+					{
+						"in": "path",
+						"name": "uid",
+						"required": true,
+						"schema": {
+							"type": "string"
+						}
+					}
+				]
+			}
+		},
+		"/tradeforms/{id}": {
+			"delete": {
+				"operationId": "deleteTradeForm",
+				"responses": {
+					"204": {
+						"description": "No content"
+					}
+				},
+				"tags": [
+					"TradeForm"
+				],
+				"security": [
+					{
+						"bearerAuth": []
+					}
+				],
+				"parameters": [
+					{
+						"in": "path",
+						"name": "id",
+						"required": true,
+						"schema": {
+							"format": "double",
+							"type": "number"
+						}
+					}
+				]
+			}
+		},
+		"/tradeforms/{uid}/confirm": {
+			"post": {
+				"operationId": "confirmTradeForm",
+				"responses": {
+					"200": {
+						"description": "Ok",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/ConfirmTradeResponseDto"
+								}
+							}
+						}
+					},
+					"403": {
+						"description": "Forbidden – Only participants may confirm; User 2 must have a valid VC",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/ErrorResponse"
+								}
+							}
+						}
+					},
+					"404": {
+						"description": "Not Found",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/ErrorResponse"
+								}
+							}
+						}
+					},
+					"409": {
+						"description": "Conflict – Trade status or counterparty mismatch",
 						"content": {
 							"application/json": {
 								"schema": {

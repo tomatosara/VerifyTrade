@@ -51,10 +51,10 @@ export default class VerifierService {
   }
 
   async verifyTradeFormQrcode() {
-    return this.createQrcode(process.env.VP_TRADEFORM || '00000000_trade_form123');
+    return this.createQrcode(process.env.VP_TRADEFORM || '00000000_transaction_verification_mult');
   }
 
-  async getResult(transactionId: string) {
+  async getIdCardVerifyResult(transactionId: string) {
     try {
       const { data, status } = await axiosVerifier.post<VerifierRaw>(
         '/api/oidvp/result',
@@ -127,6 +127,69 @@ export default class VerifierService {
           idNumber: maskedId,
           birthday,
         },
+      }
+    } catch (e) {
+      const err = e as AxiosError<any>;
+      const upstream = err.response?.data;
+
+      // 👉 關鍵：把 400 轉成「驗證中或無效 transactionId」的 failed 訊息
+      if (err.response) {
+        return {
+          status: 'failed' as const,
+          verifyResult: false,
+          transactionId,
+          message:
+            upstream?.message ||
+            upstream?.error ||
+            `Upstream ${err.response.status} from verifier`,
+          // 你也可以把 upstream 塞進 debug 欄位
+          debug: process.env.NODE_ENV !== 'production' ? upstream : undefined,
+        };
+      }
+
+      // 真的沒回應（網路問題）
+      return {
+        status: 'failed' as const,
+        verifyResult: false,
+        transactionId,
+        message: 'Network error calling verifier',
+      };
+    }
+  }
+
+  async getTradeFormVerifyResult(transactionId: string) {
+    try {
+      const { data, status } = await axiosVerifier.post<VerifierRaw>(
+        '/api/oidvp/result',
+        { transactionId }
+      );
+
+      const ok = status === 200 && !!data?.verifyResult;
+
+      // 如果你的欄位是 text/varchar 請用 JSON.stringify；若是 json/jsonb 可直接存 data
+      await this.txRepo.update(
+        { transactionId },
+        {
+          status: ok ? 'success' : 'failed',
+          // resultJson: JSON.stringify(data),
+          resultJson: data as any,
+        }
+      );
+
+      if (!ok) {
+        return {
+          status: 'failed' as const,
+          verifyResult: false,
+          message: data?.resultDescription || 'Verification failed',
+          transactionId,
+        };
+      }
+
+      // 前端用
+      return {
+        status: 'success' as const,
+        verifyResult: true,
+        transactionId,
       }
     } catch (e) {
       const err = e as AxiosError<any>;

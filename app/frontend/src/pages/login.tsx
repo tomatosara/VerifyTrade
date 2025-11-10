@@ -1,7 +1,7 @@
 import React, { useEffect, useState, useRef } from "react";
 import { FlickeringGrid } from "@/components/ui/flickering-grid";
 import { BorderBeam } from "@/components/ui/border-beam";
-import { fetchLoginQrCode, fetchVerifierResult } from "@/api/qr";
+import { fetchLoginQrCode, fetchIdCardVerifierResult } from "@/api/qr";
 import { api, setAccessToken } from "@/api/client";
 import type { QrCodeResponse, VerifierResultResponse, UserProfile } from '@/types/verifier';
 import { useNavigate } from "react-router-dom";
@@ -40,7 +40,7 @@ export default function Login() {
 
     pollerRef.current = window.setInterval(async () => {
       try {
-        const result: VerifierResultResponse = await fetchVerifierResult(qrData.transactionId);
+        const result: VerifierResultResponse = await fetchIdCardVerifierResult(qrData.transactionId);
 
         if (result.status === "success" && result.verifyResult) {
           console.log("[POLL] ✅ Verified! Stopping poller.");

@@ -4,7 +4,7 @@ import { FlickeringGrid } from "@/components/ui/flickering-grid";
 import { BorderBeam } from "@/components/ui/border-beam";
 import { InteractiveHoverButton } from "@/components/ui/interactive-hover-button";
 import { fetchTradeFormByUid, confirmTradeForm } from "@/api/tradeForm";
-import { fetchTradeFormQrCode, fetchVerifierResult } from "@/api/qr";
+import { fetchTradeFormQrCode, fetchTradeFormVerifierResult } from "@/api/qr";
 import { api, setAccessToken } from "@/api/client";
 import type { TradeFormViewResponse } from "@/types/tradeForm";
 import type { QrCodeResponse, UserProfile } from "@/types/verifier";
@@ -115,7 +115,7 @@ export default function VerifyForm() {
       pollerRef.current = window.setInterval(() => {
         (async () => {
           try {
-            const res = await fetchVerifierResult(data.transactionId);
+            const res = await fetchTradeFormVerifierResult(data.transactionId);
             if (res.status === "success" && res.verifyResult) {
               cleanupPoller();
               try {

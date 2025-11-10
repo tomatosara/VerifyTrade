@@ -18,7 +18,7 @@ import { useState, useEffect, useRef, useCallback } from "react";
 import RentTemplate from "@/components/templates/rent.template";
 import P2PTemplate from "@/components/templates/p2p.template";
 import { Copy, Check } from "lucide-react";
-import { fetchTradeFormQrCode, fetchVerifierResult } from "@/api/qr";
+import { fetchTradeFormQrCode, fetchTradeFormVerifierResult } from "@/api/qr";
 import type { QrCodeResponse } from '@/types/verifier';
 import { createTradeForm } from "@/api/tradeForm";
 import { emptyTradeForm, type TradeFormCreate, type TradeFormDraft } from "@/types/tradeForm";
@@ -212,7 +212,7 @@ export default function NewForm() {
 
         pollerRef.current = window.setInterval(async () => {
           try {
-            const result = await fetchVerifierResult(data.transactionId);
+            const result = await fetchTradeFormVerifierResult(data.transactionId);
             if (result.status === "success" && result.verifyResult) {
               cleanupPoller();
               if (requiredPhase === "initiator") {

@@ -34,14 +34,14 @@ export class VerifierController extends Controller {
   }
 
   /**
-   * 查詢驗證結果
+   * 查詢身分證驗證結果
    */
-  @Post('/result')
+  @Post('/id-card/result')
   @Response(400, 'Invalid transactionId')
-  public async getResult(
+  public async getIdCardVerifyResult(
     @Body() body: VerifierResultRequest
   ): Promise<any> {
-    return this.service.getResult(body.transactionId);
+    return this.service.getIdCardVerifyResult(body.transactionId);
   }
 
   /**
@@ -50,6 +50,17 @@ export class VerifierController extends Controller {
   @Get('/id-card/qrcode')
   public async loginIdCardQrcode(): Promise<VerifierQrcodeResponse> {
     return this.service.loginIdCardQrcode();
+  }
+
+  /**
+   * 查詢身分證驗證結果
+   */
+  @Post('/trade-form/result')
+  @Response(400, 'Invalid transactionId')
+  public async getTradeFormVerifyResult(
+    @Body() body: VerifierResultRequest
+  ): Promise<any> {
+    return this.service.getTradeFormVerifyResult(body.transactionId);
   }
 
   /**

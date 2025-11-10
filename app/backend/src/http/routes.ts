@@ -194,6 +194,14 @@ const models: TsoaRoute.Models = {
         "additionalProperties": false,
     },
     // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+    "ConfirmTradeResponseDto": {
+        "dataType": "refObject",
+        "properties": {
+            "trade": {"ref":"TradeFormResponse","required":true},
+        },
+        "additionalProperties": false,
+    },
+    // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
     "TradeFormStatusDto": {
         "dataType": "refAlias",
         "type": {"dataType":"union","subSchemas":[{"dataType":"enum","enums":["draft"]},{"dataType":"enum","enums":["pending"]},{"dataType":"enum","enums":["verified"]},{"dataType":"enum","enums":["confirmed"]},{"dataType":"enum","enums":["cancelled"]},{"dataType":"enum","enums":["failed"]},{"dataType":"enum","enums":["done"]}],"validators":{}},
@@ -403,25 +411,25 @@ export function RegisterRoutes(app: Router) {
             }
         });
         // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
-        const argsVerifierController_getResult: Record<string, TsoaRoute.ParameterSchema> = {
+        const argsVerifierController_getIdCardVerifyResult: Record<string, TsoaRoute.ParameterSchema> = {
                 body: {"in":"body","name":"body","required":true,"ref":"VerifierResultRequest"},
         };
-        app.post('/api/v1/verifier/result',
+        app.post('/api/v1/verifier/id-card/result',
             ...(fetchMiddlewares<RequestHandler>(VerifierController)),
-            ...(fetchMiddlewares<RequestHandler>(VerifierController.prototype.getResult)),
+            ...(fetchMiddlewares<RequestHandler>(VerifierController.prototype.getIdCardVerifyResult)),
 
-            async function VerifierController_getResult(request: ExRequest, response: ExResponse, next: any) {
+            async function VerifierController_getIdCardVerifyResult(request: ExRequest, response: ExResponse, next: any) {
 
             // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
 
             let validatedArgs: any[] = [];
             try {
-                validatedArgs = templateService.getValidatedArgs({ args: argsVerifierController_getResult, request, response });
+                validatedArgs = templateService.getValidatedArgs({ args: argsVerifierController_getIdCardVerifyResult, request, response });
 
                 const controller = new VerifierController();
 
               await templateService.apiHandler({
-                methodName: 'getResult',
+                methodName: 'getIdCardVerifyResult',
                 controller,
                 response,
                 next,
@@ -451,6 +459,36 @@ export function RegisterRoutes(app: Router) {
 
               await templateService.apiHandler({
                 methodName: 'loginIdCardQrcode',
+                controller,
+                response,
+                next,
+                validatedArgs,
+                successStatus: undefined,
+              });
+            } catch (err) {
+                return next(err);
+            }
+        });
+        // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+        const argsVerifierController_getTradeFormVerifyResult: Record<string, TsoaRoute.ParameterSchema> = {
+                body: {"in":"body","name":"body","required":true,"ref":"VerifierResultRequest"},
+        };
+        app.post('/api/v1/verifier/trade-form/result',
+            ...(fetchMiddlewares<RequestHandler>(VerifierController)),
+            ...(fetchMiddlewares<RequestHandler>(VerifierController.prototype.getTradeFormVerifyResult)),
+
+            async function VerifierController_getTradeFormVerifyResult(request: ExRequest, response: ExResponse, next: any) {
+
+            // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+
+            let validatedArgs: any[] = [];
+            try {
+                validatedArgs = templateService.getValidatedArgs({ args: argsVerifierController_getTradeFormVerifyResult, request, response });
+
+                const controller = new VerifierController();
+
+              await templateService.apiHandler({
+                methodName: 'getTradeFormVerifyResult',
                 controller,
                 response,
                 next,
@@ -576,6 +614,69 @@ export function RegisterRoutes(app: Router) {
 
               await templateService.apiHandler({
                 methodName: 'viewByUid',
+                controller,
+                response,
+                next,
+                validatedArgs,
+                successStatus: undefined,
+              });
+            } catch (err) {
+                return next(err);
+            }
+        });
+        // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+        const argsTradeFormController_remove: Record<string, TsoaRoute.ParameterSchema> = {
+                id: {"in":"path","name":"id","required":true,"dataType":"double"},
+        };
+        app.delete('/api/v1/tradeforms/:id',
+            authenticateMiddleware([{"bearerAuth":[]}]),
+            ...(fetchMiddlewares<RequestHandler>(TradeFormController)),
+            ...(fetchMiddlewares<RequestHandler>(TradeFormController.prototype.remove)),
+
+            async function TradeFormController_remove(request: ExRequest, response: ExResponse, next: any) {
+
+            // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+
+            let validatedArgs: any[] = [];
+            try {
+                validatedArgs = templateService.getValidatedArgs({ args: argsTradeFormController_remove, request, response });
+
+                const controller = new TradeFormController();
+
+              await templateService.apiHandler({
+                methodName: 'remove',
+                controller,
+                response,
+                next,
+                validatedArgs,
+                successStatus: undefined,
+              });
+            } catch (err) {
+                return next(err);
+            }
+        });
+        // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+        const argsTradeFormController_confirm: Record<string, TsoaRoute.ParameterSchema> = {
+                uid: {"in":"path","name":"uid","required":true,"dataType":"string"},
+                req: {"in":"request","name":"req","required":true,"dataType":"object"},
+        };
+        app.post('/api/v1/tradeforms/:uid/confirm',
+            authenticateMiddleware([{"bearerAuth":[]}]),
+            ...(fetchMiddlewares<RequestHandler>(TradeFormController)),
+            ...(fetchMiddlewares<RequestHandler>(TradeFormController.prototype.confirm)),
+
+            async function TradeFormController_confirm(request: ExRequest, response: ExResponse, next: any) {
+
+            // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+
+            let validatedArgs: any[] = [];
+            try {
+                validatedArgs = templateService.getValidatedArgs({ args: argsTradeFormController_confirm, request, response });
+
+                const controller = new TradeFormController();
+
+              await templateService.apiHandler({
+                methodName: 'confirm',
                 controller,
                 response,
                 next,
