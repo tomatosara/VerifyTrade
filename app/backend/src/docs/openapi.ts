@@ -198,10 +198,6 @@ if (uidPathEntry && !specPaths[sharePath]) {
   delete specPaths[uidPathEntry.key];
 }
 
-const listOperation =
-  findPathItem('/tradeforms')?.item.get ?? findPathItem('/api/v1/tradeforms')?.item.get;
-setExampleIfPresent(listOperation, { data: [tradeFormExample], total: 1 });
-
 const createOperation =
   findPathItem('/tradeforms')?.item.post ??
   findPathItem('/api/v1/tradeforms')?.item.post ??
@@ -226,7 +222,6 @@ if (createOperation?.requestBody && 'content' in createOperation.requestBody) {
   }
 }
 
-setExampleIfPresent(findPathItem('/tradeforms/{id}')?.item.get, tradeFormExample);
 setExampleIfPresent(findPathItem('/tradeforms/{uid}')?.item.put, {
   ...tradeFormExample,
   counterpartyId: 'B223344556',
@@ -245,73 +240,6 @@ setExampleIfPresent(viewOperation, {
     updatedAt: tradeFormExample.updatedAt
   }
 });
-
-const verifyOperation =
-  findPathItem('/tradeforms/{uid}/verify-vc')?.item.post ??
-  findPathItem('/api/v1/tradeforms/{uid}/verify-vc')?.item.post;
-if (verifyOperation) {
-  if (verifyOperation.requestBody && 'content' in verifyOperation.requestBody) {
-    const body = verifyOperation.requestBody.content?.['application/json'];
-      if (body) {
-        body.example = {
-          vcProof: {
-            claims: ['tw_national_id', 'phone_verified'],
-            issuer: 'did:example:issuer',
-            credentialType: 'KYC',
-            level: 3,
-          expiresAt: '2026-01-01T00:00:00.000Z'
-        }
-      };
-    }
-  }
-
-  verifyOperation.description =
-    'Validate User 2’s verifiable credential (VC) against the trade form requirements.';
-  setExampleIfPresent(verifyOperation, {
-    valid: true,
-    status: 'verified',
-    matched: {
-      claims: ['tw_national_id', 'phone_verified'],
-      issuer: 'did:example:issuer',
-      credentialType: 'KYC',
-      level: 3,
-      expiresAt: '2026-01-01T00:00:00.000Z'
-    },
-    trade: {
-      ...tradeFormExample,
-      counterpartyId: '2c9341ca-3f54-4a7d-8ebb-4e1a5cd9c222',
-      status: 'verified',
-      meta: {
-        vc_user2: {
-          valid: true,
-          at: '2025-01-15T03:05:00.000Z',
-          claimsMatched: ['STUDENT_ID', 'PROOF_OF_ORIGIN'],
-          issuer: 'did:example:issuer',
-          credentialType: 'KYC',
-          level: 3,
-          expiresAt: '2026-01-01T00:00:00.000Z'
-        }
-      },
-      confirmedByUser2: false
-    }
-  });
-  setResponseExample(verifyOperation, '403', {
-    error: 'VC requirements not satisfied',
-    details: {
-      code: 'VC_REQUIREMENT_NOT_MET',
-      reason: 'Missing required claims: tw_national_id'
-    }
-  });
-  setResponseExample(verifyOperation, '422', {
-    error: 'Invalid VC proof',
-    details: {
-      formErrors: [],
-      fieldErrors: {
-        vcProof: ['Expected object']
-      }
-    }
-  });
-}
 
 const confirmOperation =
   findPathItem('/tradeforms/{uid}/confirm')?.item.post ??

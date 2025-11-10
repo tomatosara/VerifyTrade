@@ -315,7 +315,7 @@ http POST :3000/api/v1/auth/dev-token \
 
 ```bash
 export VERIFYTRADE_TOKEN="<JWT from dev-token>"
-curl http://localhost:3000/api/v1/tradeforms \
+curl http://localhost:3000/api/v1/tradeforms/uid/demo-trade-uid \
   -H "Authorization: Bearer ${VERIFYTRADE_TOKEN}"
 ```
 
@@ -327,13 +327,10 @@ curl http://localhost:3000/api/v1/tradeforms \
 
 | 方法 | 路徑 | 摘要 | 權限 | 備註 |
 | --- | --- | --- | --- | --- |
-| `GET` | `/api/v1/tradeforms` | 查詢交易單，可帶過濾條件 | Bearer | 支援 `itemCondition`、`tradeChannel`、`paymentMethod`、`matchmakingChannel`、`identityRequirement` 查詢參數。 |
 | `POST` | `/api/v1/tradeforms` | 建立交易單 | Bearer | 請求需符合 `CreateTradeFormDto`，成功回傳 201 與完整資料。 |
-| `GET` | `/api/v1/tradeforms/{id}` | 以數字 ID 取得交易單 | Bearer | `id` 為數字，找不到時回傳 `404`。 |
 | `GET` | `/api/v1/tradeforms/{uid}` | 以分享 UID 取得交易單 | Bearer | 參與者會收到完整資訊，其餘人僅看到簡化內容。亦可使用 `/api/v1/tradeforms/uid/{uid}`。 |
 | `PUT` | `/api/v1/tradeforms/{uid}` | 設定交易對手 | Bearer | 使用公開 UID 作為路徑，body 需帶已存在使用者的 `counterpartyId`，並會把狀態設為 `confirmed`。 |
 | `DELETE` | `/api/v1/tradeforms/{id}` | 刪除交易單 | Bearer | 成功回傳 `204 No Content`。 |
-| `POST` | `/api/v1/tradeforms/{uid}/verify-vc` | 驗證 VC 憑證 | Bearer | 僅限交易對手；提交 `{ "vcProof": {...} }`，具速率限制與冪等保護。 |
 | `POST` | `/api/v1/tradeforms/{uid}/confirm` | 確認交易參與 | Bearer | 僅限交易參與者；雙方都確認後會觸發自動完成（finalize）流程。 |
 
 建立交易單範例：
@@ -369,23 +366,6 @@ http POST :3000/api/v1/tradeforms \
   matchmakingChannel=SOCIAL_PLATFORM \
   identityRequirements:='["STUDENT_ID","PROOF_OF_ORIGIN"]' \
   userRating:=5
-```
-
-使用冪等機制進行 VC 驗證：
-
-```bash
-curl -X POST http://localhost:3000/api/v1/tradeforms/seed-trade-001/verify-vc \
-  -H "Authorization: Bearer ${VERIFYTRADE_TOKEN}" \
-  -H 'Content-Type: application/json' \
-  -H 'Idempotency-Key: verify-vc-001' \
-  -d '{"vcProof":{"claims":["kyc_passed","jurisdiction_tw"],"issuer":"did:example:issuer","credentialType":"KYC","level":3}}'
-```
-
-```bash
-http POST :3000/api/v1/tradeforms/seed-trade-001/verify-vc \
-  Authorization:"Bearer ${VERIFYTRADE_TOKEN}" \
-  Idempotency-Key:verify-vc-001 \
-  vcProof:='{"claims":["kyc_passed","jurisdiction_tw"],"issuer":"did:example:issuer","credentialType":"KYC","level":3}'
 ```
 
 ### 認證端點

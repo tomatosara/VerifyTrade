@@ -9,23 +9,15 @@ import { featureFlags } from '@config/featureFlags';
 import { TradeFormEntity, TradeFormVCUser2Meta } from './entity/trade-form.entity';
 import { TradeFormStatus } from './enums/TradeFormEnums';
 import { TradeAuditAction, TradeAuditEventEntity } from './entity/trade-audit-event.entity';
-import { TradeFormFilters, TradeFormRepository } from './tradeform.repository';
+import { TradeFormRepository } from './tradeform.repository';
 import { CreateTradeFormDto } from './dto/create-trade-form.dto';
 import { UpdateTradeFormDto } from './dto/update-trade-form.dto';
-import {
-  TradeFormListQuery,
-  TradeFormListResponse,
-  TradeFormPublicResponse,
-  TradeFormResponse,
-  TradeFormViewResponse
-} from './dto/trade-form.response';
-import { ConfirmTradeResponseDto, VerifyVcResponseDto } from './dto/trade-form.actions.dto';
-import { checkUser2MeetsTradeRequirements } from './tradeform.vc-requirements';
-import { getVcMeta, upsertVcMeta } from './tradeform.meta';
+import { TradeFormPublicResponse, TradeFormResponse, TradeFormViewResponse } from './dto/trade-form.response';
+import { ConfirmTradeResponseDto } from './dto/trade-form.actions.dto';
+import { getVcMeta } from './tradeform.meta';
 import {
   ConflictError,
   ForbiddenError,
-  GoneError,
   NotFoundError,
   ValidationError
 } from '@utils/errors';
@@ -67,25 +59,8 @@ const mapEntityToPublicResponse = (entity: TradeFormEntity): TradeFormPublicResp
   updatedAt: entity.updatedAt
 });
 
-const isTerminalStatus = (status: TradeFormStatus): boolean =>
-  [TradeFormStatus.CANCELLED, TradeFormStatus.FAILED, TradeFormStatus.DONE].includes(status);
-
 const isParticipant = (trade: TradeFormEntity, actorId?: string | null): boolean =>
   Boolean(actorId && (trade.creatorId === actorId || trade.counterpartyId === actorId));
-
-const hasExpired = (trade: TradeFormEntity): boolean =>
-  Boolean(trade.uidExpiresAt && trade.uidExpiresAt.getTime() < Date.now());
-
-const normalizeIso = (value?: string | null): string | undefined => {
-  if (!value) {
-    return undefined;
-  }
-  const parsed = new Date(value);
-  if (Number.isNaN(parsed.getTime())) {
-    return undefined;
-  }
-  return parsed.toISOString();
-};
 
 const isVcMetaExpired = (meta?: TradeFormVCUser2Meta | null): boolean => {
   if (!meta?.expiresAt) {
@@ -96,15 +71,6 @@ const isVcMetaExpired = (meta?: TradeFormVCUser2Meta | null): boolean => {
     return false;
   }
   return expiresAt.getTime() <= Date.now();
-};
-
-const areStringArraysEqual = (a?: string[], b?: string[]): boolean => {
-  const left = Array.isArray(a) ? [...a].sort() : [];
-  const right = Array.isArray(b) ? [...b].sort() : [];
-  if (left.length !== right.length) {
-    return false;
-  }
-  return left.every((value, index) => value === right[index]);
 };
 
 const normalizeStringArray = (values?: string[]): string[] => {
@@ -213,30 +179,6 @@ export class TradeFormService {
     return mapEntityToResponse(saved);
   }
 
-  async findAll(query: TradeFormListQuery = {}): Promise<TradeFormListResponse> {
-    const filters: TradeFormFilters = {
-      itemCondition: query.itemCondition,
-      tradeChannel: query.tradeChannel,
-      paymentMethod: query.paymentMethod,
-      matchmakingChannel: query.matchmakingChannel,
-      identityRequirement: query.identityRequirement
-    };
-
-    const [rows, total] = await this.repository.findWithFilters(filters);
-    return {
-      data: rows.map(mapEntityToResponse),
-      total
-    };
-  }
-
-  async findOne(id: number): Promise<TradeFormResponse> {
-    const tradeForm = await this.repository.findById(id);
-    if (!tradeForm) {
-      throw new NotFoundError('Trade form not found');
-    }
-    return mapEntityToResponse(tradeForm);
-  }
-
   async findByUidForActor(uid: string, actorId?: string | null): Promise<TradeFormViewResponse> {
     const tradeForm = await this.repository.findByUid(uid);
     if (!tradeForm) {
@@ -253,110 +195,6 @@ export class TradeFormService {
     return {
       view: 'limited',
       trade: mapEntityToPublicResponse(tradeForm)
-    };
-  }
-
-  async verifyVc(
-    uid: string,
-    actorId: string,
-    vcProof: unknown,
-    actorUuid?: string | null
-  ): Promise<VerifyVcResponseDto> {
-    const trade = await this.repository.findByUid(uid);
-    if (!trade) {
-      throw new NotFoundError('Trade form not found');
-    }
-    if (isTerminalStatus(trade.status)) {
-      throw new ConflictError(`Trade already ${trade.status}`);
-    }
-    if (trade.creatorId === actorId) {
-      throw new ForbiddenError('Creator does not need VC verification', {
-        code: 'VC_NOT_REQUIRED_FOR_CREATOR'
-      });
-    }
-    if (hasExpired(trade)) {
-      throw new GoneError('Trade uid has expired');
-    }
-    if (trade.counterpartyId && trade.counterpartyId !== actorId) {
-      throw new ForbiddenError('Trade already associated with another counterparty', {
-        code: 'VC_COUNTERPARTY_CONFLICT'
-      });
-    }
-
-    const check = await checkUser2MeetsTradeRequirements({
-      trade,
-      userId: actorId,
-      vcProof
-    });
-
-    if (!check.ok) {
-      throw new ForbiddenError(check.reason ?? 'VC requirements not satisfied', {
-        code: 'VC_REQUIREMENT_NOT_MET',
-        reason: check.reason
-      });
-    }
-
-    const { rawRef, ...publicMatched } = check.matched;
-
-    const previousMeta = getVcMeta(trade.meta);
-    const alreadyBound = trade.counterpartyId === actorId;
-
-    const metaEquivalent =
-      previousMeta?.valid === true &&
-      areStringArraysEqual(previousMeta.claimsMatched, publicMatched.claims) &&
-      previousMeta.issuer === publicMatched.issuer &&
-      previousMeta.credentialType === publicMatched.credentialType &&
-      previousMeta.level === publicMatched.level &&
-      normalizeIso(previousMeta.expiresAt) === normalizeIso(publicMatched.expiresAt) &&
-      !isVcMetaExpired(previousMeta);
-
-    if (
-      metaEquivalent &&
-      alreadyBound &&
-      trade.status !== TradeFormStatus.PENDING &&
-      trade.vcVerifiedAt
-    ) {
-      return {
-        valid: true,
-        status: trade.status,
-        matched: publicMatched,
-        trade: mapEntityToResponse(trade)
-      };
-    }
-
-    trade.meta = upsertVcMeta(trade.meta, {
-      valid: true,
-      claimsMatched: publicMatched.claims,
-      issuer: publicMatched.issuer,
-      credentialType: publicMatched.credentialType,
-      level: publicMatched.level,
-      expiresAt: publicMatched.expiresAt,
-      rawRef
-    });
-
-    trade.vcVerifiedAt = new Date();
-    if (!trade.counterpartyId) {
-      trade.counterpartyId = actorId;
-    }
-    if (trade.status === TradeFormStatus.PENDING) {
-      trade.status = TradeFormStatus.VERIFIED;
-    }
-
-    const saved = await this.repository.save(trade);
-
-    await this.logAuditEvent(saved.uid, actorUuid ?? null, TradeAuditAction.VERIFY_VC, {
-      valid: true,
-      issuer: publicMatched.issuer ?? null,
-      credentialType: publicMatched.credentialType ?? null,
-      level: publicMatched.level ?? null,
-      expiresAt: publicMatched.expiresAt ?? null
-    });
-
-    return {
-      valid: true,
-      status: saved.status,
-      matched: publicMatched,
-      trade: mapEntityToResponse(saved)
     };
   }
 

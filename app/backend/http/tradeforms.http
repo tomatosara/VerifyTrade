@@ -10,21 +10,9 @@ Content-Type: application/json
   "amount": "1000.00"
 }
 
-### Fetch trade form as counterparty before VC verification (minimal payload)
-GET http://localhost:3000/api/v1/tradeforms/{{trade_uid}}
+### Fetch trade form by UID (limited payload for non-participants)
+GET http://localhost:3000/api/v1/tradeforms/uid/{{trade_uid}}
 Authorization: Bearer {{user2_token}}
-
-### Verify VC as User 2
-POST http://localhost:3000/api/v1/tradeforms/{{trade_uid}}/verify-vc
-Authorization: Bearer {{user2_token}}
-Idempotency-Key: verify-{{uid}}
-Content-Type: application/json
-
-{
-  "credential": {
-    "kycApproved": true
-  }
-}
 
 ### Confirm as User 2
 POST http://localhost:3000/api/v1/tradeforms/{{trade_uid}}/confirm

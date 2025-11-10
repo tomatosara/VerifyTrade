@@ -1,24 +1,7 @@
-import { DataSource, FindOptionsWhere, Repository } from 'typeorm';
+import { DataSource, Repository } from 'typeorm';
 import type { QueryDeepPartialEntity } from 'typeorm/query-builder/QueryPartialEntity';
 import { AppDataSource } from '@database/data-source';
-import {
-  TradeFormEntity
-} from './entity/trade-form.entity';
-
-import {
-  TradeFormChannel,
-  TradeFormIdentityRequirement,
-  TradeFormItemCondition,
-  TradeFormMatchmakingChannel,
-  TradeFormPaymentMethod
-} from './enums/TradeFormEnums';
-export interface TradeFormFilters {
-  itemCondition?: TradeFormItemCondition;
-  tradeChannel?: TradeFormChannel;
-  paymentMethod?: TradeFormPaymentMethod;
-  matchmakingChannel?: TradeFormMatchmakingChannel;
-  identityRequirement?: TradeFormIdentityRequirement;
-}
+import { TradeFormEntity } from './entity/trade-form.entity';
 
 export class TradeFormRepository {
   private readonly repo: Repository<TradeFormEntity>;
@@ -41,51 +24,6 @@ export class TradeFormRepository {
 
   async findByUid(uid: string): Promise<TradeFormEntity | null> {
     return this.repo.findOne({ where: { uid } });
-  }
-
-  async findAll(where: FindOptionsWhere<TradeFormEntity> = {}): Promise<TradeFormEntity[]> {
-    return this.repo.find({
-      where,
-      order: {
-        createdAt: 'DESC'
-      }
-    });
-  }
-
-  async findWithFilters(filters: TradeFormFilters = {}): Promise<[TradeFormEntity[], number]> {
-    const qb = this.repo.createQueryBuilder('tradeForm').orderBy('tradeForm.createdAt', 'DESC');
-
-    if (filters.itemCondition) {
-      qb.andWhere('tradeForm.itemCondition = :itemCondition', {
-        itemCondition: filters.itemCondition
-      });
-    }
-
-    if (filters.tradeChannel) {
-      qb.andWhere('tradeForm.tradeChannel = :tradeChannel', {
-        tradeChannel: filters.tradeChannel
-      });
-    }
-
-    if (filters.paymentMethod) {
-      qb.andWhere('tradeForm.paymentMethod = :paymentMethod', {
-        paymentMethod: filters.paymentMethod
-      });
-    }
-
-    if (filters.matchmakingChannel) {
-      qb.andWhere('tradeForm.matchmakingChannel = :matchmakingChannel', {
-        matchmakingChannel: filters.matchmakingChannel
-      });
-    }
-
-    if (filters.identityRequirement) {
-      qb.andWhere(':identityRequirement = ANY(tradeForm.identityRequirements)', {
-        identityRequirement: filters.identityRequirement
-      });
-    }
-
-    return qb.getManyAndCount();
   }
 
   async update(id: number, partial: Partial<TradeFormEntity>): Promise<void> {

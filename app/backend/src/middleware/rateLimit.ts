@@ -13,9 +13,6 @@ export function createRateLimit(options?: Partial<Options>) {
   });
 }
 
-export const verifyVCRateLimit = createRateLimit({
-  keyGenerator: (req: Request) => `${req.user?.id ?? req.ip}-verify`
-});
 export const confirmRateLimit = createRateLimit({
   keyGenerator: (req: Request) => `${req.user?.id ?? req.ip}-confirm`
 });

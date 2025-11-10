@@ -39,12 +39,9 @@ Manages the creation and lifecycle of trade forms, which are the central object 
 ### API Endpoints
 
 -   `POST /`: Creates a new trade form.
--   `GET /`: Lists all trade forms with optional filtering.
--   `GET /{id}`: Retrieves a specific trade form by its numeric `id`.
 -   `GET /uid/{uid}`: Retrieves a specific trade form by its public `uid`.
--   `PUT /{id}`: Updates a trade form.
+-   `PUT /{uid}`: Updates a trade form using its public identifier.
 -   `DELETE /{id}`: Deletes a trade form.
--   `POST /{uid}/verify-vc`: Verifies a Verifiable Credential (VC) for a trade participant.
 -   `POST /{uid}/confirm`: Confirms a trade from the perspective of the current user.
 
 ### Associated Entities

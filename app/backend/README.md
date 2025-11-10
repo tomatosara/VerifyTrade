@@ -315,7 +315,7 @@ Store the returned `token` and pass it in subsequent requests:
 
 ```bash
 export VERIFYTRADE_TOKEN="<JWT from dev-token>"
-curl http://localhost:3000/api/v1/tradeforms \
+curl http://localhost:3000/api/v1/tradeforms/uid/demo-trade-uid \
   -H "Authorization: Bearer ${VERIFYTRADE_TOKEN}"
 ```
 
@@ -327,13 +327,10 @@ Platform services may authenticate with platform-signed JWTs when `PLATFORM_JWT_
 
 | Method | Path | Summary | Auth | Notes |
 | --- | --- | --- | --- | --- |
-| `GET` | `/api/v1/tradeforms` | List trade forms with optional filters | Bearer | Supports `itemCondition`, `tradeChannel`, `paymentMethod`, `matchmakingChannel`, `identityRequirement` query params. |
 | `POST` | `/api/v1/tradeforms` | Create a trade form | Bearer | Body must satisfy `CreateTradeFormDto`; returns 201 with full record. |
-| `GET` | `/api/v1/tradeforms/{id}` | Retrieve by numeric ID | Bearer | Path param `id` (number); returns `404` if missing. |
 | `GET` | `/api/v1/tradeforms/{uid}` | Retrieve by share UID | Bearer | Participants receive the full payload, others see the limited view. Alias of `/api/v1/tradeforms/uid/{uid}`. |
 | `PUT` | `/api/v1/tradeforms/{uid}` | Assign counterparty | Bearer | Path uses the public trade UID; body requires an existing user `counterpartyId` and sets status to `confirmed`. |
 | `DELETE` | `/api/v1/tradeforms/{id}` | Delete a trade form | Bearer | Responds with `204 No Content`. |
-| `POST` | `/api/v1/tradeforms/{uid}/verify-vc` | Validate VC proof | Bearer | Counterparty-only; accepts `{ "vcProof": {...} }`, enforces rate limit & idempotency. |
 | `POST` | `/api/v1/tradeforms/{uid}/confirm` | Confirm participation | Bearer | Requires authenticated participant; finalizes trade once both sides confirm. |
 
 Sample create request:
@@ -369,23 +366,6 @@ http POST :3000/api/v1/tradeforms \
   matchmakingChannel=SOCIAL_PLATFORM \
   identityRequirements:='["STUDENT_ID","PROOF_OF_ORIGIN"]' \
   userRating:=5
-```
-
-To perform VC verification with idempotency:
-
-```bash
-curl -X POST http://localhost:3000/api/v1/tradeforms/seed-trade-001/verify-vc \
-  -H "Authorization: Bearer ${VERIFYTRADE_TOKEN}" \
-  -H 'Content-Type: application/json' \
-  -H 'Idempotency-Key: verify-vc-001' \
-  -d '{"vcProof":{"claims":["kyc_passed","jurisdiction_tw"],"issuer":"did:example:issuer","credentialType":"KYC","level":3}}'
-```
-
-```bash
-http POST :3000/api/v1/tradeforms/seed-trade-001/verify-vc \
-  Authorization:"Bearer ${VERIFYTRADE_TOKEN}" \
-  Idempotency-Key:verify-vc-001 \
-  vcProof:='{"claims":["kyc_passed","jurisdiction_tw"],"issuer":"did:example:issuer","credentialType":"KYC","level":3}'
 ```
 
 ### Authentication endpoints

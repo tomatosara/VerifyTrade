@@ -34,19 +34,6 @@ export interface TradeFormResponse {
   updatedAt: Date;
 }
 
-export interface TradeFormListQuery {
-  itemCondition?: TradeFormItemCondition;
-  tradeChannel?: TradeFormChannel;
-  paymentMethod?: TradeFormPaymentMethod;
-  matchmakingChannel?: TradeFormMatchmakingChannel;
-  identityRequirement?: TradeFormIdentityRequirement;
-}
-
-export interface TradeFormListResponse {
-  data: TradeFormResponse[];
-  total: number;
-}
-
 export interface TradeFormPublicResponse {
   uid: string;
   status: TradeFormStatus;

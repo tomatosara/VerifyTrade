@@ -41,13 +41,10 @@ export default function Open() {
     setResult(null);
     try {
       const data = await fetchTradeFormByUid(code);
-
-      if (data.view !== "participant") {
-        setResult(data);
-        setError("此交易序號僅能檢視公開資訊，請確認您是否為交易參與者。");
+      if (data.trade.status == "confirmed") {
+        setError("此交易已完成，無法再次驗證。");
         return;
       }
-
       navigate(`/verify/${code}`, { state: { result: data } });
     } catch (err) {
       console.error(err);

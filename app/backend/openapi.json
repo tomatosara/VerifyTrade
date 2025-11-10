@@ -395,47 +395,6 @@
 				"type": "object",
 				"additionalProperties": false
 			},
-			"TradeFormListResponse": {
-				"properties": {
-					"data": {
-						"items": {
-							"$ref": "#/components/schemas/TradeFormResponse"
-						},
-						"type": "array"
-					},
-					"total": {
-						"type": "number",
-						"format": "double"
-					}
-				},
-				"required": [
-					"data",
-					"total"
-				],
-				"type": "object",
-				"additionalProperties": false
-			},
-			"TradeFormListQuery": {
-				"properties": {
-					"itemCondition": {
-						"$ref": "#/components/schemas/TradeFormItemCondition"
-					},
-					"tradeChannel": {
-						"$ref": "#/components/schemas/TradeFormChannel"
-					},
-					"paymentMethod": {
-						"$ref": "#/components/schemas/TradeFormPaymentMethod"
-					},
-					"matchmakingChannel": {
-						"$ref": "#/components/schemas/TradeFormMatchmakingChannel"
-					},
-					"identityRequirement": {
-						"$ref": "#/components/schemas/TradeFormIdentityRequirement"
-					}
-				},
-				"type": "object",
-				"additionalProperties": false
-			},
 			"TradeFormViewMode": {
 				"type": "string",
 				"enum": [
@@ -488,68 +447,6 @@
 				"required": [
 					"view",
 					"trade"
-				],
-				"type": "object",
-				"additionalProperties": false
-			},
-			"VerifyVcResponseDto": {
-				"properties": {
-					"valid": {
-						"type": "boolean"
-					},
-					"reason": {
-						"type": "string"
-					},
-					"code": {
-						"type": "string"
-					},
-					"matched": {
-						"properties": {
-							"expiresAt": {
-								"type": "string"
-							},
-							"level": {
-								"type": "number",
-								"format": "double"
-							},
-							"credentialType": {
-								"type": "string"
-							},
-							"issuer": {
-								"type": "string"
-							},
-							"claims": {
-								"items": {
-									"type": "string"
-								},
-								"type": "array"
-							}
-						},
-						"required": [
-							"claims"
-						],
-						"type": "object"
-					},
-					"status": {
-						"$ref": "#/components/schemas/TradeFormStatus"
-					},
-					"trade": {
-						"$ref": "#/components/schemas/TradeFormResponse"
-					}
-				},
-				"required": [
-					"valid",
-					"status"
-				],
-				"type": "object",
-				"additionalProperties": false
-			},
-			"VerifyVcRequestDto": {
-				"properties": {
-					"vcProof": {}
-				},
-				"required": [
-					"vcProof"
 				],
 				"type": "object",
 				"additionalProperties": false
@@ -1116,71 +1013,6 @@
 						}
 					}
 				}
-			},
-			"get": {
-				"operationId": "listTradeForms",
-				"responses": {
-					"200": {
-						"description": "Ok",
-						"content": {
-							"application/json": {
-								"schema": {
-									"$ref": "#/components/schemas/TradeFormListResponse"
-								}
-							}
-						}
-					}
-				},
-				"tags": [
-					"TradeForm"
-				],
-				"security": [
-					{
-						"bearerAuth": []
-					}
-				],
-				"parameters": [
-					{
-						"in": "query",
-						"name": "itemCondition",
-						"required": false,
-						"schema": {
-							"$ref": "#/components/schemas/TradeFormItemCondition"
-						}
-					},
-					{
-						"in": "query",
-						"name": "tradeChannel",
-						"required": false,
-						"schema": {
-							"$ref": "#/components/schemas/TradeFormChannel"
-						}
-					},
-					{
-						"in": "query",
-						"name": "paymentMethod",
-						"required": false,
-						"schema": {
-							"$ref": "#/components/schemas/TradeFormPaymentMethod"
-						}
-					},
-					{
-						"in": "query",
-						"name": "matchmakingChannel",
-						"required": false,
-						"schema": {
-							"$ref": "#/components/schemas/TradeFormMatchmakingChannel"
-						}
-					},
-					{
-						"in": "query",
-						"name": "identityRequirement",
-						"required": false,
-						"schema": {
-							"$ref": "#/components/schemas/TradeFormIdentityRequirement"
-						}
-					}
-				]
 			}
 		},
 		"/tradeforms/{uid}": {
@@ -1228,79 +1060,6 @@
 				}
 			}
 		},
-		"/tradeforms/{id}": {
-			"get": {
-				"operationId": "getTradeForm",
-				"responses": {
-					"200": {
-						"description": "Ok",
-						"content": {
-							"application/json": {
-								"schema": {
-									"$ref": "#/components/schemas/TradeFormResponse"
-								}
-							}
-						}
-					},
-					"404": {
-						"description": "Not Found",
-						"content": {
-							"application/json": {
-								"schema": {
-									"$ref": "#/components/schemas/ErrorResponse"
-								}
-							}
-						}
-					}
-				},
-				"tags": [
-					"TradeForm"
-				],
-				"security": [
-					{
-						"bearerAuth": []
-					}
-				],
-				"parameters": [
-					{
-						"in": "path",
-						"name": "id",
-						"required": true,
-						"schema": {
-							"format": "double",
-							"type": "number"
-						}
-					}
-				]
-			},
-			"delete": {
-				"operationId": "deleteTradeForm",
-				"responses": {
-					"204": {
-						"description": "No content"
-					}
-				},
-				"tags": [
-					"TradeForm"
-				],
-				"security": [
-					{
-						"bearerAuth": []
-					}
-				],
-				"parameters": [
-					{
-						"in": "path",
-						"name": "id",
-						"required": true,
-						"schema": {
-							"format": "double",
-							"type": "number"
-						}
-					}
-				]
-			}
-		},
 		"/tradeforms/uid/{uid}": {
 			"get": {
 				"operationId": "viewTradeFormByUid",
@@ -1346,69 +1105,12 @@
 				]
 			}
 		},
-		"/tradeforms/{uid}/verify-vc": {
-			"post": {
-				"operationId": "verifyTradeFormVc",
+		"/tradeforms/{id}": {
+			"delete": {
+				"operationId": "deleteTradeForm",
 				"responses": {
-					"200": {
-						"description": "Ok",
-						"content": {
-							"application/json": {
-								"schema": {
-									"$ref": "#/components/schemas/VerifyVcResponseDto"
-								}
-							}
-						}
-					},
-					"403": {
-						"description": "Forbidden – VC requirement not met or caller not allowed",
-						"content": {
-							"application/json": {
-								"schema": {
-									"$ref": "#/components/schemas/ErrorResponse"
-								}
-							}
-						}
-					},
-					"404": {
-						"description": "Not Found",
-						"content": {
-							"application/json": {
-								"schema": {
-									"$ref": "#/components/schemas/ErrorResponse"
-								}
-							}
-						}
-					},
-					"409": {
-						"description": "Conflict – Trade is not in a verifiable state",
-						"content": {
-							"application/json": {
-								"schema": {
-									"$ref": "#/components/schemas/ErrorResponse"
-								}
-							}
-						}
-					},
-					"410": {
-						"description": "Gone – Trade UID expired",
-						"content": {
-							"application/json": {
-								"schema": {
-									"$ref": "#/components/schemas/ErrorResponse"
-								}
-							}
-						}
-					},
-					"422": {
-						"description": "Invalid VC proof payload",
-						"content": {
-							"application/json": {
-								"schema": {
-									"$ref": "#/components/schemas/ErrorResponse"
-								}
-							}
-						}
+					"204": {
+						"description": "No content"
 					}
 				},
 				"tags": [
@@ -1422,23 +1124,14 @@
 				"parameters": [
 					{
 						"in": "path",
-						"name": "uid",
+						"name": "id",
 						"required": true,
 						"schema": {
-							"type": "string"
+							"format": "double",
+							"type": "number"
 						}
 					}
-				],
-				"requestBody": {
-					"required": true,
-					"content": {
-						"application/json": {
-							"schema": {
-								"$ref": "#/components/schemas/VerifyVcRequestDto"
-							}
-						}
-					}
-				}
+				]
 			}
 		},
 		"/tradeforms/{uid}/confirm": {

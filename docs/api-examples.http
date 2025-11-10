@@ -23,21 +23,6 @@ Content-Type: application/json
   "amount": "1000.00"
 }
 
-### Verify a counterparty credential
-POST {{host}}/api/v1/tradeforms/{{trade_uid}}/verify-vc
-Authorization: Bearer {{token}}
-Content-Type: application/json
-
-{
-  "credential": {
-    "type": "VerifiableCredential",
-    "issuer": "did:example:issuer",
-    "credentialSubject": {
-      "id": "did:example:counterparty"
-    }
-  }
-}
-
 ### List your trade forms (filters optional)
 GET {{host}}/api/v1/me/tradeforms?status=pending&page=1&page_size=20
 Authorization: Bearer {{token}}

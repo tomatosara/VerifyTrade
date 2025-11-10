@@ -7,7 +7,7 @@ export async function createTradeForm(formData: TradeFormCreate) {
 }
 
 export async function fetchTradeFormByUid(uid: string) {
-  return api.get<TradeFormViewResponse>(`/tradeforms/${uid}`);
+  return api.get<TradeFormViewResponse>(`/tradeforms/uid/${uid}`);
 }
 
 export async function confirmTradeForm(uid: string, formdata: TradeFormComfirm) {

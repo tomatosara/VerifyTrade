@@ -64,8 +64,8 @@ export default function VerifyForm() {
     setLoading(true);
     fetchTradeFormByUid(uid)
       .then((data) => {
-        if (data.view !== "participant") {
-          setError("此交易僅能由參與者驗證，請與發起者確認您的權限。");
+        if (data.trade.status == "confirmed") {
+          setError("此交易已完成，無法再次驗證。");
           return;
         }
         setResult(data);

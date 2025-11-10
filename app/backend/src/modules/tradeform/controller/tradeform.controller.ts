@@ -8,7 +8,6 @@ import {
   Path,
   Post,
   Put,
-  Queries,
   Request,
   Response,
   Route,
@@ -16,22 +15,15 @@ import {
   SuccessResponse,
   Tags
 } from 'tsoa';
-import { plainToInstance } from 'class-transformer';
-import { validateOrReject, ValidationError as ClassValidatorError } from 'class-validator';
+import { ValidationError as ClassValidatorError } from 'class-validator';
 import { TradeFormService } from '../tradeform.service';
 import { CreateTradeFormDto } from '../dto/create-trade-form.dto';
 import { UpdateTradeFormDto } from '../dto/update-trade-form.dto';
-import {
-  TradeFormListQuery,
-  TradeFormListResponse,
-  TradeFormResponse,
-  TradeFormViewResponse
-} from '../dto/trade-form.response';
-import { TradeFormQueryDto } from '../dto/trade-form-query.dto';
+import { TradeFormResponse, TradeFormViewResponse } from '../dto/trade-form.response';
 import { UnauthorizedError, ValidationError } from '@utils/errors';
-import { VerifyVcRequestDto, VerifyVcResponseDto, ConfirmTradeResponseDto } from '../dto/trade-form.actions.dto';
+import { ConfirmTradeResponseDto } from '../dto/trade-form.actions.dto';
 import type { ErrorResponse } from '../../../http/dto/error-response';
-import { verifyVCRateLimit, confirmRateLimit } from '@middleware/rateLimit';
+import { confirmRateLimit } from '@middleware/rateLimit';
 import { idempotencyMiddleware } from '@middleware/idempotency';
 import type { AuthenticatedRequest } from '@middleware/auth';
 
@@ -81,29 +73,6 @@ export class TradeFormController extends Controller {
     }
   }
 
-  @Get()
-  @OperationId('listTradeForms')
-  @Security('bearerAuth', [])
-  public async list(
-    @Queries() query: TradeFormListQuery
-  ): Promise<TradeFormListResponse> {
-    try {
-      const dto = plainToInstance(TradeFormQueryDto, query ?? {});
-      await validateOrReject(dto, { whitelist: true });
-      return this.service.findAll(dto);
-    } catch (error) {
-      throw mapValidationError(error);
-    }
-  }
-
-  @Get('{id}')
-  @OperationId('getTradeForm')
-  @Security('bearerAuth', [])
-  @Response<ErrorResponse>('404', 'Not Found')
-  public async findOne(@Path() id: number): Promise<TradeFormResponse> {
-    return this.service.findOne(id);
-  }
-
   @Get('uid/{uid}')
   @OperationId('viewTradeFormByUid')
   @Security('bearerAuth', [])
@@ -122,29 +91,6 @@ export class TradeFormController extends Controller {
   public async remove(@Path() id: number): Promise<void> {
     await this.service.remove(id);
     this.setStatus(204);
-  }
-
-  @Post('{uid}/verify-vc')
-  @OperationId('verifyTradeFormVc')
-  @Security('bearerAuth', [])
-  @Middlewares([verifyVCRateLimit, idempotencyMiddleware])
-  @Response<ErrorResponse>('404', 'Not Found')
-  @Response<ErrorResponse>(
-    '403',
-    'Forbidden – VC requirement not met or caller not allowed'
-  )
-  @Response<ErrorResponse>('409', 'Conflict – Trade is not in a verifiable state')
-  @Response<ErrorResponse>('410', 'Gone – Trade UID expired')
-  @Response<ErrorResponse>('422', 'Invalid VC proof payload')
-  public async verifyVc(
-    @Path() uid: string,
-    @Body() body: VerifyVcRequestDto,
-    @Request() req: AuthenticatedRequest
-  ): Promise<VerifyVcResponseDto> {
-    if (!req.user?.idNumber) {
-      throw new UnauthorizedError();
-    }
-    return this.service.verifyVc(uid, req.user.idNumber, body?.vcProof, req.user.id);
   }
 
   @Post('{uid}/confirm')
