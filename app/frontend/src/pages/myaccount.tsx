@@ -3,7 +3,7 @@ import { useAuth } from "@/context/AuthContext";
 import { MyAccountTradeList } from "@/components/trade/MyAccountTradeList";
 
 const DEFAULT_AVATAR =
-  "https://api.dicebear.com/8.x/identicon/svg?seed=verifytrade-user";
+  "/image/default-avatar.png";
 
 function MyAccount() {
   const { user, loading } = useAuth();
@@ -36,7 +36,7 @@ function MyAccount() {
             <img
               src={displayAvatar}
               alt="avatar"
-              className="w-28 h-28 rounded-full bg-[var(--color-primary)] object-cover shadow-md"
+              className="w-28 h-28 rounded-full object-cover shadow-md border-4 border-[var(--color-primary)]"
             />
             <label className="absolute bottom-0 right-0 bg-[var(--color-primary)] text-white text-xs py-1 px-3 rounded-full cursor-pointer hover:bg-[var(--color-primary)]/80 transition">
               更換
@@ -60,8 +60,7 @@ function MyAccount() {
 
         {/* 標題區（跟原設計一樣） */}
         <div className="mb-3">
-          <p className="text-sm text-gray-600">交易列表</p>
-          <h2 className="text-xl font-semibold text-gray-800">
+            <h2 className="text-xl font-semibold text-gray-800">
             交易紀錄
           </h2>
         </div>

@@ -113,7 +113,7 @@ export function MyAccountTradeList() {
             >
               {/* 左側：只顯示基本資訊 */}
               <div className="space-y-1">
-                <p className="text-sm text-gray-800 font-semibold">
+                <p className="text-lg text-gray-800 font-semibold">
                   交易序號：
                   <span className="ml-1 text-[var(--color-secondary,#246BCE)]">
                     {t.uid}
@@ -122,8 +122,8 @@ export function MyAccountTradeList() {
                 <p className="text-sm text-gray-600">
                   狀態：{statusText(t.status)}
                 </p>
-                <p className="text-xs text-gray-400">
-                  更新日期：{formatDate(t.createdAt)}
+                <p className="text-sm text-gray-600">
+                  更新時間：{formatDate(t.createdAt)}
                 </p>
               </div>
 

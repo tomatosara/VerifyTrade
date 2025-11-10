@@ -9,6 +9,7 @@ import { api, setAccessToken } from "@/api/client";
 import type { TradeFormViewResponse } from "@/types/tradeForm";
 import type { QrCodeResponse, UserProfile } from "@/types/verifier";
 import { TradeSummaryCard } from "@/components/trade/TradeSummaryCard";
+import { ChevronLeft } from "lucide-react";
 
 interface LocationState {
   result?: TradeFormViewResponse;
@@ -178,18 +179,42 @@ export default function VerifyForm() {
           />
 
           <button
-            className="text-sm text-[var(--color-primary)] underline mb-6 hover:text-[var(--color-secondary)]"
+            className="flex items-center gap-2 font-semibold text-lg text-[var(--color-primary)] mb-6 hover:text-[var(--color-secondary)] transition-colors"
             onClick={() => navigate(-1)}
           >
-            ← 返回上一頁
+            <ChevronLeft size={20} />
+            返回
           </button>
+
+
 
           <h1 className="text-3xl font-bold text-[var(--color-primary)] mb-2 text-center">
             確認方驗證
           </h1>
-          <p className="text-gray-600 text-center mb-6">
-            請確認交易內容並完成身分驗證，以保障雙方權益。
-          </p>
+
+          {verificationSuccess && (
+            <div className="bg-yellow-50 border border-yellow-300 text-black py-4 px-6 rounded-xl text-center font-semibold text-lg shadow-inner mt-8 mb-8">
+
+              <p className="text-black-600 text-lg font-semibold text-center">
+                確認方驗證成功！             
+                系統已記錄您的驗證，請等待交易進一步處理。
+              </p>
+            </div>
+          )}
+          {!verificationSuccess && (
+            <section className="mt-8 text-center bg-[var(--color-primary)]/10 rounded-2xl p-5 shadow-inner border border-red-200">
+              <div className="inline-block text-left">
+                <h2 className="text-xl font-semibold text-gray-800 mb-3 text-center">
+                  驗證流程
+                </h2>
+                <ol className="list-decimal list-inside text-sm text-gray-700 space-y-2">
+                  <li>請與交易建立方再次核對內容與金額，確認無誤後再進行驗證。</li>
+                  <li>使用數位憑證皮夾掃描 QR Code，依指示完成身分驗證。</li>
+                  <li>驗證成功後，系統會通知建立方並更新交易狀態。</li>
+                </ol>
+              </div>
+            </section>
+          )}
 
           {loading && <p className="text-center text-gray-500">載入交易資訊中...</p>}
           {error && <p className="text-center text-red-500">{error}</p>}
@@ -197,88 +222,58 @@ export default function VerifyForm() {
           {result && (
             <>
               <TradeSummaryCard result={result} />
+              <div className="w-full md:w-[420px] mx-auto flex flex-col items-center justify-center mt-8">
+                {!receiverAgreed && (
+                  <>
+                    <InteractiveHoverButton
+                      disabled={!canStart}
+                      onClick={startVerification}
+                      className="px-8 py-3 rounded-full font-semibold text-white bg-[var(--color-primary)] hover:bg-[var(--color-secondary)] transition"
+                    >
+                      我已確認內容，開始驗證
+                    </InteractiveHoverButton>
+                  </>
+                )}
+              </div>
 
-              <section className="mt-8">
-                <h2 className="text-xl font-semibold text-gray-800 mb-3">驗證流程</h2>
-                <ol className="list-decimal list-inside text-sm text-gray-700 space-y-2">
-                  <li>請與交易發起方再次核對內容與金額，確認無誤後再進行驗證。</li>
-                  <li>使用數位憑證皮夾掃描 QR Code，依指示完成身分驗證。</li>
-                  <li>驗證成功後，系統會通知發起方並更新交易狀態。</li>
-                </ol>
-              </section>
+              {/* ✅ 僅在開始驗證且尚未成功時顯示 */}
+              {receiverAgreed && !verificationSuccess && (
+                <section className="mt-6">
+                  <div className="w-full md:w-[420px] mx-auto flex flex-col items-center justify-center border-2 border-dashed border-gray-300 rounded-2xl p-10 min-h-[320px] bg-gray-50 text-center">
+                    <p className="text-gray-700 mb-4">請使用數位憑證皮夾掃描下方 QR Code</p>
 
-              <section className="mt-10">
-                <div className="w-full md:w-[420px] mx-auto flex flex-col items-center justify-center border-2 border-dashed border-gray-300 rounded-2xl p-10 min-h-[320px] bg-gray-50 text-center">
-                  {!receiverAgreed && (
-                    <>
-                      <p className="text-gray-700 mb-4">
-                        交易序號：<span className="font-semibold">{tradeUid}</span>
-                      </p>
-                      <InteractiveHoverButton
-                        disabled={!canStart}
-                        onClick={startVerification}
-                        className="px-8 py-3 rounded-full font-semibold text-white bg-[var(--color-primary)] hover:bg-[var(--color-secondary)] transition"
-                      >
-                        我已確認內容，開始驗證
-                      </InteractiveHoverButton>
-                    </>
-                  )}
+                    {qrLoading && !qrData && <p className="text-gray-500">QR Code 產生中...</p>}
 
-                  {receiverAgreed && !verificationSuccess && (
-                    <>
-                      <p className="text-gray-700 mb-4">請使用數位憑證皮夾掃描下方 QR Code</p>
-                      {qrLoading && !qrData && (
-                        <p className="text-gray-500">QR Code 產生中...</p>
-                      )}
-                      {qrError && (
-                        <div className="text-red-500 text-sm mb-3">
-                          {qrError}
+                    {qrError && <div className="text-red-500 text-sm mb-3">{qrError}</div>}
+
+                    {qrData ? (
+                      <>
+                        <div className="p-3 bg-white rounded-xl shadow-sm">
+                          <img
+                            src={qrData.qrcodeImage}
+                            alt="確認方驗證 QR Code"
+                            className="w-[220px] h-[220px] object-contain"
+                          />
                         </div>
-                      )}
-                      {qrData && (
-                        <>
-                          <div className="p-3 bg-white rounded-xl shadow-sm">
-                            <img
-                              src={qrData.qrcodeImage}
-                              alt="確認方驗證 QR Code"
-                              className="w-[220px] h-[220px] object-contain"
-                            />
-                          </div>
-                          <p className="text-xs text-gray-600 mt-4">
-                            交易 ID：{qrData.transactionId}
-                          </p>
-                          <button
-                            className="mt-4 text-sm text-[var(--color-primary)] underline hover:text-[var(--color-secondary)]"
-                            onClick={generateQrCode}
-                          >
-                            重新產生 QR Code
-                          </button>
-                        </>
-                      )}
-                      {!qrLoading && !qrData && !qrError && (
+                        <p className="text-xs text-gray-600 mt-4">交易 ID：{qrData.transactionId}</p>
+                        <button
+                          className="mt-4 text-sm text-[var(--color-primary)] underline hover:text-[var(--color-secondary)]"
+                          onClick={generateQrCode}
+                        >
+                          重新產生 QR Code
+                        </button>
+                      </>
+                    ) : (
+                      !qrLoading && (
                         <InteractiveHoverButton onClick={generateQrCode}>
                           產生驗證 QR Code
                         </InteractiveHoverButton>
-                      )}
-                    </>
-                  )}
+                      )
+                    )}
+                  </div>
+                </section>
+              )}
 
-                  {verificationSuccess && (
-                    <>
-                      <p className="text-xl font-semibold text-green-600 mb-2">驗證成功</p>
-                      <p className="text-sm text-gray-600">
-                        系統已記錄您的驗證，請等待交易進一步處理。
-                      </p>
-                      <button
-                        className="mt-4 text-sm text-[var(--color-primary)] underline hover:text-[var(--color-secondary)]"
-                        onClick={handleRetry}
-                      >
-                        重新驗證
-                      </button>
-                    </>
-                  )}
-                </div>
-              </section>
             </>
           )}
         </div>
@@ -286,3 +281,4 @@ export default function VerifyForm() {
     </div>
   );
 }
+

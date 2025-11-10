@@ -57,12 +57,9 @@ export function TradeDetailDrawer({
         <div className="px-6 py-5 border-b border-gray-100 flex items-center justify-between">
           {/* 左側：標題 + UID */}
           <div className="flex flex-col">
-            <h2 className="text-lg font-bold text-gray-900 tracking-wide">
-              交易內容
-            </h2>
-            <div className="mt-0.5 text-[12px] text-gray-500">
-              UID：
-              <span className="font-mono break-all">{uid}</span>
+
+            <div className="mt-0.5 text-[12px] text-">
+              <span className="font-bold text-xl break-all text-[var(--color-secondary)]">交易序號：{uid}</span>
             </div>
           </div>
 
@@ -117,9 +114,17 @@ export function TradeDetailDrawer({
           )}
 
           {!loading && data && (
+
+
             <>
+
+              <SectionTitle accent={primary}>交易狀態</SectionTitle>
+              <div className="space-y-2">
+                <InfoRow label="交易狀態" value={formatStatus(data.status)} />
+              </div>
+
               {/* 基本資訊 */}
-              <SectionTitle accent={primary}>基本資訊</SectionTitle>
+              <SectionTitle accent={primary}>交易內容</SectionTitle>
               <div className="space-y-2">
                 <InfoRow label="商品名稱" value={data.itemName} />
                 <InfoRow
@@ -128,16 +133,17 @@ export function TradeDetailDrawer({
                   multiline
                 />
                 <InfoRow label="商品金額" value={data.amount} />
-                <InfoRow label="狀態" value={data.status} />
-                <InfoRow label="交易方式" value={data.tradeChannel} />
-                <InfoRow label="付款方式" value={data.paymentMethod} />
+
+                <InfoRow label="交易方式" value={tradeMethod(data.tradeChannel)} />
+                <InfoRow label="付款方式" value={payment(data.paymentMethod)} />
+                <InfoRow label="交易媒合管道" value={matchMaking(data.matchmakingChannel)} />
               </div>
 
               {/* 雙方資訊 */}
               <SectionTitle accent={primary}>雙方資訊</SectionTitle>
               <div className="space-y-2">
                 <InfoRow
-                  label="發起人"
+                  label="建立方"
                   value={
                     data.creatorName || data.creatorId
                       ? `${data.creatorName || ""}${data.creatorId ? `（${data.creatorId}）` : ""
@@ -146,7 +152,7 @@ export function TradeDetailDrawer({
                   }
                 />
                 <InfoRow
-                  label="相對方"
+                  label="確認方"
                   value={
                     data.counterpartyName || data.counterpartyId
                       ? `${data.counterpartyName || ""}${data.counterpartyId
@@ -159,7 +165,7 @@ export function TradeDetailDrawer({
               </div>
 
               {/* 身分 / 條件 */}
-              <SectionTitle accent={primary}>身分 / 條件</SectionTitle>
+              <SectionTitle accent={primary}>身分 / 條件驗證</SectionTitle>
               <div className="space-y-2">
                 <InfoRow
                   label="身分要求"
@@ -170,11 +176,9 @@ export function TradeDetailDrawer({
                       : "無"
                   }
                 />
-                {data.meta && (
+                {data?.meta && Object.keys(data.meta).length > 0 && (
                   <div className="flex flex-col gap-1">
-                    <div className="text-gray-500 text-xs">
-                      其他資訊
-                    </div>
+                    <div className="text-gray-500 text-xs">其他資訊</div>
                     <pre className="p-2 bg-gray-50 border border-gray-100 rounded-md text-[10px] leading-snug max-h-32 overflow-auto whitespace-pre-wrap break-all">
                       {JSON.stringify(data.meta, null, 2)}
                     </pre>
@@ -186,27 +190,8 @@ export function TradeDetailDrawer({
               <SectionTitle accent={primary}>時間紀錄</SectionTitle>
               <div className="space-y-1.5">
                 <InfoRow label="建立時間" value={formatTs(data.createdAt)} />
-                <InfoRow label="更新時間" value={formatTs(data.updatedAt)} />
-                <InfoRow
-                  label="VC 驗證時間"
-                  value={formatTs(data.vcVerifiedAt)}
-                />
-                <InfoRow
-                  label="UID 過期時間"
-                  value={formatTs(data.uidExpiresAt)}
-                />
-                <InfoRow label="完成時間" value={formatTs(data.finalizedAt)} />
+                <InfoRow label="交易完成時間" value={formatTs(data.finalizedAt)} />
               </div>
-
-              {/* 操作紀錄 */}
-              <SectionTitle accent={primary}>操作紀錄</SectionTitle>
-              {data.auditEvents && data.auditEvents.length ? (
-                <TradeTimeline events={data.auditEvents} />
-              ) : (
-                <div className="text-xs text-gray-500">
-                  目前尚無操作紀錄。
-                </div>
-              )}
             </>
           )}
         </div>
@@ -244,10 +229,6 @@ function SectionTitle({
       className="mt-2 mb-1 flex items-center gap-2 text-sm font-semibold"
       style={{ color: accent }}
     >
-      <span
-        className="w-1.5 h-1.5 rounded-full"
-        style={{ backgroundColor: accent }}
-      />
       {children}
     </div>
   );
@@ -275,4 +256,56 @@ function InfoRow({
       </div>
     </div>
   );
+}
+
+function formatStatus(status: string | null): string {
+  switch (status) {
+    case "done":
+      return "交易完成";
+    case "pending":
+      return "等待確認方驗證";
+    case "verified":
+      return "已驗證";
+    case "confirmed":
+      return "交易成立";
+    case "failed":
+      return "交易失敗";
+    case "cancelled":
+      return "已取消";
+    default:
+      return status || "-";
+  }
+}
+
+function payment(paymentMethod: string | null): string {
+  switch (paymentMethod) {
+    case "bank_transfer":
+      return "銀行";
+    case "cash":
+      return "現金";
+    default:
+      return paymentMethod || "-";
+  }
+}
+
+function tradeMethod(tradeChannel: string | null): string {
+  switch (tradeChannel) {
+    case "p2p":
+      return "面交";
+    case "escrow":
+      return "交貨便";
+    default:
+      return tradeChannel || "-";
+  }
+}
+
+function matchMaking(matchmakingChannel: string | null): string {
+  switch (matchmakingChannel) {
+    case "in_app":
+      return "線下合議";
+    case "line":
+      return "社交平台";
+    default:
+      return matchmakingChannel || "-";
+  }
 }

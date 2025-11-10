@@ -305,7 +305,7 @@ export default function NewForm() {
           <Alert text="請建立方開啟數位憑證皮夾掃描 QR Code。" />
         )}
         {initiatorVerified && !receiverAgreed && (
-          <Alert text="交易內容已鎖定。請確認方使用交易序號登入表單，核對並確認交易資訊。" />
+          <Alert text="建立方驗證成功！交易內容已鎖定，請確認方使用交易序號登入表單，核對並確認交易資訊。" />
         )}
         {receiverAgreed && !transactionSuccess&& (
           <Alert text="請確認方開啟數位憑證皮夾掃描 QR Code 完成身分驗證。" />
@@ -388,11 +388,6 @@ export default function NewForm() {
               {/* 確認方驗證階段 */}
               {requiredPhase === "receiver" &&
                 renderVerifierContent("確認方驗證", "確認方驗證 QR Code")}
-
-              {/* 驗證成功提示（取代 QR Code） */}
-              {!requiredPhase && tradeFormCreated && (
-                <p className="text-xl font-semibold text-green-600">驗證成功</p>
-              )}
             </div>
           </section>
         )}
@@ -425,25 +420,6 @@ export default function NewForm() {
             tradeFormDraft={tradeDraft}
             onDraftChange={(patch) => setTradeDraft((prev) => ({ ...prev, ...patch }))}
           />
-        )}
-
-        {/* 👇 確認方同意按鈕 ---------------------------------------------- */}
-        {initiatorVerified && transactionLocked && !receiverAgreed && (
-          <div className="flex justify-center pb-2">
-            <button
-              onClick={() => {
-                setReceiverAgreed(true);
-                window.scrollTo({ top: 0, behavior: "smooth" });
-              }}
-              className={`px-8 py-3 rounded-full font-semibold text-white transition ${
-                receiverAgreed
-                  ? "bg-gray-300 cursor-not-allowed"
-                  : "bg-[var(--color-primary)] hover:bg-[var(--color-secondary)]"
-              }`}
-            >
-              確認方同意交易內容
-            </button>
-          </div>
         )}
       </div>
     </div>
