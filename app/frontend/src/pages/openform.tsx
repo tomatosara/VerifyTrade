@@ -78,6 +78,10 @@ export default function Open() {
         setError("此交易已完成，無法再次驗證。");
         return;
       }
+      if (data.trade.creatorId == user.idNumber) {
+        setError("此交易為建立方，無法再次驗證。");
+        return;
+      }
       navigate(`/verify/${code}`, { state: { result: data } });
     } catch (err) {
       console.error(err);
@@ -135,10 +139,8 @@ export default function Open() {
             {loadingPage ? "查詢中..." : "確認"}
           </InteractiveHoverButton>
 
-          {error === "Unauthorized" && (
-            <p className="mt-4 text-sm text-red-500">
-              {"請先登入後再查詢交易資料。"}
-            </p>
+          {error && (
+            <p className="mt-4 text-sm text-red-500">{error}</p>
           )}
 
           {!loadingPage && result && (

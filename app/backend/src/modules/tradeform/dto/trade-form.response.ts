@@ -36,6 +36,7 @@ export interface TradeFormResponse {
 
 export interface TradeFormPublicResponse {
   uid: string;
+  creatorId: string;
   status: TradeFormStatus;
   createdAt: Date;
   updatedAt: Date;

@@ -178,6 +178,7 @@ const models: TsoaRoute.Models = {
         "dataType": "refObject",
         "properties": {
             "uid": {"dataType":"string","required":true},
+            "creatorId": {"dataType":"string","required":true},
             "status": {"ref":"TradeFormStatus","required":true},
             "createdAt": {"dataType":"datetime","required":true},
             "updatedAt": {"dataType":"datetime","required":true},
@@ -226,7 +227,7 @@ const models: TsoaRoute.Models = {
             "status": {"ref":"TradeFormStatusDto","required":true},
             "tradeChannel": {"ref":"TradeFormChannelDto","required":true},
             "paymentMethod": {"ref":"TradeFormPaymentMethodDto","required":true},
-            "createdAt": {"dataType":"string","required":true},
+            "updatedAt": {"dataType":"string","required":true},
             "finalizedAt": {"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"enum","enums":[null]}],"required":true},
             "creatorName": {"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"enum","enums":[null]}],"required":true},
             "counterpartyName": {"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"enum","enums":[null]}],"required":true},

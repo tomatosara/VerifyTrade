@@ -407,6 +407,9 @@
 					"uid": {
 						"type": "string"
 					},
+					"creatorId": {
+						"type": "string"
+					},
 					"status": {
 						"$ref": "#/components/schemas/TradeFormStatus"
 					},
@@ -421,6 +424,7 @@
 				},
 				"required": [
 					"uid",
+					"creatorId",
 					"status",
 					"createdAt",
 					"updatedAt"
@@ -510,7 +514,7 @@
 					"paymentMethod": {
 						"$ref": "#/components/schemas/TradeFormPaymentMethodDto"
 					},
-					"createdAt": {
+					"updatedAt": {
 						"type": "string"
 					},
 					"finalizedAt": {
@@ -538,7 +542,7 @@
 					"status",
 					"tradeChannel",
 					"paymentMethod",
-					"createdAt",
+					"updatedAt",
 					"finalizedAt",
 					"creatorName",
 					"counterpartyName"

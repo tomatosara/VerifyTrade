@@ -85,6 +85,7 @@ export const emptyTradeFormErrors: TradeFormErrors = {};
 
 export interface TradeFormPublicResponse {
   uid: string;
+  creatorId: string;
   status: TradeFormStatus;
   createdAt: string;
   updatedAt: string;

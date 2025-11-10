@@ -54,6 +54,7 @@ const mapEntityToResponse = (entity: TradeFormEntity): TradeFormResponse => ({
 
 const mapEntityToPublicResponse = (entity: TradeFormEntity): TradeFormPublicResponse => ({
   uid: entity.uid,
+  creatorId: entity.creatorId,
   status: entity.status,
   createdAt: entity.createdAt,
   updatedAt: entity.updatedAt
