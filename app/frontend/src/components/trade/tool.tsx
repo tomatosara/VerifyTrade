@@ -19,3 +19,6 @@ export function formatStatus(status: string | null | undefined): string {
 
 export const formatDate = (value?: string | null) =>
   value ? new Date(value).toLocaleString("zh-TW") : "-";
+
+export const formatAmount = (value?: string | null) =>
+  value ? parseFloat(value).toFixed(1) : "-";

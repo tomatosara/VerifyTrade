@@ -1,19 +1,16 @@
 import { useEffect, useMemo, useRef, useState, useCallback } from "react";
-import { useLocation, useNavigate, useParams } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 import { FlickeringGrid } from "@/components/ui/flickering-grid";
 import { BorderBeam } from "@/components/ui/border-beam";
 import { InteractiveHoverButton } from "@/components/ui/interactive-hover-button";
-import { fetchTradeFormByUid, confirmTradeForm } from "@/api/tradeForm";
+import { confirmTradeForm } from "@/api/tradeForm";
+import { fetchTradeDetail } from "@/api/trades";
 import { fetchTradeFormQrCode, fetchTradeFormVerifierResult } from "@/api/qr";
 import { api, setAccessToken } from "@/api/client";
-import type { TradeFormViewResponse } from "@/types/tradeForm";
+import type { TradeDetail } from "@/types/trades";
 import type { QrCodeResponse, UserProfile } from "@/types/verifier";
 import { TradeSummaryCard } from "@/components/trade/TradeSummaryCard";
 import { ChevronLeft } from "lucide-react";
-
-interface LocationState {
-  result?: TradeFormViewResponse;
-}
 
 const extractErrorMessage = (error: unknown) => {
   if (error instanceof Error) {
@@ -32,13 +29,9 @@ const extractErrorMessage = (error: unknown) => {
 export default function VerifyForm() {
   const { uid } = useParams<{ uid: string }>();
   const navigate = useNavigate();
-  const location = useLocation();
-  const locationState = location.state as LocationState | undefined;
 
-  const [result, setResult] = useState<TradeFormViewResponse | null>(
-    locationState?.result ?? null
-  );
-  const [loading, setLoading] = useState(!locationState?.result);
+  const [result, setResult] = useState<TradeDetail | null>(null);
+  const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   const [receiverAgreed, setReceiverAgreed] = useState(false);
@@ -50,7 +43,7 @@ export default function VerifyForm() {
   const pollerRef = useRef<number | null>(null);
   const confirmTriggeredRef = useRef(false);
 
-  const tradeUid = useMemo(() => result?.trade.uid ?? uid ?? "", [result?.trade.uid, uid]);
+  const tradeUid = useMemo(() => result?.uid ?? uid ?? "", [result?.uid, uid]);
 
   const cleanupPoller = useCallback(() => {
     if (pollerRef.current) {
@@ -60,12 +53,15 @@ export default function VerifyForm() {
   }, []);
 
   useEffect(() => {
-    if (result || !uid) return;
+    if (!uid) {
+      setError("缺少交易序號");
+      setLoading(false);
+      return;
+    }
 
-    setLoading(true);
-    fetchTradeFormByUid(uid)
+    fetchTradeDetail(uid)
       .then((data) => {
-        if (data.trade.status == "confirmed") {
+        if (data.status == "confirmed") {
           setError("此交易已完成，無法再次驗證。");
           return;
         }
@@ -73,7 +69,7 @@ export default function VerifyForm() {
       })
       .catch((err) => setError(extractErrorMessage(err)))
       .finally(() => setLoading(false));
-  }, [result, uid]);
+  }, [uid]);
 
   useEffect(() => {
     return () => cleanupPoller();
@@ -119,15 +115,6 @@ export default function VerifyForm() {
             if (res.status === "success" && res.verifyResult) {
               cleanupPoller();
               try {
-                const loginResp = await api.post<{ accessToken: string; expiresIn: string }>(
-                  "/auth/login-by-verifier",
-                  { transactionId: data.transactionId },
-                  false
-                );
-                if (loginResp?.accessToken) {
-                  setAccessToken(loginResp.accessToken);
-                  window.dispatchEvent(new Event("auth-updated"));
-                }
                 const profile = await api.get<UserProfile>("/auth/me");
                 const verifiedId = profile?.idNumber;
                 if (!verifiedId) {
@@ -281,4 +268,3 @@ export default function VerifyForm() {
     </div>
   );
 }
-

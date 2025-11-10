@@ -11,8 +11,8 @@ export default function P2PTemplate({
   initiatorConfirmed,
   setInitiatorConfirmed,
 }: any) {
-  const [initiator, setInitiator] = useState({ name: "", method: "" });
-  const [receiver, setReceiver] = useState({ name: "", method: "" });
+  const [initiator, setInitiator] = useState({ method: "" });
+  const [receiver, setReceiver] = useState({ method: "" });
   const [formData, setFormData] = useState({ address: "", rent: "", duration: "" });
   const [initiatorExtraList, setInitiatorExtraList] = useState([""]);
   const [receiverExtraList, setReceiverExtraList] = useState([""]);

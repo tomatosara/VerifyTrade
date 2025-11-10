@@ -1,13 +1,19 @@
 import type { TradeFormResponse, TradeFormViewResponse } from "@/types/tradeForm";
-import {formatStatus, formatDate} from "@/components/trade/tool";
+import { formatStatus, formatDate, formatAmount } from "@/components/trade/tool";
+import type { TradeDetail } from "@/types/trades";
 
+type TradeSummarySource = TradeDetail | TradeFormViewResponse;
+
+const isTradeFormViewResponse = (
+  result: TradeSummarySource
+): result is TradeFormViewResponse => "trade" in result;
 
 const isFullTradePayload = (
-  trade: TradeFormViewResponse["trade"]
-): trade is TradeFormResponse => "creatorId" in trade;
+  trade: TradeFormViewResponse["trade"] | TradeDetail
+): trade is TradeFormResponse | TradeDetail => "creatorId" in trade;
 
-export function TradeSummaryCard({ result }: { result: TradeFormViewResponse }) {
-  const trade = result.trade;
+export function TradeSummaryCard({ result }: { result: TradeSummarySource }) {
+  const trade = isTradeFormViewResponse(result) ? result.trade : result;
   const isFull = isFullTradePayload(trade);
 
   return (
@@ -26,7 +32,7 @@ export function TradeSummaryCard({ result }: { result: TradeFormViewResponse }) 
           <div className="mt-4 grid grid-cols-1 sm:grid-cols-2 gap-4 text-basic text-gray-800">
             <DetailItem label="身份驗證條件" value={trade.identityRequirements.join("、")} />
             <DetailItem label="商品名稱" value={trade.itemName} />
-            <DetailItem label="商品金額" value={trade.amount} />
+            <DetailItem label="商品金額" value={formatAmount(trade.amount)} />
             <DetailItem label="交易方式" value={tradeMethod(trade.tradeChannel)} />
             <DetailItem label="付款方式" value={payment(trade.paymentMethod)} />
             <DetailItem label="交易媒合管道" value={matchMaking(trade.matchmakingChannel)} />

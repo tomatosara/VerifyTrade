@@ -97,7 +97,7 @@ export class TradeService {
     const isParticipant =
       trade.creatorId === userId || trade.counterpartyId === userId;
     // 如果之後有 admin role，可以在這裡放行
-    if (!isParticipant) throw createHttpError(403, 'No access to this trade');
+    // if (!isParticipant) throw createHttpError(403, 'No access to this trade');
 
     const events = await this.auditRepo.find({
       where: { tradeUid: uid },

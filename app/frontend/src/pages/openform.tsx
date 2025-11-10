@@ -135,13 +135,9 @@ export default function Open() {
             {loadingPage ? "查詢中..." : "確認"}
           </InteractiveHoverButton>
 
-          {error && (
-            <p className="mt-4 text-sm text-red-500">{error}</p>
-          )}
-
-          {loadingPage && !error && (
-            <p className="mt-4 text-sm text-gray-600">
-              查詢中，請稍候...
+          {error === "Unauthorized" && (
+            <p className="mt-4 text-sm text-red-500">
+              {"請先登入後再查詢交易資料。"}
             </p>
           )}
 

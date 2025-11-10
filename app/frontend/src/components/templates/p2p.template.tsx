@@ -79,8 +79,8 @@ export default function P2PTemplate({
   const handleDraftChange = (patch: Partial<TradeFormDraft>) => {
     onDraftChange(patch);
   };
-  const [initiator, setInitiator] = useState({ name: "", method: "" });
-  const [receiver, setReceiver] = useState({ name: "", method: "" });
+  const [initiator, setInitiator] = useState({ method: "" });
+  const [receiver, setReceiver] = useState({ method: "" });
   const [initiatorExtraList, setInitiatorExtraList] = useState([""]);
   const [receiverExtraList, setReceiverExtraList] = useState([""]);
   const paymentSelectionRef = useRef<string | null>(null);
@@ -201,16 +201,6 @@ export default function P2PTemplate({
                 建立方條件
               </h3>
 
-              <input
-                placeholder="姓名"
-                className={inputClass(initiatorConfirmed)}
-                value={initiator.name}
-                onChange={(e) =>
-                  setInitiator({ ...initiator, name: e.target.value })
-                }
-                disabled={initiatorConfirmed}
-              />
-
               <select
                 className={selectClass(initiatorConfirmed)}
                 value={initiator.method}
@@ -273,14 +263,6 @@ export default function P2PTemplate({
               <h3 className="font-semibold text-[var(--color-secondary)] mb-4">
                 確認方條件
               </h3>
-
-              <input
-                placeholder="姓名"
-                className={inputClass(initiatorConfirmed)}
-                value={receiver.name}
-                onChange={(e) => setReceiver({ ...receiver, name: e.target.value })}
-                disabled={initiatorConfirmed}
-              />
 
               <select
                 className={selectClass(initiatorConfirmed)}
