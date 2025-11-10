@@ -132,8 +132,7 @@ export function TradeDetailDrawer({
                   value={data.itemDescription || "-"}
                   multiline
                 />
-                <InfoRow label="商品金額" value={data.amount} />
-
+                <InfoRow label="商品金額" value={parseInt(data.amount, 10)} />
                 <InfoRow label="交易方式" value={tradeMethod(data.tradeChannel)} />
                 <InfoRow label="付款方式" value={payment(data.paymentMethod)} />
                 <InfoRow label="交易媒合管道" value={matchMaking(data.matchmakingChannel)} />

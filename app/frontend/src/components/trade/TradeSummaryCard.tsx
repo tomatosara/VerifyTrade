@@ -1,7 +1,6 @@
 import type { TradeFormResponse, TradeFormViewResponse } from "@/types/tradeForm";
+import {formatStatus, formatDate} from "@/components/trade/tool";
 
-const formatDate = (value?: string | null) =>
-  value ? new Date(value).toLocaleString("zh-TW") : "-";
 
 const isFullTradePayload = (
   trade: TradeFormViewResponse["trade"]
@@ -47,25 +46,6 @@ function DetailItem({ label, value }: { label: string; value?: string | number |
       <span className="font-medium text-gray-900 break-words">{value ?? "-"}</span>
     </div>
   );
-}
-
-function formatStatus(status: string | null): string {
-  switch (status) {
-    case "done":
-      return "交易完成";
-    case "pending":
-      return "等待確認方驗證";
-    case "verified":
-      return "已驗證";
-    case "confirmed":
-      return "交易成立";
-    case "failed":
-      return "交易失敗";
-    case "cancelled":
-      return "已取消";
-    default:
-      return status || "-";
-  }
 }
 
 function payment(paymentMethod: string | null): string {

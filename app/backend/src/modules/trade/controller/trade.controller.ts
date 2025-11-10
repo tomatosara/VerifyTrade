@@ -68,7 +68,7 @@ export class TradeController extends Controller {
 
 @Post('{uid}/rating')
   @OperationId('rateTrade')
-  @Security('bearerAuth', []) // 跟上面保持一致，不要用 jwt/ bearerAuth 混用
+  @Security('bearerAuth', []) 
   @Middlewares([confirmRateLimit, idempotencyMiddleware])
   @SuccessResponse('200', 'OK')
   @Response<ErrorResponse>('400', 'Bad Request')
@@ -83,7 +83,7 @@ export class TradeController extends Controller {
     const stars = body.stars;
     const resultStars = await this.service.rateTrade({
       tradeUid: uid,
-      raterIdNumber: req.user!.idNumber, // 你現有邏輯用 idNumber 當 userId
+      raterIdNumber: req.user!.idNumber, 
       stars,
     });
 

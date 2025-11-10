@@ -44,9 +44,7 @@ export class TradeService {
       .take(pageSize);
 
     if (status) {
-      qb.andWhere('t.status = :status', {
-        status: status as TradeFormStatus,
-      });
+      qb.andWhere('t.status = :status', { status: status as TradeFormStatus });
     }
     if (from) {
       qb.andWhere('t.createdAt >= :from', { from });
@@ -57,19 +55,20 @@ export class TradeService {
 
     const [rows, total] = await qb.getManyAndCount();
 
-    // 查出目前登入者針對這些交易的評價
     const tradeUids = rows.map((t) => t.uid);
     const ratingRepo = AppDataSource.getRepository(TradeRatingEntity);
 
-    const ratings = await ratingRepo
-      .createQueryBuilder('r')
-      .where('r.tradeUid IN (:...tradeUids)', { tradeUids })
-      .andWhere('r.fromIdNumber = :userId', { userId })
-      .getMany();
+    let ratingMap = new Map<string, number>();
 
-    // 轉成快速查表
-    const ratingMap = new Map<string, number>();
-    ratings.forEach((r) => ratingMap.set(r.tradeUid, r.stars));
+    if (tradeUids.length > 0) {
+      const ratings = await ratingRepo
+        .createQueryBuilder('r')
+        .where('r.tradeUid IN (:...tradeUids)', { tradeUids })
+        .andWhere('r.fromIdNumber = :userId', { userId })
+        .getMany();
+
+      ratingMap = new Map(ratings.map((r) => [r.tradeUid, r.stars]));
+    }
 
     const items: TradeSummaryDto[] = rows.map((t) => ({
       uid: t.uid,
@@ -78,11 +77,11 @@ export class TradeService {
       status: t.status,
       tradeChannel: t.tradeChannel,
       paymentMethod: t.paymentMethod,
-      createdAt: t.createdAt.toISOString(),
+      updatedAt: t.updatedAt.toISOString(),
       finalizedAt: t.finalizedAt ? t.finalizedAt.toISOString() : null,
       creatorName: t.creator?.name ?? null,
       counterpartyName: t.counterparty?.name ?? null,
-      stars: ratingMap.get(t.uid) ?? null, // ✅ 加入評價
+      stars: ratingMap.get(t.uid) ?? null,
     }));
 
     return { items, total };

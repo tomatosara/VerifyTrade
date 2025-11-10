@@ -196,7 +196,7 @@ export default function VerifyForm() {
             <div className="bg-yellow-50 border border-yellow-300 text-black py-4 px-6 rounded-xl text-center font-semibold text-lg shadow-inner mt-8 mb-8">
 
               <p className="text-black-600 text-lg font-semibold text-center">
-                確認方驗證成功！             
+                確認方驗證成功！
                 系統已記錄您的驗證，請等待交易進一步處理。
               </p>
             </div>

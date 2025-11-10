@@ -15,7 +15,7 @@ export interface TradeSummary {
   status: TradeStatus;
   tradeChannel: string;
   paymentMethod: string;
-  createdAt: string;
+  updatedAt: string;
   finalizedAt: string | null;
   creatorName: string | null;
   counterpartyName: string | null;

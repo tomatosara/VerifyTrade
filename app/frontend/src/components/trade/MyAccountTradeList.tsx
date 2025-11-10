@@ -3,7 +3,7 @@ import { Star } from "lucide-react";
 import { fetchTrades } from "@/api/trades";
 import { TradeSummary } from "@/types/trades";
 import { TradeDetailDrawer } from "@/components/trade/TradeDetailDrawer";
-
+import { formatStatus, formatDate } from "@/components/trade/tool";
 const ITEMS_PER_PAGE = 5;
 
 export function MyAccountTradeList() {
@@ -70,31 +70,9 @@ export function MyAccountTradeList() {
     return <div className="text-red-500 text-sm">{error}</div>;
   }
 
-  if (!trades.length) {
-    return <div className="text-gray-500 text-sm">目前尚無交易紀錄。</div>;
+  if (!loading && !error && trades.length === 0) {
+    return <div className="text-center text-gray-500 py-6">目前沒有交易紀錄</div>;
   }
-
-  const statusText = (status: string | null | undefined) => {
-    switch (status) {
-      case "done":
-        return "交易完成";
-      case "pending":
-        return "審核中";
-      case "verified":
-        return "已驗證";
-      case "confirmed":
-        return "已確認";
-      case "failed":
-        return "交易失敗";
-      case "cancelled":
-        return "已取消";
-      default:
-        return status || "-";
-    }
-  };
-
-  const formatDate = (iso?: string | null) =>
-    iso ? new Date(iso).toLocaleString("zh-TW") : "-";
 
   return (
     <>
@@ -120,10 +98,10 @@ export function MyAccountTradeList() {
                   </span>
                 </p>
                 <p className="text-sm text-gray-600">
-                  狀態：{statusText(t.status)}
+                  狀態：{formatStatus(t.status)}
                 </p>
                 <p className="text-sm text-gray-600">
-                  更新時間：{formatDate(t.createdAt)}
+                  更新時間：{formatDate(t.updatedAt)}
                 </p>
               </div>
 

@@ -12,7 +12,7 @@ export class TradeSummaryDto {
   status!: TradeFormStatusDto;
   tradeChannel!: TradeFormChannelDto;
   paymentMethod!: TradeFormPaymentMethodDto;
-  createdAt!: string;
+  updatedAt: string;
   finalizedAt!: string | null;
   creatorName!: string | null;
   counterpartyName!: string | null;
