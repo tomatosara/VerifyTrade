@@ -67,15 +67,15 @@ export class TradeFormController extends Controller {
     }
   }
 
-  @Put('{id}')
+  @Put('{uid}')
   @OperationId('updateTradeForm')
   @Security('bearerAuth', [])
   public async update(
-    @Path() id: number,
+    @Path() uid: string,
     @Body() body: UpdateTradeFormDto
   ): Promise<TradeFormResponse> {
     try {
-      return await this.service.update(id, body);
+      return await this.service.update(uid, body);
     } catch (error) {
       throw mapValidationError(error);
     }

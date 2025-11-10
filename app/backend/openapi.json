@@ -385,44 +385,13 @@
 			},
 			"UpdateTradeFormDto": {
 				"properties": {
-					"creatorVerifiedIdentities": {
-						"items": {
-							"type": "string"
-						},
-						"type": "array"
-					},
-					"itemName": {
+					"counterpartyId": {
 						"type": "string"
-					},
-					"itemDescription": {
-						"type": "string"
-					},
-					"itemCondition": {
-						"$ref": "#/components/schemas/TradeFormItemCondition"
-					},
-					"amount": {
-						"type": "string"
-					},
-					"tradeChannel": {
-						"$ref": "#/components/schemas/TradeFormChannel"
-					},
-					"paymentMethod": {
-						"$ref": "#/components/schemas/TradeFormPaymentMethod"
-					},
-					"matchmakingChannel": {
-						"$ref": "#/components/schemas/TradeFormMatchmakingChannel"
-					},
-					"identityRequirements": {
-						"items": {
-							"$ref": "#/components/schemas/TradeFormIdentityRequirement"
-						},
-						"type": "array"
-					},
-					"userRating": {
-						"type": "number",
-						"format": "double"
 					}
 				},
+				"required": [
+					"counterpartyId"
+				],
 				"type": "object",
 				"additionalProperties": false
 			},
@@ -1214,7 +1183,7 @@
 				]
 			}
 		},
-		"/tradeforms/{id}": {
+		"/tradeforms/{uid}": {
 			"put": {
 				"operationId": "updateTradeForm",
 				"responses": {
@@ -1240,11 +1209,10 @@
 				"parameters": [
 					{
 						"in": "path",
-						"name": "id",
+						"name": "uid",
 						"required": true,
 						"schema": {
-							"format": "double",
-							"type": "number"
+							"type": "string"
 						}
 					}
 				],
@@ -1258,7 +1226,9 @@
 						}
 					}
 				}
-			},
+			}
+		},
+		"/tradeforms/{id}": {
 			"get": {
 				"operationId": "getTradeForm",
 				"responses": {

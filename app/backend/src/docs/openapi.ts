@@ -193,7 +193,7 @@ const ensurePathItem = (path: string): OpenAPIV3_1.PathItemObject => {
 
 const uidPathEntry = findPathItem('/tradeforms/uid/{uid}');
 const sharePath = '/tradeforms/{uid}';
-if (uidPathEntry) {
+if (uidPathEntry && !specPaths[sharePath]) {
   specPaths[sharePath] = uidPathEntry.item;
   delete specPaths[uidPathEntry.key];
 }
@@ -227,12 +227,15 @@ if (createOperation?.requestBody && 'content' in createOperation.requestBody) {
 }
 
 setExampleIfPresent(findPathItem('/tradeforms/{id}')?.item.get, tradeFormExample);
-setExampleIfPresent(findPathItem('/tradeforms/{id}')?.item.put, {
+setExampleIfPresent(findPathItem('/tradeforms/{uid}')?.item.put, {
   ...tradeFormExample,
-  itemDescription: '含原廠鍵盤與 Apple Pencil'
+  counterpartyId: 'B223344556',
+  status: 'confirmed'
 });
 
-const viewOperation = findPathItem('/tradeforms/{uid}')?.item.get ?? findPathItem(sharePath)?.item.get;
+const viewOperation =
+  findPathItem('/tradeforms/uid/{uid}')?.item.get ??
+  findPathItem(sharePath)?.item.get;
 setExampleIfPresent(viewOperation, {
   view: 'limited',
   trade: {

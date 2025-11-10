@@ -8,6 +8,8 @@ import VerifierService from '@modules/verifier/service/verifier.service';
 import { signJwt, verifyJwt } from '@modules/auth/jwt';
 import { ForbiddenError } from '@utils/errors';
 import createError from 'http-errors';
+import { AppDataSource } from '@database/data-source';
+import { UserEntity } from '@modules/auth/entity/user.entity';
 
 // 小工具：設置/清除 refresh cookie（與你現有版本一致即可）
 import { serialize } from 'cookie';
@@ -45,12 +47,23 @@ export class AuthController extends Controller {
     if (!claims) {
       throw new ForbiddenError('Invalid or incomplete verification transaction');
     }
+    const userRepo = AppDataSource.getRepository(UserEntity);
+    let user = await userRepo.findOne({ where: { idNumber: claims.idNumber } });
+    if (!user) {
+      user = userRepo.create({
+        idNumber: claims.idNumber,
+        name: claims.name,
+        birthday: claims.birthday
+      });
+      user = await userRepo.save(user);
+    }
 
     // 直接用 claims 組 payload（sub 用穩定鍵：idn:<身分證字號>）
     const accessExp = '15m';
     const refreshExp = '7d';
 
     const accessPayload = {
+      id: user.id,
       sub: `idn:${claims.idNumber}`,
       role: 'user' as const,
       idNumber: claims.idNumber,
@@ -62,6 +75,7 @@ export class AuthController extends Controller {
 
     // 建議把最基本身分也放進 refresh，refresh → access 不必再碰 DB
     const refreshPayload = {
+      id: user.id,
       sub: accessPayload.sub,
       typ: 'refresh' as const,
       idNumber: claims.idNumber,
@@ -97,15 +111,23 @@ export class AuthController extends Controller {
       this.setStatus(401);
       return { accessToken: '', expiresIn: '0' };
     }
+    let actorId: string | undefined = payload.id;
+    if (!actorId && payload.idNumber) {
+      const userRepo = AppDataSource.getRepository(UserEntity);
+      const user = await userRepo.findOne({ where: { idNumber: payload.idNumber } });
+      actorId = user?.id;
+    }
 
     // 用 refresh 的資訊重簽 access
     const accessExp = '15m';
     const accessToken = signJwt(
       {
+        id: actorId,
         sub: payload.sub,
         role: payload.role ?? 'user',
         idNumber: payload.idNumber,
         name: payload.name,
+        birthday: payload.birthday,
       },
       { expiresIn: accessExp }
     );

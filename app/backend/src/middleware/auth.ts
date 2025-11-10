@@ -2,6 +2,9 @@
 import { Request, Response, NextFunction } from 'express';
 import type { UserRole } from '@modules/auth/entity/user.entity';
 import jwt from 'jsonwebtoken';
+import { AppDataSource } from '@database/data-source';
+import { UserEntity } from '@modules/auth/entity/user.entity';
+import { validate as validateUuid } from 'uuid';
 
 export interface AuthenticatedRequest extends Request {
   user?: {
@@ -14,7 +17,7 @@ export interface AuthenticatedRequest extends Request {
   };
 }
 
-export const authMiddleware = (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
+export const authMiddleware = async (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
   const authHeader = req.headers['authorization'];
   if (!authHeader) return res.status(401).json({ message: 'Unauthorized' });
 
@@ -23,13 +26,30 @@ export const authMiddleware = (req: AuthenticatedRequest, res: Response, next: N
 
   try {
     const payload = jwt.verify(token, process.env.JWT_SECRET!) as any;
+    const userRepo = AppDataSource.getRepository(UserEntity);
+
+    const isValidUuid = typeof payload.id === 'string' && validateUuid(payload.id);
+    let user: UserEntity | null = null;
+
+    if (isValidUuid) {
+      user = await userRepo.findOne({ where: { id: payload.id } });
+    }
+
+    if (!user && payload.idNumber) {
+      user = await userRepo.findOne({ where: { idNumber: payload.idNumber } });
+    }
+
+    if (!user) {
+      return res.status(401).json({ message: 'Unauthorized' });
+    }
+
     req.user = {
-      id: payload.id,
+      id: user.id,
       sub: payload.sub,
-      idNumber: payload.idNumber,
+      idNumber: user.idNumber,
       role: payload.role,
-      name: payload.name,
-      birthday: payload.birthday
+      name: payload.name ?? user.name,
+      birthday: payload.birthday ?? user.birthday
     };
     next();
   } catch {

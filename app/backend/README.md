@@ -331,7 +331,7 @@ Platform services may authenticate with platform-signed JWTs when `PLATFORM_JWT_
 | `POST` | `/api/v1/tradeforms` | Create a trade form | Bearer | Body must satisfy `CreateTradeFormDto`; returns 201 with full record. |
 | `GET` | `/api/v1/tradeforms/{id}` | Retrieve by numeric ID | Bearer | Path param `id` (number); returns `404` if missing. |
 | `GET` | `/api/v1/tradeforms/{uid}` | Retrieve by share UID | Bearer | Participants receive the full payload, others see the limited view. Alias of `/api/v1/tradeforms/uid/{uid}`. |
-| `PUT` | `/api/v1/tradeforms/{id}` | Update fields | Bearer | Accepts partial `UpdateTradeFormDto`. |
+| `PUT` | `/api/v1/tradeforms/{uid}` | Assign counterparty | Bearer | Path uses the public trade UID; body requires an existing user `counterpartyId` and sets status to `confirmed`. |
 | `DELETE` | `/api/v1/tradeforms/{id}` | Delete a trade form | Bearer | Responds with `204 No Content`. |
 | `POST` | `/api/v1/tradeforms/{uid}/verify-vc` | Validate VC proof | Bearer | Counterparty-only; accepts `{ "vcProof": {...} }`, enforces rate limit & idempotency. |
 | `POST` | `/api/v1/tradeforms/{uid}/confirm` | Confirm participation | Bearer | Requires authenticated participant; finalizes trade once both sides confirm. |

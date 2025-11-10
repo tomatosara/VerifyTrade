@@ -21,10 +21,19 @@ import { Copy, Check } from "lucide-react";
 import { fetchTradeFormQrCode, fetchVerifierResult } from "@/api/qr";
 import type { QrCodeResponse } from '@/types/verifier';
 import { createTradeForm } from "@/api/tradeForm";
-import type { TradeFormCreate } from "@/types/tradeForm";
+import { emptyTradeForm, type TradeFormCreate, type TradeFormDraft } from "@/types/tradeForm";
 import { useAuth as useAuthContext } from "@/context/AuthContext";
 
 type VerificationPhase = "initiator" | "receiver";
+
+const tradeCreationInFlight = new Set<string>();
+const tradeCreationSucceeded = new Set<string>();
+
+const isTradeUidConflictError = (error: unknown): boolean => {
+  if (!error || typeof error !== "object") return false;
+  const maybeAxios = error as { response?: { data?: { error?: string } } };
+  return maybeAxios.response?.data?.error === "Trade UID already exists";
+};
 
 export default function NewForm() {
   // 🧩 所有狀態變數
@@ -43,10 +52,12 @@ export default function NewForm() {
   const [qrLoading, setQrLoading] = useState(false);
   const [qrReloadKey, setQrReloadKey] = useState(0);
   const pollerRef = useRef<number | null>(null);
+  const autoCreateAttemptedTradeId = useRef<string | null>(null); // Ensures auto-create fires only once per tradeId
   const [creatingTradeForm, setCreatingTradeForm] = useState(false);
   const [tradeFormCreated, setTradeFormCreated] = useState(false);
   const [tradeFormError, setTradeFormError] = useState<string | null>(null);
   const creatorId = user?.idNumber ?? "";
+  const [tradeDraft, setTradeDraft] = useState<TradeFormDraft>({ ...emptyTradeForm });
 
   // ✅ 自動生成交易序號
   const generateTradeId = () => {
@@ -69,6 +80,7 @@ export default function NewForm() {
       : initiatorVerified && transactionLocked && receiverAgreed && !receiverVerified
         ? "receiver"
         : null;
+  const shouldShowQrSection = Boolean(template && (requiredPhase || tradeFormCreated));
 
   const cleanupPoller = useCallback(() => {
     if (pollerRef.current) {
@@ -84,31 +96,70 @@ export default function NewForm() {
   const attemptCreateTradeForm = useCallback(async () => {
     if (!tradeId || !creatorId || !template) return;
 
-    const payload: TradeFormCreate = {
-      uid: tradeId,
-      creatorId,
-      creatorVerifiedIdentities: ["tw_national_id"],
-      itemName: template === "p2p" ? "網路交易" : "租屋交易",
-      itemDescription: "請在表單中補充交易內容與條件。",
-      itemCondition: "used",
-      amount: "1",
-      tradeChannel: template === "p2p" ? "p2p" : "escrow",
-      paymentMethod: "cash",
-      matchmakingChannel: "in_app",
-      identityRequirements: ["tw_national_id"],
-    };
+    if (tradeCreationSucceeded.has(tradeId)) {
+      if (!tradeFormCreated) {
+        setTradeFormCreated(true);
+        setTradeFormError(null);
+      }
+      return;
+    }
 
+    if (tradeCreationInFlight.has(tradeId)) {
+      return;
+    }
+
+    const payload: TradeFormCreate =
+      template === "p2p"
+        ? {
+            uid: tradeId,
+            creatorId,
+            creatorVerifiedIdentities:
+              tradeDraft.creatorVerifiedIdentities && tradeDraft.creatorVerifiedIdentities.length > 0
+                ? tradeDraft.creatorVerifiedIdentities
+                : ["tw_national_id"],
+            itemName: tradeDraft.itemName,
+            itemDescription: tradeDraft.itemDescription,
+            itemCondition: tradeDraft.itemCondition,
+            amount: tradeDraft.amount,
+            tradeChannel: tradeDraft.tradeChannel,
+            paymentMethod: tradeDraft.paymentMethod,
+            matchmakingChannel: tradeDraft.matchmakingChannel,
+            identityRequirements: tradeDraft.identityRequirements,
+          }
+        : {
+            uid: tradeId,
+            creatorId,
+            creatorVerifiedIdentities: ["tw_national_id"],
+            itemName: "租屋交易",
+            itemDescription: "請在表單中補充交易內容與條件。",
+            itemCondition: "used",
+            amount: "1",
+            tradeChannel: "escrow",
+            paymentMethod: "cash",
+            matchmakingChannel: "in_app",
+            identityRequirements: ["tw_national_id"],
+          };
+
+    tradeCreationInFlight.add(tradeId);
     setCreatingTradeForm(true);
     setTradeFormError(null);
     try {
       await createTradeForm(payload);
+      tradeCreationSucceeded.add(tradeId);
       setTradeFormCreated(true);
     } catch (err: any) {
-      setTradeFormError(err?.message || "建立交易表單失敗，請稍後再試");
+      if (isTradeUidConflictError(err)) {
+        tradeCreationSucceeded.add(tradeId);
+        setTradeFormCreated(true);
+        setTradeFormError(null);
+      } else {
+        setTradeFormError(err?.message || "建立交易表單失敗，請稍後再試");
+      }
     } finally {
+      tradeCreationInFlight.delete(tradeId);
       setCreatingTradeForm(false);
     }
-  }, [creatorId, template, tradeId]);
+  }, [creatorId, template, tradeFormCreated, tradeId, tradeDraft]);
 
   useEffect(() => {
     if (
@@ -116,10 +167,12 @@ export default function NewForm() {
       !tradeId ||
       tradeFormCreated ||
       !creatorId ||
-      creatingTradeForm
+      creatingTradeForm ||
+      autoCreateAttemptedTradeId.current === tradeId
     ) {
       return;
     }
+    autoCreateAttemptedTradeId.current = tradeId;
     attemptCreateTradeForm();
   }, [
     initiatorVerified,
@@ -301,7 +354,7 @@ export default function NewForm() {
             {tradeFormCreated && !tradeFormError && (
               <p className="text-sm text-green-600 mt-2">交易表單已建立。</p>
             )}
-            {tradeFormError && (
+            {/* {tradeFormError && (
               <div className="mt-3 flex flex-col items-center gap-2">
                 <p className="text-sm text-red-600">{tradeFormError}</p>
                 <button
@@ -312,7 +365,7 @@ export default function NewForm() {
                   重新送出交易表單
                 </button>
               </div>
-            )}
+            )} */}
           </section>
         )}
 
@@ -320,11 +373,7 @@ export default function NewForm() {
         {!template && <TemplateSelector resetStates={resetAllStates} />}
 
         {/* QR 驗證區 ------------------------------------------------------ */}
-        {template && (
-          (initiatorConfirmed && !initiatorVerified) ||
-          (initiatorVerified && transactionLocked && receiverAgreed && !receiverVerified) 
-        
-          ) && (
+        {shouldShowQrSection && (
           <section className="border-b border-gray-200 pb-8">
             <h2 className="text-lg font-semibold text-gray-800 mb-6 text-center">
               數位憑證皮夾驗證
@@ -333,12 +382,17 @@ export default function NewForm() {
             <div className="w-full md:w-[400px] mx-auto flex flex-col items-center justify-center border-2 border-dashed border-gray-300 rounded-xl p-10 min-h-[300px] bg-gray-50 text-center transition-all duration-300">
 
               {/* 建立方驗證階段 */}
-              {initiatorConfirmed && !initiatorVerified &&
+              {requiredPhase === "initiator" &&
                 renderVerifierContent("建立方驗證", "建立方驗證 QR Code")}
 
               {/* 確認方驗證階段 */}
-              {initiatorVerified && transactionLocked && receiverAgreed && !receiverVerified &&
+              {requiredPhase === "receiver" &&
                 renderVerifierContent("確認方驗證", "確認方驗證 QR Code")}
+
+              {/* 驗證成功提示（取代 QR Code） */}
+              {!requiredPhase && tradeFormCreated && (
+                <p className="text-xl font-semibold text-green-600">驗證成功</p>
+              )}
             </div>
           </section>
         )}
@@ -368,6 +422,8 @@ export default function NewForm() {
             generateTradeId={generateTradeId}
             initiatorConfirmed={initiatorConfirmed}
             setInitiatorConfirmed={setInitiatorConfirmed}
+            tradeFormDraft={tradeDraft}
+            onDraftChange={(patch) => setTradeDraft((prev) => ({ ...prev, ...patch }))}
           />
         )}
 
@@ -396,6 +452,10 @@ export default function NewForm() {
   // 🧹 重設所有狀態（供 TemplateSelector 呼叫）
   function resetAllStates(type: "rent" | "p2p") {
     cleanupPoller();
+    if (tradeId) {
+      tradeCreationInFlight.delete(tradeId);
+      tradeCreationSucceeded.delete(tradeId);
+    }
     setQrData(null);
     setQrPhase(null);
     setQrError(null);
@@ -410,6 +470,8 @@ export default function NewForm() {
     setInitiatorConfirmed(false);
     setTradeId("");
     setReceiverAgreed(false);
+    setTradeDraft({ ...emptyTradeForm });
+    autoCreateAttemptedTradeId.current = null;
   }
 }
 

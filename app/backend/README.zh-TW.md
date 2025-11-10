@@ -331,7 +331,7 @@ curl http://localhost:3000/api/v1/tradeforms \
 | `POST` | `/api/v1/tradeforms` | 建立交易單 | Bearer | 請求需符合 `CreateTradeFormDto`，成功回傳 201 與完整資料。 |
 | `GET` | `/api/v1/tradeforms/{id}` | 以數字 ID 取得交易單 | Bearer | `id` 為數字，找不到時回傳 `404`。 |
 | `GET` | `/api/v1/tradeforms/{uid}` | 以分享 UID 取得交易單 | Bearer | 參與者會收到完整資訊，其餘人僅看到簡化內容。亦可使用 `/api/v1/tradeforms/uid/{uid}`。 |
-| `PUT` | `/api/v1/tradeforms/{id}` | 更新交易單欄位 | Bearer | 接受 `UpdateTradeFormDto` 的部分欄位。 |
+| `PUT` | `/api/v1/tradeforms/{uid}` | 設定交易對手 | Bearer | 使用公開 UID 作為路徑，body 需帶已存在使用者的 `counterpartyId`，並會把狀態設為 `confirmed`。 |
 | `DELETE` | `/api/v1/tradeforms/{id}` | 刪除交易單 | Bearer | 成功回傳 `204 No Content`。 |
 | `POST` | `/api/v1/tradeforms/{uid}/verify-vc` | 驗證 VC 憑證 | Bearer | 僅限交易對手；提交 `{ "vcProof": {...} }`，具速率限制與冪等保護。 |
 | `POST` | `/api/v1/tradeforms/{uid}/confirm` | 確認交易參與 | Bearer | 僅限交易參與者；雙方都確認後會觸發自動完成（finalize）流程。 |

@@ -4,6 +4,7 @@ import { plainToInstance } from 'class-transformer';
 import { validateOrReject } from 'class-validator';
 import { nanoid } from 'nanoid';
 import { AppDataSource } from '@database/data-source';
+import { UserEntity } from '@modules/auth/entity/user.entity';
 import { featureFlags } from '@config/featureFlags';
 import { TradeFormEntity, TradeFormVCUser2Meta } from './entity/trade-form.entity';
 import { TradeFormStatus } from './enums/TradeFormEnums';
@@ -135,6 +136,8 @@ export class TradeFormService {
 
   private readonly auditRepository: Repository<TradeAuditEventEntity>;
 
+  private readonly userRepository: Repository<UserEntity>;
+
   constructor(
     dataSource: DataSource = AppDataSource,
     repository: TradeFormRepository = new TradeFormRepository(dataSource)
@@ -142,6 +145,7 @@ export class TradeFormService {
     this.dataSource = dataSource;
     this.repository = repository;
     this.auditRepository = dataSource.getRepository(TradeAuditEventEntity);
+    this.userRepository = dataSource.getRepository(UserEntity);
   }
 
   async create(
@@ -431,43 +435,26 @@ export class TradeFormService {
     };
   }
 
-  async update(id: number, body: UpdateTradeFormDto): Promise<TradeFormResponse> {
+  async update(uid: string, body: UpdateTradeFormDto): Promise<TradeFormResponse> {
     const dto = plainToInstance(UpdateTradeFormDto, body);
     await validateOrReject(dto, { whitelist: true });
 
-    const existing = await this.repository.findById(id);
+    const existing = await this.repository.findByUid(uid);
     if (!existing) {
       throw new NotFoundError('Trade form not found');
     }
 
-    const creatorVerifiedIdentities =
-      dto.creatorVerifiedIdentities !== undefined
-        ? normalizeStringArray(dto.creatorVerifiedIdentities)
-        : existing.creatorVerifiedIdentities ?? [];
-
-    const identityRequirements =
-      dto.identityRequirements !== undefined
-        ? ensureNonEmptyArray(
-            normalizeStringArray(dto.identityRequirements),
-            'identityRequirements'
-          )
-        : existing.identityRequirements ?? [];
-
-    const amount =
-      dto.amount !== undefined ? normalizeAmountString(dto.amount) : existing.amount;
-
-    Object.assign(existing, {
-      creatorVerifiedIdentities,
-      itemName: dto.itemName ?? existing.itemName,
-      itemDescription: dto.itemDescription ?? existing.itemDescription,
-      itemCondition: dto.itemCondition ?? existing.itemCondition,
-      amount,
-      tradeChannel: dto.tradeChannel ?? existing.tradeChannel,
-      paymentMethod: dto.paymentMethod ?? existing.paymentMethod,
-      matchmakingChannel: dto.matchmakingChannel ?? existing.matchmakingChannel,
-      identityRequirements,
-      userRating: dto.userRating ?? existing.userRating
+    const counterparty = await this.userRepository.findOne({
+      where: { idNumber: dto.counterpartyId }
     });
+    if (!counterparty) {
+      throw new NotFoundError('Counterparty not found', {
+        field: 'counterpartyId'
+      });
+    }
+
+    existing.counterpartyId = dto.counterpartyId;
+    existing.status = TradeFormStatus.CONFIRMED;
 
     const saved = await this.repository.save(existing);
     return mapEntityToResponse(saved);

@@ -164,16 +164,7 @@ const models: TsoaRoute.Models = {
     "UpdateTradeFormDto": {
         "dataType": "refObject",
         "properties": {
-            "creatorVerifiedIdentities": {"dataType":"array","array":{"dataType":"string"}},
-            "itemName": {"dataType":"string"},
-            "itemDescription": {"dataType":"string"},
-            "itemCondition": {"ref":"TradeFormItemCondition"},
-            "amount": {"dataType":"string"},
-            "tradeChannel": {"ref":"TradeFormChannel"},
-            "paymentMethod": {"ref":"TradeFormPaymentMethod"},
-            "matchmakingChannel": {"ref":"TradeFormMatchmakingChannel"},
-            "identityRequirements": {"dataType":"array","array":{"dataType":"refAlias","ref":"TradeFormIdentityRequirement"}},
-            "userRating": {"dataType":"double"},
+            "counterpartyId": {"dataType":"string","required":true},
         },
         "additionalProperties": false,
     },
@@ -583,10 +574,10 @@ export function RegisterRoutes(app: Router) {
         });
         // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
         const argsTradeFormController_update: Record<string, TsoaRoute.ParameterSchema> = {
-                id: {"in":"path","name":"id","required":true,"dataType":"double"},
+                uid: {"in":"path","name":"uid","required":true,"dataType":"string"},
                 body: {"in":"body","name":"body","required":true,"ref":"UpdateTradeFormDto"},
         };
-        app.put('/api/v1/tradeforms/:id',
+        app.put('/api/v1/tradeforms/:uid',
             authenticateMiddleware([{"bearerAuth":[]}]),
             ...(fetchMiddlewares<RequestHandler>(TradeFormController)),
             ...(fetchMiddlewares<RequestHandler>(TradeFormController.prototype.update)),

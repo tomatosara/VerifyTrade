@@ -4,6 +4,7 @@ import Home from "./pages/home";
 import Login from "./pages/login";
 import NewForm from "./pages/newform";
 import OpenForm from "./pages/openform";
+import VerifyForm from "./pages/verifyform";
 import MyAccount from "./pages/myaccount";
 import { AuthProvider } from "./context/AuthContext";
 import Question from "./pages/question";
@@ -23,6 +24,7 @@ function App() {
           <Route path="/login" element={<Login />} />
           <Route path="/newform" element={<NewForm />} />
           <Route path="/openform" element={<OpenForm />} />
+          <Route path="/verify/:uid" element={<VerifyForm />} />
           <Route path="/myaccount" element={<MyAccount />} />
           <Route path="/question" element={<Question />} />   
 

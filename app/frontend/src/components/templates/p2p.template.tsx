@@ -59,6 +59,8 @@ interface P2PTemplateProps {
   generateTradeId: () => void;
   initiatorConfirmed: boolean;
   setInitiatorConfirmed: (value: boolean) => void;
+  tradeFormDraft: TradeFormDraft;
+  onDraftChange: (patch: Partial<TradeFormDraft>) => void;
 }
 
 export default function P2PTemplate({
@@ -70,10 +72,12 @@ export default function P2PTemplate({
   generateTradeId,
   initiatorConfirmed,
   setInitiatorConfirmed,
+  tradeFormDraft,
+  onDraftChange,
 }: P2PTemplateProps) {
-  const [form, setForm] = useState<TradeFormDraft>(emptyTradeForm);
+  const draft = tradeFormDraft ?? emptyTradeForm;
   const handleDraftChange = (patch: Partial<TradeFormDraft>) => {
-    setForm((prev) => ({ ...prev, ...patch }));
+    onDraftChange(patch);
   };
   const [initiator, setInitiator] = useState({ name: "", method: "" });
   const [receiver, setReceiver] = useState({ name: "", method: "" });
@@ -83,13 +87,13 @@ export default function P2PTemplate({
   const tradeChannelSelectionRef = useRef<string | null>(null);
   const matchmakingSelectionRef = useRef<string | null>(null);
   const [paymentMethodUi, setPaymentMethodUi] = useState<string>(() =>
-    findUiValue(paymentMethodOptions, form.paymentMethod)
+    findUiValue(paymentMethodOptions, draft.paymentMethod)
   );
   const [tradeChannelUi, setTradeChannelUi] = useState<string>(() =>
-    findUiValue(tradeChannelOptions, form.tradeChannel)
+    findUiValue(tradeChannelOptions, draft.tradeChannel)
   );
   const [matchmakingUi, setMatchmakingUi] = useState<string>(() =>
-    findUiValue(matchmakingOptions, form.matchmakingChannel)
+    findUiValue(matchmakingOptions, draft.matchmakingChannel)
   );
 
   const inputClass = (disabled = false) =>
@@ -111,53 +115,49 @@ export default function P2PTemplate({
   }, [transactionLocked]);
 
   useEffect(() => {
-    setForm(() => ({ ...emptyTradeForm }));
-  }, [tradeId]);
-
-  useEffect(() => {
     paymentSelectionRef.current = null;
     tradeChannelSelectionRef.current = null;
     matchmakingSelectionRef.current = null;
-    setPaymentMethodUi(findUiValue(paymentMethodOptions, form.paymentMethod));
-    setTradeChannelUi(findUiValue(tradeChannelOptions, form.tradeChannel));
-    setMatchmakingUi(findUiValue(matchmakingOptions, form.matchmakingChannel));
-  }, [tradeId, form.paymentMethod, form.tradeChannel, form.matchmakingChannel]);
+    setPaymentMethodUi(findUiValue(paymentMethodOptions, draft.paymentMethod));
+    setTradeChannelUi(findUiValue(tradeChannelOptions, draft.tradeChannel));
+    setMatchmakingUi(findUiValue(matchmakingOptions, draft.matchmakingChannel));
+  }, [tradeId, draft.paymentMethod, draft.tradeChannel, draft.matchmakingChannel]);
 
   useEffect(() => {
     const last = paymentSelectionRef.current;
     if (last) {
       const mapped = paymentMethodOptions.find((opt) => opt.value === last)?.backend;
-      if (mapped === form.paymentMethod) {
+      if (mapped === draft.paymentMethod) {
         setPaymentMethodUi(last);
         return;
       }
     }
-    setPaymentMethodUi(findUiValue(paymentMethodOptions, form.paymentMethod));
-  }, [form.paymentMethod]);
+    setPaymentMethodUi(findUiValue(paymentMethodOptions, draft.paymentMethod));
+  }, [draft.paymentMethod]);
 
   useEffect(() => {
     const last = tradeChannelSelectionRef.current;
     if (last) {
       const mapped = tradeChannelOptions.find((opt) => opt.value === last)?.backend;
-      if (mapped === form.tradeChannel) {
+      if (mapped === draft.tradeChannel) {
         setTradeChannelUi(last);
         return;
       }
     }
-    setTradeChannelUi(findUiValue(tradeChannelOptions, form.tradeChannel));
-  }, [form.tradeChannel]);
+    setTradeChannelUi(findUiValue(tradeChannelOptions, draft.tradeChannel));
+  }, [draft.tradeChannel]);
 
   useEffect(() => {
     const last = matchmakingSelectionRef.current;
     if (last) {
       const mapped = matchmakingOptions.find((opt) => opt.value === last)?.backend;
-      if (mapped === form.matchmakingChannel) {
+      if (mapped === draft.matchmakingChannel) {
         setMatchmakingUi(last);
         return;
       }
     }
-    setMatchmakingUi(findUiValue(matchmakingOptions, form.matchmakingChannel));
-  }, [form.matchmakingChannel]);
+    setMatchmakingUi(findUiValue(matchmakingOptions, draft.matchmakingChannel));
+  }, [draft.matchmakingChannel]);
 
   const handlePaymentMethodChange = (value: string) => {
     paymentSelectionRef.current = value;
@@ -370,7 +370,7 @@ export default function P2PTemplate({
               type="text"
               placeholder="請輸入商品名稱"
               className={inputClass(transactionLocked)}
-              value={form.itemName}
+              value={draft.itemName}
               onChange={(e) => handleDraftChange({ itemName: e.target.value })}
               disabled={transactionLocked}
             />
@@ -380,7 +380,7 @@ export default function P2PTemplate({
             <label className="block text-gray-700 font-medium mb-1">商品狀態</label>
             <select
               className={inputClass(transactionLocked)}
-              value={form.itemCondition}
+              value={draft.itemCondition}
               onChange={(e) =>
                 handleDraftChange({ itemCondition: e.target.value as TradeFormDraft["itemCondition"] })
               }
@@ -398,7 +398,7 @@ export default function P2PTemplate({
               type="number"
               placeholder="請輸入商品金額"
               className={inputClass(transactionLocked)}
-              value={form.amount}
+              value={draft.amount}
               onChange={(e) => handleDraftChange({ amount: e.target.value })}
               disabled={transactionLocked}
             />
@@ -458,7 +458,7 @@ export default function P2PTemplate({
               placeholder="請輸入商品說明（3000 字以內）"
               className={`${inputClass(transactionLocked)} h-32 resize-none`}
               maxLength={3000}
-              value={form.itemDescription}
+              value={draft.itemDescription}
               onChange={(e) => handleDraftChange({ itemDescription: e.target.value })}
               disabled={transactionLocked}
             ></textarea>

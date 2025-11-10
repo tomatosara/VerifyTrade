@@ -62,11 +62,11 @@ export interface TradeFormResponse {
   meta: TradeFormMeta;
   confirmedByUser1: boolean;
   confirmedByUser2: boolean;
-  vcVerifiedAt: Date | null;
-  uidExpiresAt: Date | null;
-  finalizedAt: Date | null;
-  createdAt: Date;
-  updatedAt: Date;
+  vcVerifiedAt: string | null;
+  uidExpiresAt: string | null;
+  finalizedAt: string | null;
+  createdAt: string;
+  updatedAt: string;
 }
 
 export const emptyTradeForm: TradeFormDraft = {
@@ -82,3 +82,22 @@ export const emptyTradeForm: TradeFormDraft = {
 };
 
 export const emptyTradeFormErrors: TradeFormErrors = {};
+
+export interface TradeFormPublicResponse {
+  uid: string;
+  status: TradeFormStatus;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export type TradeFormViewMode = 'participant' | 'limited';
+
+export interface TradeFormViewResponse {
+  view: TradeFormViewMode;
+  trade: TradeFormResponse | TradeFormPublicResponse;
+}
+
+export interface TradeFormComfirm {
+  counterpartyId: string;
+}
+
