@@ -10,21 +10,21 @@ export default function Carousel() {
   const slides = [
     {
       bgImage: "/image/shake-hand.png",
-      bgImageMobile: "/image/shake-hand.png",
+      bgImageMobile: "/image/shake-hand-mobile.png",
       buttonText: "立即登入",
       buttonLink: "/login",
       buttonColor: "bg-[var(--color-primary)] hover:bg-[var(--color-secondary)] text-white",
     },
     {
       bgImage: "/image/advantages.png",
-      bgImageMobile: "/image/advantages.png",
+      bgImageMobile: "/image/advantages-mobile.png",
       buttonText: "建立表單",
       buttonLink: "/newform",
       buttonColor: "bg-[var(--color-secondary)] hover:bg-[var(--color-secondary)] text-white",
     },
     {
       bgImage: "/image/fraud.png",
-      bgImageMobile: "/image/fraud.png",
+      bgImageMobile: "/image/fraud-mobile.png",
       buttonText: "查詢交易序號",
       buttonLink: "/openform",
       buttonColor: "bg-gradient-to-r from-[var(--color-primary)] to-[var(--color-accent)] text-white",
