@@ -194,14 +194,6 @@ const models: TsoaRoute.Models = {
         "additionalProperties": false,
     },
     // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
-    "ConfirmTradeResponseDto": {
-        "dataType": "refObject",
-        "properties": {
-            "trade": {"ref":"TradeFormResponse","required":true},
-        },
-        "additionalProperties": false,
-    },
-    // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
     "TradeFormStatusDto": {
         "dataType": "refAlias",
         "type": {"dataType":"union","subSchemas":[{"dataType":"enum","enums":["draft"]},{"dataType":"enum","enums":["pending"]},{"dataType":"enum","enums":["verified"]},{"dataType":"enum","enums":["confirmed"]},{"dataType":"enum","enums":["cancelled"]},{"dataType":"enum","enums":["failed"]},{"dataType":"enum","enums":["done"]}],"validators":{}},
@@ -584,69 +576,6 @@ export function RegisterRoutes(app: Router) {
 
               await templateService.apiHandler({
                 methodName: 'viewByUid',
-                controller,
-                response,
-                next,
-                validatedArgs,
-                successStatus: undefined,
-              });
-            } catch (err) {
-                return next(err);
-            }
-        });
-        // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
-        const argsTradeFormController_remove: Record<string, TsoaRoute.ParameterSchema> = {
-                id: {"in":"path","name":"id","required":true,"dataType":"double"},
-        };
-        app.delete('/api/v1/tradeforms/:id',
-            authenticateMiddleware([{"bearerAuth":[]}]),
-            ...(fetchMiddlewares<RequestHandler>(TradeFormController)),
-            ...(fetchMiddlewares<RequestHandler>(TradeFormController.prototype.remove)),
-
-            async function TradeFormController_remove(request: ExRequest, response: ExResponse, next: any) {
-
-            // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
-
-            let validatedArgs: any[] = [];
-            try {
-                validatedArgs = templateService.getValidatedArgs({ args: argsTradeFormController_remove, request, response });
-
-                const controller = new TradeFormController();
-
-              await templateService.apiHandler({
-                methodName: 'remove',
-                controller,
-                response,
-                next,
-                validatedArgs,
-                successStatus: undefined,
-              });
-            } catch (err) {
-                return next(err);
-            }
-        });
-        // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
-        const argsTradeFormController_confirm: Record<string, TsoaRoute.ParameterSchema> = {
-                uid: {"in":"path","name":"uid","required":true,"dataType":"string"},
-                req: {"in":"request","name":"req","required":true,"dataType":"object"},
-        };
-        app.post('/api/v1/tradeforms/:uid/confirm',
-            authenticateMiddleware([{"bearerAuth":[]}]),
-            ...(fetchMiddlewares<RequestHandler>(TradeFormController)),
-            ...(fetchMiddlewares<RequestHandler>(TradeFormController.prototype.confirm)),
-
-            async function TradeFormController_confirm(request: ExRequest, response: ExResponse, next: any) {
-
-            // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
-
-            let validatedArgs: any[] = [];
-            try {
-                validatedArgs = templateService.getValidatedArgs({ args: argsTradeFormController_confirm, request, response });
-
-                const controller = new TradeFormController();
-
-              await templateService.apiHandler({
-                methodName: 'confirm',
                 controller,
                 response,
                 next,

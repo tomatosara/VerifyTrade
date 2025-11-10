@@ -451,18 +451,6 @@
 				"type": "object",
 				"additionalProperties": false
 			},
-			"ConfirmTradeResponseDto": {
-				"properties": {
-					"trade": {
-						"$ref": "#/components/schemas/TradeFormResponse"
-					}
-				},
-				"required": [
-					"trade"
-				],
-				"type": "object",
-				"additionalProperties": false
-			},
 			"TradeFormStatusDto": {
 				"type": "string",
 				"enum": [
@@ -1076,100 +1064,6 @@
 					},
 					"404": {
 						"description": "Not Found",
-						"content": {
-							"application/json": {
-								"schema": {
-									"$ref": "#/components/schemas/ErrorResponse"
-								}
-							}
-						}
-					}
-				},
-				"tags": [
-					"TradeForm"
-				],
-				"security": [
-					{
-						"bearerAuth": []
-					}
-				],
-				"parameters": [
-					{
-						"in": "path",
-						"name": "uid",
-						"required": true,
-						"schema": {
-							"type": "string"
-						}
-					}
-				]
-			}
-		},
-		"/tradeforms/{id}": {
-			"delete": {
-				"operationId": "deleteTradeForm",
-				"responses": {
-					"204": {
-						"description": "No content"
-					}
-				},
-				"tags": [
-					"TradeForm"
-				],
-				"security": [
-					{
-						"bearerAuth": []
-					}
-				],
-				"parameters": [
-					{
-						"in": "path",
-						"name": "id",
-						"required": true,
-						"schema": {
-							"format": "double",
-							"type": "number"
-						}
-					}
-				]
-			}
-		},
-		"/tradeforms/{uid}/confirm": {
-			"post": {
-				"operationId": "confirmTradeForm",
-				"responses": {
-					"200": {
-						"description": "Ok",
-						"content": {
-							"application/json": {
-								"schema": {
-									"$ref": "#/components/schemas/ConfirmTradeResponseDto"
-								}
-							}
-						}
-					},
-					"403": {
-						"description": "Forbidden – Only participants may confirm; User 2 must have a valid VC",
-						"content": {
-							"application/json": {
-								"schema": {
-									"$ref": "#/components/schemas/ErrorResponse"
-								}
-							}
-						}
-					},
-					"404": {
-						"description": "Not Found",
-						"content": {
-							"application/json": {
-								"schema": {
-									"$ref": "#/components/schemas/ErrorResponse"
-								}
-							}
-						}
-					},
-					"409": {
-						"description": "Conflict – Trade status or counterparty mismatch",
 						"content": {
 							"application/json": {
 								"schema": {
