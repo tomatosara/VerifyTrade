@@ -104,6 +104,7 @@ export class TradeDetailDto {
   paymentMethod!: TradeFormPaymentMethodDto;
   matchmakingChannel!: TradeFormMatchmakingChannelDto;
   identityRequirements!: TradeFormIdentityRequirementDto[];
+  creatorVerifiedIdentities!: string[];
   userRating!: number;
 
   // meta：tsoa 對 Record<> 支援有坑，直接用 any / object

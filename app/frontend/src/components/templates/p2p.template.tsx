@@ -61,6 +61,8 @@ interface P2PTemplateProps {
   setInitiatorConfirmed: (value: boolean) => void;
   tradeFormDraft: TradeFormDraft;
   onDraftChange: (patch: Partial<TradeFormDraft>) => void;
+  onInitiatorRequirementsChange: (requirements: string[]) => void;
+  onReceiverRequirementsChange: (requirements: string[]) => void;
 }
 
 export default function P2PTemplate({
@@ -74,6 +76,8 @@ export default function P2PTemplate({
   setInitiatorConfirmed,
   tradeFormDraft,
   onDraftChange,
+  onInitiatorRequirementsChange,
+  onReceiverRequirementsChange,
 }: P2PTemplateProps) {
   const draft = tradeFormDraft ?? emptyTradeForm;
   const handleDraftChange = (patch: Partial<TradeFormDraft>) => {
@@ -159,6 +163,18 @@ export default function P2PTemplate({
     setMatchmakingUi(findUiValue(matchmakingOptions, draft.matchmakingChannel));
   }, [draft.matchmakingChannel]);
 
+  useEffect(() => {
+    const initiatorRequirements = initiatorExtraList.filter((v) => v);
+    const receiverRequirements = receiverExtraList.filter((v) => v);
+
+    const validatedInitiator = initiatorRequirements.length > 0 ? initiatorRequirements : [];
+    const validatedReceiver = receiverRequirements.length > 0 ? receiverRequirements : [];
+
+    onInitiatorRequirementsChange(validatedInitiator);
+    onReceiverRequirementsChange(validatedReceiver);
+    handleDraftChange({ identityRequirements: validatedReceiver });
+  }, [initiatorExtraList, receiverExtraList, onInitiatorRequirementsChange, onReceiverRequirementsChange]);
+
   const handlePaymentMethodChange = (value: string) => {
     paymentSelectionRef.current = value;
     setPaymentMethodUi(value);
@@ -228,10 +244,10 @@ export default function P2PTemplate({
                   >
                     <option value="">其他身分條件</option>
                     <option value="student">學生證</option>
-                    <option value="employee">員工證</option>
+                    {/* <option value="employee">員工證</option> */}
                     <option value="nutritionist">營養師證照</option>
                     <option value="lawyer">律師證照</option>
-                    <option value="goods">商品來源證明</option>
+                    {/* <option value="goods">商品來源證明</option> */}
                   </select>
 
                   {!initiatorConfirmed && initiatorExtraList.length > 1 && (
@@ -291,10 +307,10 @@ export default function P2PTemplate({
                   >
                     <option value="">其他身分條件</option>
                     <option value="student">學生證</option>
-                    <option value="employee">員工證</option>
+                    {/* <option value="employee">員工證</option> */}
                     <option value="nutritionist">營養師證照</option>
                     <option value="lawyer">律師證照</option>
-                    <option value="goods">商品來源證明</option>
+                    {/* <option value="goods">商品來源證明</option> */}
                   </select>
 
                   {!initiatorConfirmed && receiverExtraList.length > 1 && (

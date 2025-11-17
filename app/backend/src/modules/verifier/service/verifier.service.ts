@@ -5,12 +5,12 @@ import { AppDataSource } from '@database/data-source';
 import { VerificationTx } from '@modules/verifier/entity/verification-tx.entity';
 import { UserEntity } from '@modules/auth/entity/user.entity';
 
+type VerifierClaim = { ename?: string; cname?: string; value?: string };
+type VerifierVC = { credentialType?: string; claims?: VerifierClaim[] };
 type VerifierRaw = {
   verifyResult?: boolean;
   resultDescription?: string;
-  data?: Array<{
-    claims?: Array<{ ename?: string; value?: string }>;
-  }>;
+  data?: VerifierVC[];
 };
 
 export type IdClaims = {
@@ -60,6 +60,7 @@ export default class VerifierService {
         '/api/oidvp/result',
         { transactionId }
       );
+      console.log('[Verifier] getIdCardVerifyResult upstream', { transactionId, status, data });
 
       const ok = status === 200 && !!data?.verifyResult;
 
@@ -77,8 +78,10 @@ export default class VerifierService {
         return {
           status: 'failed' as const,
           verifyResult: false,
+          resultDescription: data?.resultDescription,
           message: data?.resultDescription || 'Verification failed',
           transactionId,
+          data: data?.data,
         };
       }
 
@@ -116,12 +119,14 @@ export default class VerifierService {
       // 去識別化
       const maskedId = idNumber.replace(/^(\w{3})\w+(\w{2})$/, '$1*****$2');
       const maskedName = name.length > 1 ? name[0] + '○'.repeat(name.length - 1) : name;
-
+      console.log('result credentials:', data?.data);
       // 前端用
       return {
         status: 'success' as const,
         verifyResult: true,
+        resultDescription: data?.resultDescription,
         transactionId,
+        data: data?.data,
         user: {
           name: maskedName,
           idNumber: maskedId,
@@ -163,6 +168,13 @@ export default class VerifierService {
         '/api/oidvp/result',
         { transactionId }
       );
+      console.log('[Verifier] getTradeFormVerifyResult upstream', {
+        transactionId,
+        status,
+        data,
+        firstCredentialType: data?.data?.[0]?.credentialType,
+        firstClaims: JSON.stringify(data?.data?.[0]?.claims ?? []),
+      });
 
       const ok = status === 200 && !!data?.verifyResult;
 
@@ -180,8 +192,10 @@ export default class VerifierService {
         return {
           status: 'failed' as const,
           verifyResult: false,
+          resultDescription: data?.resultDescription,
           message: data?.resultDescription || 'Verification failed',
           transactionId,
+          data: data?.data,
         };
       }
 
@@ -189,7 +203,9 @@ export default class VerifierService {
       return {
         status: 'success' as const,
         verifyResult: true,
+        resultDescription: data?.resultDescription,
         transactionId,
+        data: data?.data,
       }
     } catch (e) {
       const err = e as AxiosError<any>;

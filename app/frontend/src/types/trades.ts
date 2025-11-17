@@ -57,6 +57,7 @@ export interface TradeDetail {
   paymentMethod: string;
   matchmakingChannel: string;
   identityRequirements: string[];
+  creatorVerifiedIdentities?: string[];
   userRating: number;
 
   meta: Record<string, unknown>;

@@ -4,6 +4,7 @@ import { fetchTradeDetail, rateTrade } from "@/api/trades";
 import { TradeDetail } from "@/types/trades";
 import { TradeTimeline } from "@/components/trade/TradeTimeline";
 import { RatingStars } from "@/components/trade/RatingStars";
+import { formatIdentityRequirementList } from "@/types/verifier";
 
 interface Props {
   uid: string | null;
@@ -175,7 +176,7 @@ export function TradeDetailDrawer({
                   value={
                     data.identityRequirements &&
                       data.identityRequirements.length
-                      ? data.identityRequirements.join("、")
+                      ? formatIdentityRequirementList(data.identityRequirements)
                       : "無"
                   }
                 />

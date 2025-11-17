@@ -8,7 +8,7 @@ import { fetchTradeDetail } from "@/api/trades";
 import { fetchTradeFormQrCode, fetchTradeFormVerifierResult } from "@/api/qr";
 import { api, setAccessToken } from "@/api/client";
 import type { TradeDetail } from "@/types/trades";
-import type { QrCodeResponse, UserProfile } from "@/types/verifier";
+import { normalizeCredentialType, resolveCredentialTypesFromIdentity, formatIdentityRequirementList, type QrCodeResponse, type UserProfile } from "@/types/verifier";
 import { TradeSummaryCard } from "@/components/trade/TradeSummaryCard";
 import { ChevronLeft } from "lucide-react";
 
@@ -40,10 +40,22 @@ export default function VerifyForm() {
   const [qrError, setQrError] = useState<string | null>(null);
   const [verificationSuccess, setVerificationSuccess] = useState(false);
   const [verifiedCounterpartyId, setVerifiedCounterpartyId] = useState<string | null>(null);
+  const [verificationError, setVerificationError] = useState<string | null>(null);
   const pollerRef = useRef<number | null>(null);
   const confirmTriggeredRef = useRef(false);
 
   const tradeUid = useMemo(() => result?.uid ?? uid ?? "", [result?.uid, uid]);
+  const requiredCredentialTypes = useMemo(
+    () =>
+      resolveCredentialTypesFromIdentity(result?.identityRequirements).length > 0
+        ? resolveCredentialTypesFromIdentity(result?.identityRequirements)
+        : ["VirtualCardCredential"],
+    [result?.identityRequirements]
+  );
+  const initiatorRequirementLabels = useMemo(
+    () => formatIdentityRequirementList(result?.creatorVerifiedIdentities),
+    [result?.creatorVerifiedIdentities]
+  );
 
   const cleanupPoller = useCallback(() => {
     if (pollerRef.current) {
@@ -80,6 +92,12 @@ export default function VerifyForm() {
     confirmTriggeredRef.current = true;
     try {
       await confirmTradeForm(tradeUid, { counterpartyId });
+      try {
+        const updated = await fetchTradeDetail(tradeUid);
+        setResult(updated);
+      } catch {
+        // ignore refresh errors; UI already marks success
+      }
       setVerificationSuccess(true);
     } catch (err) {
       confirmTriggeredRef.current = false;
@@ -92,6 +110,7 @@ export default function VerifyForm() {
     confirmTriggeredRef.current = false;
     setReceiverAgreed(true);
     setQrError(null);
+    setVerificationError(null);
     setVerificationSuccess(false);
     setVerifiedCounterpartyId(null);
     await generateQrCode();
@@ -113,7 +132,23 @@ export default function VerifyForm() {
           try {
             const res = await fetchTradeFormVerifierResult(data.transactionId);
             if (res.status === "success" && res.verifyResult) {
+              const availableTypes = (res.data ?? [])
+                .map((vc) => normalizeCredentialType(vc?.credentialType))
+                .filter(Boolean) as string[];
+              const isCredentialMatched =
+                requiredCredentialTypes.length > 0 &&
+                requiredCredentialTypes.every((req) => availableTypes.includes(req));
+              if (!isCredentialMatched) {
+                cleanupPoller();
+                setVerificationError("身份條件不符，請重新驗證");
+                setVerifiedCounterpartyId(null);
+                confirmTriggeredRef.current = false;
+                await generateQrCode();
+                return;
+              }
+
               cleanupPoller();
+              setVerificationError(null);
               try {
                 const profile = await api.get<UserProfile>("/auth/me");
                 const verifiedId = profile?.idNumber;
@@ -147,6 +182,7 @@ export default function VerifyForm() {
     setQrData(null);
     setQrError(null);
     setVerifiedCounterpartyId(null);
+    setVerificationError(null);
     confirmTriggeredRef.current = false;
   };
 
@@ -210,6 +246,10 @@ export default function VerifyForm() {
             <>
               <TradeSummaryCard result={result} />
               <div className="w-full md:w-[420px] mx-auto flex flex-col items-center justify-center mt-8">
+                <div className="w-full bg-gray-50 border border-gray-200 rounded-xl p-4 text-sm text-left text-gray-700 mb-6">
+                  <p className="font-semibold mb-2 text-gray-800">建立方已驗證的身份條件</p>
+                  <p>{initiatorRequirementLabels}</p>
+                </div>
                 {!receiverAgreed && (
                   <>
                     <InteractiveHoverButton
@@ -232,6 +272,9 @@ export default function VerifyForm() {
                     {qrLoading && !qrData && <p className="text-gray-500">QR Code 產生中...</p>}
 
                     {qrError && <div className="text-red-500 text-sm mb-3">{qrError}</div>}
+                    {verificationError && (
+                      <div className="text-red-500 text-sm mb-3">{verificationError}</div>
+                    )}
 
                     {qrData ? (
                       <>

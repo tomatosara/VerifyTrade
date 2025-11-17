@@ -19,7 +19,7 @@ import RentTemplate from "@/components/templates/rent.template";
 import P2PTemplate from "@/components/templates/p2p.template";
 import { Copy, Check } from "lucide-react";
 import { fetchTradeFormQrCode, fetchTradeFormVerifierResult } from "@/api/qr";
-import type { QrCodeResponse } from '@/types/verifier';
+import { normalizeCredentialType, resolveCredentialTypeFromIdentity, resolveCredentialTypesFromIdentity, type QrCodeResponse } from '@/types/verifier';
 import { createTradeForm } from "@/api/tradeForm";
 import { emptyTradeForm, type TradeFormCreate, type TradeFormDraft } from "@/types/tradeForm";
 import { useAuth as useAuthContext } from "@/context/AuthContext";
@@ -49,13 +49,19 @@ export default function NewForm() {
   const [qrData, setQrData] = useState<QrCodeResponse | null>(null);
   const [qrPhase, setQrPhase] = useState<VerificationPhase | null>(null);
   const [qrError, setQrError] = useState<string | null>(null);
+  const [verificationError, setVerificationError] = useState<string | null>(null);
   const [qrLoading, setQrLoading] = useState(false);
   const [qrReloadKey, setQrReloadKey] = useState(0);
   const pollerRef = useRef<number | null>(null);
+  const qrFetchKeyRef = useRef(0);
   const autoCreateAttemptedTradeId = useRef<string | null>(null); // Ensures auto-create fires only once per tradeId
   const [creatingTradeForm, setCreatingTradeForm] = useState(false);
   const [tradeFormCreated, setTradeFormCreated] = useState(false);
   const [tradeFormError, setTradeFormError] = useState<string | null>(null);
+  const defaultCredentialType: string | null = null;
+  const [requiredCredentialType, setRequiredCredentialType] = useState<string | null>(defaultCredentialType);
+  const [initiatorIdentityRequirements, setInitiatorIdentityRequirements] = useState<string[]>([]);
+  const [receiverIdentityRequirements, setReceiverIdentityRequirements] = useState<string[]>([]);
   const creatorId = user?.idNumber ?? "";
   const [tradeDraft, setTradeDraft] = useState<TradeFormDraft>({ ...emptyTradeForm });
 
@@ -93,6 +99,34 @@ export default function NewForm() {
     return () => cleanupPoller();
   }, [cleanupPoller]);
 
+  useEffect(() => {
+    const targetPhase = requiredPhase ?? "initiator";
+    const identities =
+      targetPhase === "receiver" ? receiverIdentityRequirements : initiatorIdentityRequirements;
+    const mappedRequirements = resolveCredentialTypesFromIdentity(identities);
+    setRequiredCredentialType(mappedRequirements.length > 0 ? mappedRequirements[0] : null);
+  }, [requiredPhase, initiatorIdentityRequirements, receiverIdentityRequirements, template, defaultCredentialType]);
+
+  const getRequiredCredentialType = useCallback(
+    (phase?: VerificationPhase | null) => {
+      const targetPhase = phase ?? requiredPhase ?? "initiator";
+      const identities =
+        targetPhase === "receiver" ? receiverIdentityRequirements : initiatorIdentityRequirements;
+      return (
+        resolveCredentialTypeFromIdentity(identities) ??
+        normalizeCredentialType(requiredCredentialType) ??
+        normalizeCredentialType(defaultCredentialType)
+      );
+    },
+    [
+      requiredPhase,
+      receiverIdentityRequirements,
+      initiatorIdentityRequirements,
+      requiredCredentialType,
+      defaultCredentialType,
+    ]
+  );
+
   const attemptCreateTradeForm = useCallback(async () => {
     if (!tradeId || !creatorId || !template) return;
 
@@ -113,10 +147,7 @@ export default function NewForm() {
         ? {
             uid: tradeId,
             creatorId,
-            creatorVerifiedIdentities:
-              tradeDraft.creatorVerifiedIdentities && tradeDraft.creatorVerifiedIdentities.length > 0
-                ? tradeDraft.creatorVerifiedIdentities
-                : ["tw_national_id"],
+            creatorVerifiedIdentities: initiatorIdentityRequirements,
             itemName: tradeDraft.itemName,
             itemDescription: tradeDraft.itemDescription,
             itemCondition: tradeDraft.itemCondition,
@@ -129,7 +160,7 @@ export default function NewForm() {
         : {
             uid: tradeId,
             creatorId,
-            creatorVerifiedIdentities: ["tw_national_id"],
+            creatorVerifiedIdentities: initiatorIdentityRequirements,
             itemName: "租屋交易",
             itemDescription: "請在表單中補充交易內容與條件。",
             itemCondition: "used",
@@ -190,11 +221,33 @@ export default function NewForm() {
       if (qrData) setQrData(null);
       if (qrPhase) setQrPhase(null);
       setQrError(null);
+      setVerificationError(null);
       setQrLoading(false);
+      qrFetchKeyRef.current = 0;
       return;
     }
 
-    if (qrPhase === requiredPhase && qrData) return;
+    const requiredTypesForPhase = resolveCredentialTypesFromIdentity(
+      requiredPhase === "receiver" ? receiverIdentityRequirements : initiatorIdentityRequirements
+    );
+    if (requiredTypesForPhase.length === 0) {
+      cleanupPoller();
+      if (qrData) setQrData(null);
+      if (qrPhase) setQrPhase(null);
+      setQrError(null);
+      setVerificationError(null);
+      setQrLoading(false);
+      qrFetchKeyRef.current = 0;
+      if (requiredPhase === "initiator") {
+        setInitiatorVerified(true);
+      } else if (requiredPhase === "receiver") {
+        setReceiverVerified(true);
+      }
+      return;
+    }
+
+    const currentReloadKey = qrReloadKey;
+    if (qrPhase === requiredPhase && qrData && qrFetchKeyRef.current === currentReloadKey) return;
 
     let cancelled = false;
 
@@ -202,6 +255,7 @@ export default function NewForm() {
       setQrLoading(true);
       setQrError(null);
       cleanupPoller();
+      qrFetchKeyRef.current = currentReloadKey;
 
       try {
         const data = await fetchTradeFormQrCode();
@@ -214,11 +268,32 @@ export default function NewForm() {
           try {
             const result = await fetchTradeFormVerifierResult(data.transactionId);
             if (result.status === "success" && result.verifyResult) {
+              const availableTypes = (result.data ?? [])
+                .map((vc) => normalizeCredentialType(vc?.credentialType))
+                .filter(Boolean) as string[];
+              const requiredTypes = resolveCredentialTypesFromIdentity(
+                requiredPhase === "receiver"
+                  ? receiverIdentityRequirements
+                  : initiatorIdentityRequirements
+              );
+              const isCredentialMatched =
+                requiredTypes.length > 0 &&
+                requiredTypes.every((req) => availableTypes.includes(req));
+              if (!isCredentialMatched) {
+                cleanupPoller();
+                setVerificationError("身份條件不符，請重新驗證");
+                setInitiatorVerified(false);
+                setQrData(null);
+                setQrPhase(null);
+                setQrLoading(false);
+                setQrReloadKey((key) => key + 1);
+                return;
+              }
+
               cleanupPoller();
+              setVerificationError(null);
               if (requiredPhase === "initiator") {
                 setInitiatorVerified(true);
-              } else {
-                setReceiverVerified(true);
               }
               window.scrollTo({ top: 0, behavior: "smooth" });
             }
@@ -242,7 +317,7 @@ export default function NewForm() {
     return () => {
       cancelled = true;
     };
-  }, [requiredPhase, qrPhase, qrData, qrReloadKey, cleanupPoller]);
+  }, [requiredPhase, qrPhase, qrData, qrReloadKey, cleanupPoller, getRequiredCredentialType]);
 
   // ✅ 複製交易序號
   const handleCopy = () => {
@@ -271,6 +346,9 @@ export default function NewForm() {
             </button>
           )}
         </>
+      )}
+      {verificationError && (
+        <p className="text-red-500 text-sm mb-3">{verificationError}</p>
       )}
       {qrData && (
         <>
@@ -384,10 +462,6 @@ export default function NewForm() {
               {/* 建立方驗證階段 */}
               {requiredPhase === "initiator" &&
                 renderVerifierContent("建立方驗證", "建立方驗證 QR Code")}
-
-              {/* 確認方驗證階段 */}
-              {requiredPhase === "receiver" &&
-                renderVerifierContent("確認方驗證", "確認方驗證 QR Code")}
             </div>
           </section>
         )}
@@ -419,6 +493,8 @@ export default function NewForm() {
             setInitiatorConfirmed={setInitiatorConfirmed}
             tradeFormDraft={tradeDraft}
             onDraftChange={(patch) => setTradeDraft((prev) => ({ ...prev, ...patch }))}
+            onInitiatorRequirementsChange={setInitiatorIdentityRequirements}
+            onReceiverRequirementsChange={setReceiverIdentityRequirements}
           />
         )}
       </div>
@@ -435,7 +511,10 @@ export default function NewForm() {
     setQrData(null);
     setQrPhase(null);
     setQrError(null);
+    setVerificationError(null);
     setQrLoading(false);
+    setQrReloadKey(0);
+    qrFetchKeyRef.current = 0;
     setTradeFormCreated(false);
     setTradeFormError(null);
     setCreatingTradeForm(false);
@@ -447,6 +526,9 @@ export default function NewForm() {
     setTradeId("");
     setReceiverAgreed(false);
     setTradeDraft({ ...emptyTradeForm });
+    setInitiatorIdentityRequirements([]);
+    setReceiverIdentityRequirements([]);
+    setRequiredCredentialType(defaultCredentialType);
     autoCreateAttemptedTradeId.current = null;
   }
 }

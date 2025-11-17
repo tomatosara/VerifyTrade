@@ -131,6 +131,7 @@ export class TradeService {
       paymentMethod: trade.paymentMethod,
       matchmakingChannel: trade.matchmakingChannel,
       identityRequirements: trade.identityRequirements,
+      creatorVerifiedIdentities: trade.creatorVerifiedIdentities ?? [],
       userRating: trade.userRating,
 
       meta: trade.meta,

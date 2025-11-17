@@ -1,6 +1,7 @@
 import type { TradeFormResponse, TradeFormViewResponse } from "@/types/tradeForm";
 import { formatStatus, formatDate, formatAmount } from "@/components/trade/tool";
 import type { TradeDetail } from "@/types/trades";
+import { formatIdentityRequirementList } from "@/types/verifier";
 
 type TradeSummarySource = TradeDetail | TradeFormViewResponse;
 
@@ -30,7 +31,7 @@ export function TradeSummaryCard({ result }: { result: TradeSummarySource }) {
       {isFull && (
         <>
           <div className="mt-4 grid grid-cols-1 sm:grid-cols-2 gap-4 text-basic text-gray-800">
-            <DetailItem label="身份驗證條件" value={trade.identityRequirements.join("、")} />
+            <DetailItem label="身份驗證條件" value={formatIdentityRequirementList(trade.identityRequirements)} />
             <DetailItem label="商品名稱" value={trade.itemName} />
             <DetailItem label="商品金額" value={formatAmount(trade.amount)} />
             <DetailItem label="交易方式" value={tradeMethod(trade.tradeChannel)} />
