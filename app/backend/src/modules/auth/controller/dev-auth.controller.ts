@@ -112,6 +112,7 @@ export class AuthController extends Controller {
       return { accessToken: '', expiresIn: '0' };
     }
     let actorId: string | undefined = payload.id;
+    console.log('Refresh token payload:', payload);
     if (!actorId && payload.idNumber) {
       const userRepo = AppDataSource.getRepository(UserEntity);
       const user = await userRepo.findOne({ where: { idNumber: payload.idNumber } });

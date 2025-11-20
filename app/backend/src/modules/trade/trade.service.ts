@@ -114,6 +114,10 @@ export class TradeService {
       details: e.details,
     }));
 
+    // ⭐ 從 users 取出各自分數
+    const creatorScore = trade.creator?.score ?? null;
+    console.log('Creator score:', creatorScore);
+
     const dto: TradeDetailDto = {
       uid: trade.uid,
       itemName: trade.itemName,
@@ -143,7 +147,7 @@ export class TradeService {
       finalizedAt: trade.finalizedAt?.toISOString() ?? null,
       createdAt: trade.createdAt.toISOString(),
       updatedAt: trade.updatedAt.toISOString(),
-
+      otherPartyScore: creatorScore,
       auditEvents,
     };
     return dto;

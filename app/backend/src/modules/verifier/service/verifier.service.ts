@@ -47,7 +47,7 @@ export default class VerifierService {
   }
 
   async loginIdCardQrcode() {
-    return this.createQrcode(process.env.VP_IDCARD || '00000000_id_card123');
+    return this.createQrcode(process.env.VP_IDCARD || '00000000_login_verify');
   }
 
   async verifyTradeFormQrcode() {

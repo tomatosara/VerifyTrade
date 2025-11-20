@@ -67,6 +67,7 @@ export interface TradeDetail {
   vcVerifiedAt: string | null;
   uidExpiresAt: string | null;
   finalizedAt: string | null;
+  otherPartyScore: number | null;
   createdAt: string;
   updatedAt: string;
 

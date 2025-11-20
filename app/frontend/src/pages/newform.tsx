@@ -25,7 +25,7 @@ import { emptyTradeForm, type TradeFormCreate, type TradeFormDraft } from "@/typ
 import { useAuth as useAuthContext } from "@/context/AuthContext";
 
 type VerificationPhase = "initiator" | "receiver";
-
+type TradeParty = "initiator" | "receiver";
 const tradeCreationInFlight = new Set<string>();
 const tradeCreationSucceeded = new Set<string>();
 
@@ -64,7 +64,8 @@ export default function NewForm() {
   const [receiverIdentityRequirements, setReceiverIdentityRequirements] = useState<string[]>([]);
   const creatorId = user?.idNumber ?? "";
   const [tradeDraft, setTradeDraft] = useState<TradeFormDraft>({ ...emptyTradeForm });
-
+const [buyerSide, setBuyerSide] = useState<TradeParty>("initiator"); // 預設建立方是買家
+const sellerSide: TradeParty = buyerSide === "initiator" ? "receiver" : "initiator";
   // ✅ 自動生成交易序號
   const generateTradeId = () => {
     const id = Math.random().toString(36).substring(2, 10).toUpperCase();
@@ -495,6 +496,10 @@ export default function NewForm() {
             onDraftChange={(patch) => setTradeDraft((prev) => ({ ...prev, ...patch }))}
             onInitiatorRequirementsChange={setInitiatorIdentityRequirements}
             onReceiverRequirementsChange={setReceiverIdentityRequirements}
+            // 買家 / 賣家角色
+            buyerSide={buyerSide}
+            sellerSide={sellerSide}
+            onBuyerSideChange={setBuyerSide}
           />
         )}
       </div>

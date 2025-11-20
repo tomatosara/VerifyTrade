@@ -1,60 +1,3 @@
-// // src/modules/trade/dto/trade-detail.dto.ts
-// import {
-//   TradeFormMeta
-// } from '@modules/tradeform/entity/trade-form.entity';
-
-// import {
-//   TradeFormStatus,
-//   TradeFormChannel,
-//   TradeFormPaymentMethod,
-//   TradeFormMatchmakingChannel,
-//   TradeFormItemCondition,
-//   TradeFormIdentityRequirement,
-// } from '@modules/tradeform/enums/TradeFormEnums'
-// import { TradeAuditEventDto } from './trade-audit-event.dto';
-
-// export class TradeDetailDto {
-//   uid!: string;
-
-//   // basic
-//   itemName!: string;
-//   itemDescription!: string;
-//   amount!: string;
-//   itemCondition!: TradeFormItemCondition;
-//   status!: TradeFormStatus;
-
-//   // parties
-//   creatorId!: string | null;
-//   creatorName!: string | null;
-//   counterpartyId!: string | null;
-//   counterpartyName!: string | null;
-
-//   // trade config
-//   tradeChannel!: TradeFormChannel;
-//   paymentMethod!: TradeFormPaymentMethod;
-//   matchmakingChannel!: TradeFormMatchmakingChannel;
-//   identityRequirements!: TradeFormIdentityRequirement[];
-//   userRating!: number;
-
-//   // meta
-//   meta!: TradeFormMeta;
-
-//   // flags
-//   confirmedByUser1!: boolean;
-//   confirmedByUser2!: boolean;
-
-//   // timestamps
-//   vcVerifiedAt!: string | null;
-//   uidExpiresAt!: string | null;
-//   finalizedAt!: string | null;
-//   createdAt!: string;
-//   updatedAt!: string;
-
-//   // history
-//   auditEvents!: TradeAuditEventDto[];
-// }
-
-
 // src/modules/trade/dto/trade-detail.dto.ts
 
 import { TradeAuditEventDto } from './trade-audit-event.dto';
@@ -123,4 +66,6 @@ export class TradeDetailDto {
 
   // history
   auditEvents!: TradeAuditEventDto[];
+
+  otherPartyScore: number | null;
 }

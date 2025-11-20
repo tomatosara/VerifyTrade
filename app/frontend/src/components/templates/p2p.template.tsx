@@ -50,6 +50,7 @@ const findUiValue = <T extends string>(
   backendValue: T | undefined
 ) => options.find((opt) => opt.backend === backendValue)?.value ?? "";
 
+type TradeParty = "initiator" | "receiver";
 interface P2PTemplateProps {
   tradeId: string;
   initiatorVerified: boolean;
@@ -63,6 +64,9 @@ interface P2PTemplateProps {
   onDraftChange: (patch: Partial<TradeFormDraft>) => void;
   onInitiatorRequirementsChange: (requirements: string[]) => void;
   onReceiverRequirementsChange: (requirements: string[]) => void;
+  buyerSide: TradeParty;
+  sellerSide: TradeParty;
+  onBuyerSideChange: (side: TradeParty) => void;
 }
 
 export default function P2PTemplate({
@@ -78,13 +82,14 @@ export default function P2PTemplate({
   onDraftChange,
   onInitiatorRequirementsChange,
   onReceiverRequirementsChange,
+  buyerSide,
+  sellerSide,
+  onBuyerSideChange,
 }: P2PTemplateProps) {
   const draft = tradeFormDraft ?? emptyTradeForm;
   const handleDraftChange = (patch: Partial<TradeFormDraft>) => {
     onDraftChange(patch);
   };
-  const [initiator, setInitiator] = useState({ method: "" });
-  const [receiver, setReceiver] = useState({ method: "" });
   const [initiatorExtraList, setInitiatorExtraList] = useState([""]);
   const [receiverExtraList, setReceiverExtraList] = useState([""]);
   const paymentSelectionRef = useRef<string | null>(null);
@@ -99,6 +104,10 @@ export default function P2PTemplate({
   const [matchmakingUi, setMatchmakingUi] = useState<string>(() =>
     findUiValue(matchmakingOptions, draft.matchmakingChannel)
   );
+  const getRoleSelectValue = (party: TradeParty): string => {
+    // nid = 買家, vc = 賣家（沿用你原本的 value）
+    return buyerSide === party ? "nid" : "vc";
+  };
 
   const inputClass = (disabled = false) =>
     `border border-gray-300 rounded-lg w-full px-3 py-2 mb-3 text-gray-800 ${disabled
@@ -164,16 +173,13 @@ export default function P2PTemplate({
   }, [draft.matchmakingChannel]);
 
   useEffect(() => {
-    const initiatorRequirements = initiatorExtraList.filter((v) => v);
-    const receiverRequirements = receiverExtraList.filter((v) => v);
+    const initiatorExtras = initiatorExtraList.filter((v) => v);
+    const receiverExtras = receiverExtraList.filter((v) => v);
 
-    const validatedInitiator = initiatorRequirements.length > 0 ? initiatorRequirements : [];
-    const validatedReceiver = receiverRequirements.length > 0 ? receiverRequirements : [];
-
-    onInitiatorRequirementsChange(validatedInitiator);
-    onReceiverRequirementsChange(validatedReceiver);
-    handleDraftChange({ identityRequirements: validatedReceiver });
-  }, [initiatorExtraList, receiverExtraList, onInitiatorRequirementsChange, onReceiverRequirementsChange]);
+    // 只回報「額外條件」，預設身分證在 NewForm 那邊合併
+    onInitiatorRequirementsChange(initiatorExtras);
+    onReceiverRequirementsChange(receiverExtras);
+  }, [initiatorExtraList, receiverExtraList]);
 
   const handlePaymentMethodChange = (value: string) => {
     paymentSelectionRef.current = value;
@@ -219,16 +225,23 @@ export default function P2PTemplate({
 
               <select
                 className={selectClass(initiatorConfirmed)}
-                value={initiator.method}
-                onChange={(e) =>
-                  setInitiator({ ...initiator, method: e.target.value })
-                }
+                value={getRoleSelectValue("initiator")}
+                onChange={(e) => {
+                  const value = e.target.value;
+                  if (value === "nid") {
+                    // 建立方選「買家」→ buyerSide = initiator
+                    onBuyerSideChange("initiator");
+                  } else if (value === "vc") {
+                    // 建立方選「賣家」→ buyerSide = receiver（另一邊自動變買家）
+                    onBuyerSideChange("receiver");
+                  }
+                }}
                 disabled={initiatorConfirmed}
               >
-                <option value="">請選擇交易身分</option>
                 <option value="vc">賣家</option>
                 <option value="nid">買家</option>
               </select>
+
 
               {initiatorExtraList.map((item, index) => (
                 <div key={index} className="mt-3 flex items-center gap-2">
@@ -282,16 +295,23 @@ export default function P2PTemplate({
 
               <select
                 className={selectClass(initiatorConfirmed)}
-                value={receiver.method}
-                onChange={(e) =>
-                  setReceiver({ ...receiver, method: e.target.value })
-                }
+                value={getRoleSelectValue("receiver")}
+                onChange={(e) => {
+                  const value = e.target.value;
+                  if (value === "nid") {
+                    // 確認方選「買家」→ buyerSide = receiver
+                    onBuyerSideChange("receiver");
+                  } else if (value === "vc") {
+                    // 確認方選「賣家」→ buyerSide = initiator
+                    onBuyerSideChange("initiator");
+                  }
+                }}
                 disabled={initiatorConfirmed}
               >
-                <option value="">請選擇交易身分</option>
                 <option value="vc">賣家</option>
                 <option value="nid">買家</option>
               </select>
+
 
               {receiverExtraList.map((item, index) => (
                 <div key={index} className="mt-3 flex items-center gap-2">

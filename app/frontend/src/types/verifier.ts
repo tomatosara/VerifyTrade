@@ -30,6 +30,7 @@ export interface VerifierResultResponse {
 }
 
 export interface UserProfile {
+  id: string;
   sub: string;
   idNumber: string;
   name: string;

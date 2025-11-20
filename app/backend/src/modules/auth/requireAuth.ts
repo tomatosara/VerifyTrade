@@ -26,6 +26,7 @@ export function requireAuth(req: Request, _res: Response, next: NextFunction): v
 
   try {
     const claims = verifyJwt<{
+      id: string;
       sub: string;
       role?: UserRole;
       idNumber?: string;
@@ -36,9 +37,10 @@ export function requireAuth(req: Request, _res: Response, next: NextFunction): v
       throw new UnauthorizedError();
     }
     const role = claims.role ?? 'user';
+    console.log('Authenticated user claims:', claims);
     const typedRequest = req as AuthenticatedRequest;
     typedRequest.user = {
-      id: claims.sub,
+      id: claims.id,
       sub: claims.sub,
       idNumber: claims.idNumber ?? claims.sub,
       role,

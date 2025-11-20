@@ -13,14 +13,49 @@ const isFullTradePayload = (
   trade: TradeFormViewResponse["trade"] | TradeDetail
 ): trade is TradeFormResponse | TradeDetail => "creatorId" in trade;
 
+type FullTradeWithRating = (TradeFormResponse | TradeDetail) & {
+  userRating?: number;
+  otherPartyScore?: number | null;
+};
+
 export function TradeSummaryCard({ result }: { result: TradeSummarySource }) {
+
   const trade = isTradeFormViewResponse(result) ? result.trade : result;
+  console.log("trade in TradeSummaryCard", trade);
+
   const isFull = isFullTradePayload(trade);
+
+  let reputationScore: number | null = null;
+
+  if (isFull) {
+    const full = trade as FullTradeWithRating & {
+      otherPartyScore?: number | string | null;
+    };
+
+    const raw = full.otherPartyScore;
+
+    if (typeof raw === "number") {
+      reputationScore = raw;
+    } else if (typeof raw === "string") {
+      const parsed = Number(raw);
+      reputationScore = Number.isFinite(parsed) ? parsed : null;
+    }
+  }
+
+  console.log("isFull", reputationScore);
+
+  const isLowReputation =
+    typeof reputationScore === "number" && reputationScore < 2;
+  console.log("reputationScore", reputationScore);
+
+  const cardClass =
+    "mt-6 text-left rounded-2xl p-5 shadow-inner border " +
+    (isLowReputation
+      ? "bg-red-50 border-red-300"
+      : "bg-white/90 border-gray-100");
 
   return (
     <div className="mt-6 text-left bg-white/90 rounded-2xl p-5 shadow-inner border border-gray-100">
-
-
       <div className="mt-4 grid grid-cols-1 sm:grid-cols-2 gap-4 text-basic text-gray-800">
         <DetailItem label="交易序號" value={trade.uid} />
         <DetailItem label="狀態" value={formatStatus(trade.status)} />
@@ -31,13 +66,30 @@ export function TradeSummaryCard({ result }: { result: TradeSummarySource }) {
       {isFull && (
         <>
           <div className="mt-4 grid grid-cols-1 sm:grid-cols-2 gap-4 text-basic text-gray-800">
-            <DetailItem label="身份驗證條件" value={formatIdentityRequirementList(trade.identityRequirements)} />
+            <DetailItem
+              label="身份驗證條件"
+              value={formatIdentityRequirementList(trade.identityRequirements)}
+            />
             <DetailItem label="商品名稱" value={trade.itemName} />
             <DetailItem label="商品金額" value={formatAmount(trade.amount)} />
             <DetailItem label="交易方式" value={tradeMethod(trade.tradeChannel)} />
             <DetailItem label="付款方式" value={payment(trade.paymentMethod)} />
-            <DetailItem label="交易媒合管道" value={matchMaking(trade.matchmakingChannel)} />
+            <DetailItem
+              label="交易媒合管道"
+              value={matchMaking(trade.matchmakingChannel)}
+            />
           </div>
+
+          {typeof reputationScore === "number" && isLowReputation && (
+            <div className="mt-4 rounded-xl border border-red-300 bg-red-50 px-3 py-2 text-xs sm:text-sm text-red-800 flex flex-col gap-1">
+              <span className="font-semibold">
+                ⚠️ 注意：對方信譽分數偏低
+              </span>
+              <span className="leading-snug">
+                進行這筆交易可能有較高風險，建議再次確認對方身份、交易方式與付款安全。
+              </span>
+            </div>
+          )}
         </>
       )}
     </div>
