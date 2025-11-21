@@ -664,6 +664,12 @@
 						},
 						"type": "array"
 					},
+					"creatorVerifiedIdentities": {
+						"items": {
+							"type": "string"
+						},
+						"type": "array"
+					},
 					"userRating": {
 						"type": "number",
 						"format": "double"
@@ -698,6 +704,11 @@
 							"$ref": "#/components/schemas/TradeAuditEventDto"
 						},
 						"type": "array"
+					},
+					"otherPartyScore": {
+						"type": "number",
+						"format": "double",
+						"nullable": true
 					}
 				},
 				"required": [
@@ -715,6 +726,7 @@
 					"paymentMethod",
 					"matchmakingChannel",
 					"identityRequirements",
+					"creatorVerifiedIdentities",
 					"userRating",
 					"meta",
 					"confirmedByUser1",
@@ -724,7 +736,8 @@
 					"finalizedAt",
 					"createdAt",
 					"updatedAt",
-					"auditEvents"
+					"auditEvents",
+					"otherPartyScore"
 				],
 				"type": "object",
 				"additionalProperties": false

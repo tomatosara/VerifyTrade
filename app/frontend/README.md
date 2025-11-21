@@ -1,16 +1,71 @@
-# React + Vite
+# VerifyTrade Frontend
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+React + Vite client for the VerifyTrade platform. Handles login, trade form creation, verification flows, and account views while talking to the backend API.
 
-Currently, two official plugins are available:
+## Responsibilities
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) (or [oxc](https://oxc.rs) when used in [rolldown-vite](https://vite.dev/guide/rolldown)) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+- UI for trade creation, confirmation, and verification flows
+- Routing, auth context, and token handling for API calls
+- Animations and motion-driven presentation for marketing and product surfaces
 
-## React Compiler
+## Tech Stack
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+- React 19, TypeScript, Vite (Rolldown build)
+- Tailwind CSS v4, motion/animation utilities, Radix primitives, lucide-react icons
+- Routing via `react-router-dom`
 
-## Expanding the ESLint configuration
+## Folder Structure
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+```text
+src/
+  api/         # API client wrapper (in-memory access token + refresh helper)
+  components/  # UI components (navbar, carousel, UI primitives)
+  context/     # Auth provider
+  pages/       # Home, login, trade form, verification, account, FAQ
+  styles/      # Global design tokens and utilities
+  utils/, hooks, lib, assets  # helpers and shared logic
+```
+
+## Prerequisites
+
+- Node.js 20+ with Corepack
+- pnpm 10.x (installed at repo root)
+- Backend API running locally or reachable at a configured URL
+
+## Setup
+
+Dependencies are installed from the repo root:
+```bash
+pnpm install
+```
+
+## Environment Variables
+
+- `VITE_API_BASE_URL` — Backend base URL (defaults to `http://localhost:3000/api/v1`)
+
+Set this in a local `.env` if you need to point to a different backend instance.
+
+## Run Locally
+
+```bash
+pnpm --filter frontend dev    # http://localhost:5173
+```
+
+The API client stores the access token in memory and will attempt a single refresh (`POST /auth/refresh`) when receiving `401` responses. Cookies must be allowed for refresh to work.
+
+## Build & Preview
+
+```bash
+pnpm --filter frontend build
+pnpm --filter frontend preview
+```
+
+## Quality
+
+- Lint: `pnpm --filter frontend lint`
+- Tests: not defined yet for this app.
+
+## Related Docs
+
+- Backend setup and API details: `../backend/README.md`
+- Root workspace instructions: `../../README.md`

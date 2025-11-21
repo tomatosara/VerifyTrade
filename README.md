@@ -1,77 +1,84 @@
 # VerifyTrade Monorepo
 
-VerifyTrade is a digital identity trading platform with a TypeScript backend that issues and verifies VC-backed trade forms plus a React + Vite front-end experience. This repository groups every service, developer doc, and Docker definition into a single pnpm workspace.
+Digital identity trading platform that issues and verifies VC-backed trade forms. The monorepo contains a TypeScript/Express API and a React + Vite client, all managed via pnpm workspaces.
 
-## Repository Layout
+## Monorepo Layout
 
-- `app/backend` – Express + TypeORM API with TSOA-generated OpenAPI docs, migrations, and seed scripts.
-- `app/frontend` – React 19 + Vite client (Rolldown build) with Tailwind v4 and motion-driven UI.
-- `docs/` – How-to guides such as `db-local-dev.md` and `seeding.md`, plus HTTP samples.
-- `docker-compose.yml` / `docker-compose.db.yml` – Backend + Postgres stack for local use.
+- `app/backend` — REST API (Express + TypeORM + TSOA), migrations, seeds, OpenAPI spec.
+- `app/frontend` — React 19 + Vite (Rolldown build) with Tailwind v4 and motion-first UI.
+- `docs/` — How-to guides and HTTP request examples.
+- `docker-compose.yml` / `docker-compose.db.yml` — Local containers for API + Postgres.
+- `dev.sh` — Convenience script to start frontend and backend together.
+
+## Tech Stack
+
+- Node.js 20+, TypeScript, pnpm workspaces
+- Express, TypeORM, TSOA/OpenAPI, Jest + Testcontainers
+- React 19, Vite (Rolldown), Tailwind CSS v4, motion/animation libraries
+- Docker Compose for local Postgres and API
 
 ## Prerequisites
 
-- Node.js 20+ with `corepack` (pnpm 10.20.0 is locked through `packageManager`).
-- pnpm installed via `corepack enable`.
-- Docker Desktop (optional but recommended for the Postgres service).
-- PostgreSQL 16 instance if you are not using Docker Compose.
+- Node.js 20+ with Corepack enabled (`corepack enable`)
+- pnpm 10.x (bootstrapped by Corepack)
+- Docker (optional, recommended for local Postgres)
 
-## Quick Start
+## Setup
 
-1. Install dependencies once for the entire workspace:
-   ```bash
-   corepack enable
-   pnpm install
-   ```
-2. Configure the backend environment:
-   ```bash
-   cp app/backend/.env.example app/backend/.env
-   # adjust DB credentials, JWT secrets, and SHARE_URL_BASE as needed
-   ```
-3. Start PostgreSQL (choose one):
-   - **Docker Compose:** `docker compose -f docker-compose.db.yml up -d`
-   - **Host instance:** Follow `docs/db-local-dev.md` for the expected ports and credentials.
-4. Run the backend API:
-   ```bash
-   pnpm --filter @verifytrade/backend dev:api
-   ```
-   Swagger UI is available at `http://localhost:3000/docs` and health checks at `/health`.
-   ps. if database do not work well,  change `app/backend/src/database/data-source.ts` synchronize to true.
-5. Run the React front-end:
-   ```bash
-   pnpm --filter frontend dev
-   ```
-   Vite serves on `http://localhost:5173` by default; proxy API calls to `localhost:3000`.
+```bash
+corepack enable
+pnpm install
+cp app/backend/.env.example app/backend/.env  # update secrets, DB settings, URLs
+```
 
-## Useful Commands
+- Backend envs live in `app/backend/.env` (see that README for full details).
+- Frontend can point to the API via `VITE_API_BASE_URL` (defaults to `http://localhost:3000/api/v1`).
 
-| Goal | Command |
-| --- | --- |
-| Generate & apply OpenAPI routes | `pnpm --filter @verifytrade/backend openapi` |
-| Run backend tests (Jest + Testcontainers) | `pnpm --filter @verifytrade/backend test` |
-| Apply migrations | `pnpm --filter @verifytrade/backend typeorm:migrate:run` |
-| Seed dev data (idempotent) | `pnpm --filter @verifytrade/backend db:seed` |
-| Reset DB (revert → migrate → seed) | `pnpm --filter @verifytrade/backend db:reset` |
-| Lint backend / frontend | `pnpm --filter @verifytrade/backend lint`, `pnpm --filter frontend lint` |
+## Run Locally
 
-## Docker Workflows
+Backend (with optional Postgres helper):
+```bash
+pnpm --filter @verifytrade/backend dev:compose:up   # start Postgres via docker-compose.db.yml (optional)
+pnpm --filter @verifytrade/backend typeorm:migrate:run
+pnpm --filter @verifytrade/backend db:seed          # sample data
+pnpm --filter @verifytrade/backend dev              # start API on :3000
+```
 
-- Full stack (Node container + Postgres):
-  ```bash
-  docker compose up -d
-  ```
-  The backend container runs `pnpm --filter @verifytrade/backend dev:api` and watches the repo volume.
+Frontend:
+```bash
+pnpm --filter frontend dev   # serves on http://localhost:5173
+```
+
+Stop the helper DB container when done:
+```bash
+pnpm --filter @verifytrade/backend dev:compose:down
+```
+
+## Docker Compose
+
+- Full stack: `docker compose up -d` (runs backend + Postgres; loads env from `app/backend/.env`).
 - Database only: `docker compose -f docker-compose.db.yml up -d`
-- Shut down and remove volumes: `docker compose -f docker-compose.db.yml down -v`
+- Change forwarded DB port with `HOST_DB_PORT` if 5432 is busy.
 
-Compose respects `HOST_DB_PORT` for forwarded ports and loads secrets from `app/backend/.env`.
+## Common Scripts
 
-## Documentation & Resources
+- OpenAPI (generate spec + routes): `pnpm --filter @verifytrade/backend openapi`
+- Migrations: `pnpm --filter @verifytrade/backend typeorm:migrate:run`
+- Seed database: `pnpm --filter @verifytrade/backend db:seed`
+- Reset DB (revert → migrate → seed): `pnpm --filter @verifytrade/backend db:reset`
+- Tests (backend): `pnpm --filter @verifytrade/backend test`
+- Lint: `pnpm --filter @verifytrade/backend lint` / `pnpm --filter frontend lint`
 
-- Backend deep dive: `app/backend/README.md` (+ `README.zh-TW.md`).
-- Database setup: `docs/db-local-dev.md`
-- Seeding guide: `docs/seeding.md`
+## Testing & Quality
+
+- Backend: Jest + Supertest (`pnpm --filter @verifytrade/backend test`; Docker required for Testcontainers).
+- Linting: ESLint configurations per app.
+
+## Documentation
+
+- Backend: `app/backend/README.md` (full API/dev/deploy details; also `README.zh-TW.md`)
+- Frontend: `app/frontend/README.md`
+- DB setup: `docs/db-local-dev.md`
 - Sample HTTP calls: `docs/api-examples.http`
-- GEMINI design notes: `app/backend/GEMINI.md`, `app/frontend/GEMINI.md`
 
-Keep backend docs as the source of truth for environment variables, module layout, and security considerations. This root README focuses on wiring both apps together—refer to the service-specific files when you need implementation details.
+Refer to the backend README for environment variables, security requirements, and API behavior. This root file stays focused on wiring the monorepo and local workflows.
