@@ -113,7 +113,6 @@ export class CreateTradeFormDto {
    * @example ["tw_national_id", "phone_verified"]
    */
   @IsArray()
-  @ArrayMinSize(1)
   @IsString({ each: true })
   @Matches(IDENTITY_REQUIREMENT_PATTERN, {
     each: true,

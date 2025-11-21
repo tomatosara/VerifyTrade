@@ -35,7 +35,7 @@ export class UserEntity {
   @Column({ type: 'varchar', length: 128, nullable: true })
   address!: string;
 
-  @Column({ name: 'score', type: 'numeric', precision: 3, scale: 2, default: 0 })
+  @Column({ name: 'score', type: 'numeric', precision: 3, scale: 2, default: 5 })
   score!: number;
 
    @Column({ name: 'rating_sum', type: 'int', default: 0 })

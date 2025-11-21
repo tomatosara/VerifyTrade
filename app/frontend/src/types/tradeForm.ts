@@ -78,7 +78,7 @@ export const emptyTradeForm: TradeFormDraft = {
   tradeChannel: 'p2p',
   paymentMethod: 'cash',
   matchmakingChannel: 'in_app',
-  identityRequirements: ['tw_national_id'],
+  identityRequirements: [],
 };
 
 export const emptyTradeFormErrors: TradeFormErrors = {};

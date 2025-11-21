@@ -6,7 +6,7 @@ import { InteractiveHoverButton } from "@/components/ui/interactive-hover-button
 import { confirmTradeForm } from "@/api/tradeForm";
 import { fetchTradeDetail } from "@/api/trades";
 import { fetchTradeFormQrCode, fetchTradeFormVerifierResult } from "@/api/qr";
-import { api, setAccessToken } from "@/api/client";
+import { api } from "@/api/client";
 import type { TradeDetail } from "@/types/trades";
 import { normalizeCredentialType, resolveCredentialTypesFromIdentity, formatIdentityRequirementList, type QrCodeResponse, type UserProfile } from "@/types/verifier";
 import { TradeSummaryCard } from "@/components/trade/TradeSummaryCard";
@@ -46,10 +46,7 @@ export default function VerifyForm() {
 
   const tradeUid = useMemo(() => result?.uid ?? uid ?? "", [result?.uid, uid]);
   const requiredCredentialTypes = useMemo(
-    () =>
-      resolveCredentialTypesFromIdentity(result?.identityRequirements).length > 0
-        ? resolveCredentialTypesFromIdentity(result?.identityRequirements)
-        : ["VirtualCardCredential"],
+    () => resolveCredentialTypesFromIdentity(result?.identityRequirements),
     [result?.identityRequirements]
   );
   const initiatorRequirementLabels = useMemo(
@@ -113,9 +110,28 @@ export default function VerifyForm() {
     setVerificationError(null);
     setVerificationSuccess(false);
     setVerifiedCounterpartyId(null);
+    if (requiredCredentialTypes.length === 0) {
+      setQrLoading(true);
+      try {
+        const profile = await api.get<UserProfile>("/auth/me");
+        const verifiedId = profile?.idNumber;
+        if (!verifiedId) {
+          throw new Error("無法取得身分證號，請重新驗證。");
+        }
+        setVerifiedCounterpartyId(verifiedId);
+        await handleVerificationComplete(verifiedId);
+        return;
+      } catch (err) {
+        setQrError(extractErrorMessage(err));
+        setReceiverAgreed(false);
+      } finally {
+        setQrLoading(false);
+      }
+      return;
+    }
     await generateQrCode();
   };
-
+  
   const generateQrCode = async () => {
     cleanupPoller();
     confirmTriggeredRef.current = false;
@@ -264,7 +280,7 @@ export default function VerifyForm() {
               </div>
 
               {/* ✅ 僅在開始驗證且尚未成功時顯示 */}
-              {receiverAgreed && !verificationSuccess && (
+              {receiverAgreed && !verificationSuccess && requiredCredentialTypes.length > 0 && (
                 <section className="mt-6">
                   <div className="w-full md:w-[420px] mx-auto flex flex-col items-center justify-center border-2 border-dashed border-gray-300 rounded-2xl p-10 min-h-[320px] bg-gray-50 text-center">
                     <p className="text-gray-700 mb-4">請使用數位憑證皮夾掃描下方 QR Code</p>

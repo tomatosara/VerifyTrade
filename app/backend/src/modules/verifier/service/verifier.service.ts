@@ -51,7 +51,7 @@ export default class VerifierService {
   }
 
   async verifyTradeFormQrcode() {
-    return this.createQrcode(process.env.VP_TRADEFORM || '00000000_transaction_verification_mult');
+    return this.createQrcode(process.env.VP_TRADEFORM || '00000000_trade_verify');
   }
 
   async getIdCardVerifyResult(transactionId: string) {

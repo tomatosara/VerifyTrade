@@ -130,10 +130,7 @@ export class TradeFormService {
     }
 
     const normalizedCreatorIdentities = normalizeStringArray(dto.creatorVerifiedIdentities);
-    const normalizedIdentityRequirements = ensureNonEmptyArray(
-      normalizeStringArray(dto.identityRequirements),
-      'identityRequirements'
-    );
+    const normalizedIdentityRequirements = (dto.identityRequirements) ? normalizeStringArray(dto.identityRequirements) : [];
     const amount = normalizeAmountString(dto.amount);
     const uid = await this.resolveUid(dto.uid);
 
