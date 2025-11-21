@@ -228,6 +228,9 @@ importers:
       '@eslint/js':
         specifier: ^9.36.0
         version: 9.39.1
+      '@rolldown/binding-linux-x64-gnu':
+        specifier: 1.0.0-beta.41
+        version: 1.0.0-beta.41
       '@tailwindcss/postcss':
         specifier: ^4.1.16
         version: 4.1.17
@@ -4882,8 +4885,7 @@ snapshots:
   '@rolldown/binding-linux-arm64-musl@1.0.0-beta.41':
     optional: true
 
-  '@rolldown/binding-linux-x64-gnu@1.0.0-beta.41':
-    optional: true
+  '@rolldown/binding-linux-x64-gnu@1.0.0-beta.41': {}
 
   '@rolldown/binding-linux-x64-musl@1.0.0-beta.41':
     optional: true

@@ -19,7 +19,6 @@ import {
   ConflictError,
   ForbiddenError,
   NotFoundError,
-  ValidationError
 } from '@utils/errors';
 import { formatAmountForResponse, normalizeAmountString } from './utils/amount';
 
@@ -84,18 +83,6 @@ const normalizeStringArray = (values?: string[]): string[] => {
   return Array.from(new Set(normalized));
 };
 
-const ensureNonEmptyArray = (values: string[], field: string): string[] => {
-  if (values.length === 0) {
-    throw new ValidationError(`${field} must contain at least one entry`, {
-      field,
-      constraints: {
-        [field]: 'At least one value is required'
-      }
-    });
-  }
-  return values;
-};
-
 export class TradeFormService {
   private readonly repository: TradeFormRepository;
 
@@ -130,7 +117,7 @@ export class TradeFormService {
     }
 
     const normalizedCreatorIdentities = normalizeStringArray(dto.creatorVerifiedIdentities);
-    const normalizedIdentityRequirements = (dto.identityRequirements) ? normalizeStringArray(dto.identityRequirements) : [];
+    const normalizedIdentityRequirements = normalizeStringArray(dto.identityRequirements);
     const amount = normalizeAmountString(dto.amount);
     const uid = await this.resolveUid(dto.uid);
 

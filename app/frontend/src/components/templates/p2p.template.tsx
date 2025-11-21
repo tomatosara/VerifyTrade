@@ -173,13 +173,16 @@ export default function P2PTemplate({
   }, [draft.matchmakingChannel]);
 
   useEffect(() => {
-    const initiatorExtras = initiatorExtraList.filter((v) => v);
-    const receiverExtras = receiverExtraList.filter((v) => v);
+    const initiatorRequirements = initiatorExtraList.filter((v) => v);
+    const receiverRequirements = receiverExtraList.filter((v) => v);
 
-    // 只回報「額外條件」，預設身分證在 NewForm 那邊合併
-    onInitiatorRequirementsChange(initiatorExtras);
-    onReceiverRequirementsChange(receiverExtras);
-  }, [initiatorExtraList, receiverExtraList]);
+    const validatedInitiator = initiatorRequirements.length > 0 ? initiatorRequirements : [];
+    const validatedReceiver = receiverRequirements.length > 0 ? receiverRequirements : [];
+
+    onInitiatorRequirementsChange(validatedInitiator);
+    onReceiverRequirementsChange(validatedReceiver);
+    handleDraftChange({ identityRequirements: validatedReceiver });
+  }, [initiatorExtraList, receiverExtraList, onInitiatorRequirementsChange, onReceiverRequirementsChange]);
 
   const handlePaymentMethodChange = (value: string) => {
     paymentSelectionRef.current = value;
