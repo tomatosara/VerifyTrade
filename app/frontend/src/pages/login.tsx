@@ -50,7 +50,8 @@ export default function Login() {
           // 🔑 第三步：向後端換 JWT
           const { accessToken } = await api.post<{ accessToken: string }>(
             "/auth/login-by-verifier",
-            { transactionId: qrData.transactionId }
+            { transactionId: qrData.transactionId },
+            false
           );
           console.log("[POLL] Received Access Token:", accessToken);
           // 設定 Access Token（存在記憶體，之後自動夾帶）

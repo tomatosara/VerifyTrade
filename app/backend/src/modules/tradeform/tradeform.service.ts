@@ -1,3 +1,4 @@
+import { randomBytes } from 'crypto';
 import { DataSource, Repository } from 'typeorm';
 import { QueryFailedError } from 'typeorm/error/QueryFailedError';
 import { plainToInstance } from 'class-transformer';
@@ -24,6 +25,10 @@ import { formatAmountForResponse, normalizeAmountString } from './utils/amount';
 
 const UID_ALPHABET = '23456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz';
 const UID_LENGTH = 24;
+const UID_ALPHABET_LENGTH = UID_ALPHABET.length;
+
+const secureRandomIndex = (max: number): number => randomBytes(1)[0] % max;
+const secureRandomChar = (): string => UID_ALPHABET[secureRandomIndex(UID_ALPHABET_LENGTH)];
 
 const mapEntityToResponse = (entity: TradeFormEntity): TradeFormResponse => ({
   id: entity.id,
@@ -374,7 +379,7 @@ export class TradeFormService {
     for (let attempts = 0; attempts < 5; attempts += 1) {
       const candidate = nanoid(UID_LENGTH)
         .split('')
-        .map((char) => (UID_ALPHABET.includes(char) ? char : UID_ALPHABET[Math.floor(Math.random() * UID_ALPHABET.length)]))
+        .map((char) => (UID_ALPHABET.includes(char) ? char : secureRandomChar()))
         .join('');
 
       const existing = await this.repository.findByUid(candidate);

@@ -12,18 +12,11 @@ import { normalizeCredentialType, resolveCredentialTypesFromIdentity, formatIden
 import { TradeSummaryCard } from "@/components/trade/TradeSummaryCard";
 import { ChevronLeft } from "lucide-react";
 
-const extractErrorMessage = (error: unknown) => {
-  if (error instanceof Error) {
-    try {
-      const parsed = JSON.parse(error.message);
-      if (typeof parsed?.message === "string") return parsed.message;
-      if (typeof parsed?.error === "string") return parsed.error;
-    } catch {
-      // ignore
-    }
-    return error.message;
-  }
-  return "處理要求時發生問題，請稍後再試。";
+const GENERIC_VERIFY_ERROR = "驗證失敗，請稍後再試或聯絡客服。";
+const GENERIC_LOAD_ERROR = "無法載入交易資訊，請稍後再試。";
+const safeErrorMessage = (label: string, error: unknown, fallback: string) => {
+  console.error(label, error);
+  return fallback;
 };
 
 export default function VerifyForm() {
@@ -76,7 +69,7 @@ export default function VerifyForm() {
         }
         setResult(data);
       })
-      .catch((err) => setError(extractErrorMessage(err)))
+      .catch((err) => setError(safeErrorMessage("fetch trade detail failed", err, GENERIC_LOAD_ERROR)))
       .finally(() => setLoading(false));
   }, [uid]);
 
@@ -98,7 +91,7 @@ export default function VerifyForm() {
       setVerificationSuccess(true);
     } catch (err) {
       confirmTriggeredRef.current = false;
-      setQrError(extractErrorMessage(err));
+      setQrError(safeErrorMessage("confirm trade failed", err, GENERIC_VERIFY_ERROR));
     }
   }, [tradeUid]);
 
@@ -122,7 +115,7 @@ export default function VerifyForm() {
         await handleVerificationComplete(verifiedId);
         return;
       } catch (err) {
-        setQrError(extractErrorMessage(err));
+        setQrError(safeErrorMessage("start verification failed", err, GENERIC_VERIFY_ERROR));
         setReceiverAgreed(false);
       } finally {
         setQrLoading(false);
@@ -175,17 +168,17 @@ export default function VerifyForm() {
                 await handleVerificationComplete(verifiedId);
               } catch (innerErr) {
                 confirmTriggeredRef.current = false;
-                setQrError(extractErrorMessage(innerErr));
+                setQrError(safeErrorMessage("complete verification failed", innerErr, GENERIC_VERIFY_ERROR));
                 setReceiverAgreed(false);
               }
             }
           } catch (err) {
-            setQrError(extractErrorMessage(err));
+            setQrError(safeErrorMessage("poll verifier result failed", err, GENERIC_VERIFY_ERROR));
           }
         })();
       }, 3000);
     } catch (err) {
-      setQrError(extractErrorMessage(err));
+      setQrError(safeErrorMessage("generate QR failed", err, GENERIC_VERIFY_ERROR));
     } finally {
       setQrLoading(false);
     }

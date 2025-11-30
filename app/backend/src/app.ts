@@ -13,6 +13,7 @@ import { registerSwagger } from './docs/swagger';
 import { TradeFormService } from '@modules/tradeform/tradeform.service';
 import { requireAuth } from '@modules/auth/requireAuth';
 import type { AuthenticatedRequest } from '@middleware/auth';
+import { csrfProtectionMiddleware } from '@modules/auth/csrf';
 
 export function createApp(): Express {
   const app = express();
@@ -71,6 +72,7 @@ export function createApp(): Express {
   app.use(express.urlencoded({ extended: true }));
   app.use(requestIdMiddleware);
   app.use(loggingMiddleware);
+  app.use(csrfProtectionMiddleware);
 
   app.use(healthRouter);
 

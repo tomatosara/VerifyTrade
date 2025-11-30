@@ -46,6 +46,7 @@ export const FlickeringGrid: React.FC<FlickeringGridProps> = ({
     return toRGBA(color)
   }, [color])
 
+  // NOTE: Math.random() here is used purely for animation randomness (non-security-sensitive).
   const setupCanvas = useCallback(
     (canvas: HTMLCanvasElement, width: number, height: number) => {
       const dpr = window.devicePixelRatio || 1

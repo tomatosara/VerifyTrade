@@ -29,6 +29,17 @@ type TradeParty = "initiator" | "receiver";
 const tradeCreationInFlight = new Set<string>();
 const tradeCreationSucceeded = new Set<string>();
 
+const TRADE_ID_ALPHABET = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+const generateSecureId = (length: number = 8): string => {
+  const cryptoObj = typeof globalThis !== "undefined" ? (globalThis.crypto as Crypto | undefined) : undefined;
+  if (!cryptoObj?.getRandomValues) {
+    throw new Error("Secure random generator unavailable");
+  }
+  const bytes = new Uint8Array(length);
+  cryptoObj.getRandomValues(bytes);
+  return Array.from(bytes, (b) => TRADE_ID_ALPHABET[b % TRADE_ID_ALPHABET.length]).join("");
+};
+
 const isTradeUidConflictError = (error: unknown): boolean => {
   if (!error || typeof error !== "object") return false;
   const maybeAxios = error as { response?: { data?: { error?: string } } };
@@ -68,8 +79,13 @@ const [buyerSide, setBuyerSide] = useState<TradeParty>("initiator"); // 預設�
 const sellerSide: TradeParty = buyerSide === "initiator" ? "receiver" : "initiator";
   // ✅ 自動生成交易序號
   const generateTradeId = () => {
-    const id = Math.random().toString(36).substring(2, 10).toUpperCase();
-    setTradeId(id);
+    try {
+      const id = generateSecureId(8);
+      setTradeId(id);
+    } catch (error) {
+      console.error("Failed to generate secure trade id", error);
+      setTradeFormError("無法產生交易序號，請使用支援的瀏覽器再試一次。");
+    }
   };
 
   // ✅ 當建立方驗證成功但尚未生成 tradeId 時，自動生成

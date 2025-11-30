@@ -10,25 +10,14 @@ import { ForbiddenError } from '@utils/errors';
 import createError from 'http-errors';
 import { AppDataSource } from '@database/data-source';
 import { UserEntity } from '@modules/auth/entity/user.entity';
-
-// 小工具：設置/清除 refresh cookie（與你現有版本一致即可）
-import { serialize } from 'cookie';
-const setRefreshCookie = (token: string) =>
-  serialize('refresh_token', token, {
-    httpOnly: true,
-    secure: process.env.NODE_ENV === 'production',
-    sameSite: process.env.NODE_ENV === 'production' ? 'strict' : 'lax',
-    path: '/api/v1/auth',
-    maxAge: 60 * 60 * 24 * 7,
-  });
-const clearRefreshCookie = () =>
-  serialize('refresh_token', '', {
-    httpOnly: true,
-    secure: process.env.NODE_ENV === 'production',
-    sameSite: process.env.NODE_ENV === 'production' ? 'strict' : 'lax',
-    path: '/api/v1/auth',
-    maxAge: 0,
-  });
+import { clearRefreshCookie, makeRefreshCookie } from '../cookies';
+import {
+  CSRF_COOKIE_NAME,
+  clearCsrfCookie,
+  generateCsrfToken,
+  makeCsrfCookie,
+  parseRequestCookies
+} from '../csrf';
 
 export interface LoginByVerifierRequest { transactionId: string; }
 export interface LoginResponse { accessToken: string; expiresIn: string; }
@@ -87,19 +76,19 @@ export class AuthController extends Controller {
       secret: process.env.JWT_REFRESH_SECRET,
     });
 
-    this.setHeader('Set-Cookie', setRefreshCookie(refreshToken));
+    const csrfToken = generateCsrfToken();
+    this.setHeader('Set-Cookie', [
+      makeRefreshCookie(refreshToken),
+      makeCsrfCookie(csrfToken, '/api/v1')
+    ]);
     return { accessToken, expiresIn: accessExp };
   }
 
   @Post('refresh')
   @OperationId('refreshAccessToken')
   public async refresh(@Request() req: ExpressRequest): Promise<RefreshResponse> {
-    const cookie = req.headers.cookie || '';
-    const refresh = cookie
-      .split(';')
-      .map(s => s.trim())
-      .find(s => s.startsWith('refresh_token='))
-      ?.split('=')[1];
+    const cookies = parseRequestCookies(req);
+    const refresh = cookies.refresh_token;
 
     if (!refresh) {
       this.setStatus(401);
@@ -109,6 +98,16 @@ export class AuthController extends Controller {
     const payload = verifyJwt<any>(refresh, process.env.JWT_REFRESH_SECRET!);
     if (!payload?.sub || payload?.typ !== 'refresh') {
       this.setStatus(401);
+      return { accessToken: '', expiresIn: '0' };
+    }
+    const csrfCookie = cookies[CSRF_COOKIE_NAME];
+    const csrfHeader = typeof req.headers['x-csrf-token'] === 'string'
+      ? (req.headers['x-csrf-token'] as string)
+      : Array.isArray(req.headers['x-csrf-token'])
+        ? req.headers['x-csrf-token'][0]
+        : undefined;
+    if (csrfCookie && csrfCookie !== csrfHeader) {
+      this.setStatus(403);
       return { accessToken: '', expiresIn: '0' };
     }
     let actorId: string | undefined = payload.id;
@@ -133,6 +132,11 @@ export class AuthController extends Controller {
       { expiresIn: accessExp }
     );
 
+    const csrfToken = csrfCookie ?? generateCsrfToken();
+    this.setHeader('Set-Cookie', [
+      makeRefreshCookie(refresh, '/api/v1/auth'),
+      makeCsrfCookie(csrfToken, '/api/v1')
+    ]);
     return { accessToken, expiresIn: accessExp };
   }
 
@@ -140,7 +144,7 @@ export class AuthController extends Controller {
   @OperationId('logout')
   @Security('bearerAuth', [])
   public async logout(): Promise<LogoutResponse> {
-    this.setHeader('Set-Cookie', clearRefreshCookie());
+    this.setHeader('Set-Cookie', [clearRefreshCookie(), clearCsrfCookie('/api/v1')]);
     return { success: true };
   }
 
@@ -156,5 +160,26 @@ export class AuthController extends Controller {
       sub: `idn:${user.idNumber}`,  // 用 idNumber 生成 sub
       ...user
     };
+  }
+
+  @Get('csrf')
+  @OperationId('getCsrfToken')
+  public async csrf(@Request() req: ExpressRequest): Promise<{ csrfToken: string }> {
+    const cookies = parseRequestCookies(req);
+    const refresh = cookies.refresh_token;
+    if (!refresh) {
+      this.setStatus(401);
+      return { csrfToken: '' };
+    }
+
+    const payload = verifyJwt<any>(refresh, process.env.JWT_REFRESH_SECRET!);
+    if (!payload?.sub || payload?.typ !== 'refresh') {
+      this.setStatus(401);
+      return { csrfToken: '' };
+    }
+
+    const csrfToken = cookies[CSRF_COOKIE_NAME] ?? generateCsrfToken();
+    this.setHeader('Set-Cookie', makeCsrfCookie(csrfToken, '/api/v1'));
+    return { csrfToken };
   }
 }

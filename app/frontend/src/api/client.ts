@@ -6,6 +6,9 @@ const API_BASE_URL =
 let ACCESS_TOKEN: string | null = null;
 export function setAccessToken(token: string | null) {
   ACCESS_TOKEN = token;
+  if (!token) {
+    CSRF_TOKEN = null;
+  }
 }
 export function getAccessToken() {
   return ACCESS_TOKEN;
@@ -14,6 +17,29 @@ export function getAccessToken() {
 // 可選：如果你的後端把「access token 也放 HttpOnly Cookie」
 // 你可以把這個旗標設為 true，就不會加 Authorization header。
 const USE_COOKIE_ACCESS = false;
+
+let CSRF_TOKEN: string | null = null;
+async function ensureCsrfToken(): Promise<string | null> {
+  if (CSRF_TOKEN) return CSRF_TOKEN;
+  try {
+    const res = await fetch(`${API_BASE_URL}/auth/csrf`, {
+      method: "GET",
+      credentials: "include",
+    });
+    if (!res.ok) return null;
+    const data = await res.json();
+    CSRF_TOKEN = data?.csrfToken ?? null;
+    return CSRF_TOKEN;
+  } catch {
+    return null;
+  }
+}
+
+function applyCsrf(headers: Record<string, string>, token: string | null) {
+  if (token) {
+    headers["X-CSRF-Token"] = token;
+  }
+}
 
 // ---- 共用 request（含自動 refresh & 重試一次） ----
 type RequestOptions = {
@@ -45,9 +71,14 @@ async function request<T>(
   const headers: Record<string, string> = {
     "Content-Type": "application/json",
   };
+  const needsCsrf = auth && method !== "GET";
   // 需要驗證 + 有 token + 未採用 cookie-access 時，加 Bearer
   if (auth && !USE_COOKIE_ACCESS && ACCESS_TOKEN) {
     headers.Authorization = `Bearer ${ACCESS_TOKEN}`;
+  }
+  if (needsCsrf) {
+    const token = await ensureCsrfToken();
+    applyCsrf(headers, token);
   }
 
   // 第一次請求
@@ -56,7 +87,7 @@ async function request<T>(
     headers,
     body: body ? JSON.stringify(body) : undefined,
     // ✅ 讓瀏覽器自動帶上 HttpOnly refresh_token
-    credentials: "include",
+    credentials: auth ? "include" : "same-origin",
   });
 
   // 如果 OK 直接回
@@ -107,9 +138,12 @@ async function safeReadText(res: Response) {
 // 呼叫 /auth/refresh 換新 access token（用 HttpOnly cookie）
 async function tryRefresh(): Promise<boolean> {
   try {
+    const headers: Record<string, string> = { "Content-Type": "application/json" };
+    const csrfToken = await ensureCsrfToken();
+    applyCsrf(headers, csrfToken);
     const res = await fetch(`${API_BASE_URL}/auth/refresh`, {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers,
       credentials: "include", // 帶 refresh_token cookie
     });
     if (!res.ok) return false;

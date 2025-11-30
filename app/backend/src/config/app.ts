@@ -19,6 +19,8 @@ const appConfigSchema = z.object({
   SWAGGER_PATH: z.string().default('/docs'),
   BASE_PATH: z.string().default('/'),
   DEV_HTTPS: z.string().default('false'),
+  DEV_TLS_CERT_PATH: z.string().optional(),
+  DEV_TLS_KEY_PATH: z.string().optional(),
   JWT_ISSUER: z.string().optional(),
   JWT_AUDIENCE: z.string().optional(),
   TRUST_PROXY: z.string().optional()
@@ -110,7 +112,9 @@ export const appConfig = {
   trustProxy: parseTrustProxy(rawConfig.TRUST_PROXY),
   swaggerPath: normalizeSwaggerPath(rawConfig.SWAGGER_PATH),
   basePath: normalizeBasePath(rawConfig.BASE_PATH),
-  devHttps: parseBooleanLike(rawConfig.DEV_HTTPS)
+  devHttps: parseBooleanLike(rawConfig.DEV_HTTPS),
+  devTlsCertPath: rawConfig.DEV_TLS_CERT_PATH,
+  devTlsKeyPath: rawConfig.DEV_TLS_KEY_PATH
 } as const;
 
 export type AppConfig = typeof appConfig;
