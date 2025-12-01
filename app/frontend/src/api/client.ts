@@ -19,6 +19,8 @@ export function getAccessToken() {
 const USE_COOKIE_ACCESS = false;
 
 let CSRF_TOKEN: string | null = null;
+// CSRF: We pair the anti-forgery cookie with an explicit header on every
+// state-changing request so the backend middleware can validate both pieces.
 async function ensureCsrfToken(): Promise<string | null> {
   if (CSRF_TOKEN) return CSRF_TOKEN;
   try {
@@ -45,10 +47,13 @@ function applyCsrf(headers: Record<string, string>, token: string | null) {
 type RequestOptions = {
   params?: Record<string, any>;
   body?: any;
-  method: "GET" | "POST" | "PUT" | "DELETE";
+  method: "GET" | "POST" | "PUT" | "PATCH" | "DELETE";
   // 預設需要驗證；有些公開 API 可傳 false 跳過帶 token
   auth?: boolean;
 };
+
+const isStateChangingMethod = (method: RequestOptions["method"]) =>
+  !["GET", "HEAD", "OPTIONS", "TRACE"].includes(method);
 
 async function request<T>(
   endpoint: string,
@@ -71,7 +76,8 @@ async function request<T>(
   const headers: Record<string, string> = {
     "Content-Type": "application/json",
   };
-  const needsCsrf = auth && method !== "GET";
+  // 對應後端 csrfProtectionMiddleware：所有改變狀態的請求都帶上 CSRF header。
+  const needsCsrf = isStateChangingMethod(method);
   // 需要驗證 + 有 token + 未採用 cookie-access 時，加 Bearer
   if (auth && !USE_COOKIE_ACCESS && ACCESS_TOKEN) {
     headers.Authorization = `Bearer ${ACCESS_TOKEN}`;
@@ -169,6 +175,9 @@ export const api = {
   },
   async put<T>(endpoint: string, body?: any, auth = true) {
     return request<T>(endpoint, { method: "PUT", body, auth });
+  },
+  async patch<T>(endpoint: string, body?: any, auth = true) {
+    return request<T>(endpoint, { method: "PATCH", body, auth });
   },
   async delete<T>(endpoint: string, auth = true) {
     return request<T>(endpoint, { method: "DELETE", auth });

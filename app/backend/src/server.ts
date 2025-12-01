@@ -1,7 +1,9 @@
 import 'reflect-metadata';
 import '@config/env';
 import fs from 'fs';
+import http from 'http';
 import https from 'https';
+import { constants as tlsConstants } from 'crypto';
 import { createApp } from './app';
 import { AppDataSource } from '@database/data-source';
 import { appConfig } from '@config/app';
@@ -15,28 +17,8 @@ async function start() {
     const app = createApp();
     const useLocalHttps = appConfig.devHttps && appConfig.nodeEnv !== 'production';
     const preferHttps = useLocalHttps || appConfig.nodeEnv === 'production';
-    const startHttpListener = () =>
-      app.listen(appConfig.port, appConfig.host, () => {
-        const swaggerUrl = buildPublicUrl({
-          host: appConfig.host,
-          port: appConfig.port,
-          https: preferHttps,
-          basePath: appConfig.basePath,
-          swaggerPath: appConfig.swaggerPath
-        });
-
-        const displayHost =
-          appConfig.host === '0.0.0.0' || appConfig.host === '::'
-            ? 'localhost'
-            : appConfig.host;
-        const protocol = preferHttps ? 'https' : 'http';
-        const basePathSuffix = appConfig.basePath === '/' ? '' : appConfig.basePath;
-        const baseUrl = `${protocol}://${displayHost}:${appConfig.port}${basePathSuffix}`;
-
-        const transportNote = useLocalHttps
-          ? 'HTTPS (dev self-managed certificate)'
-          : 'HTTP listener behind upstream TLS termination';
-
+    const startHttpListener = () => {
+      const startCallback = (baseUrl: string, swaggerUrl: string, transportNote: string) => {
         const lines = [
           '',
           '*** Backend is running ***',
@@ -56,15 +38,69 @@ async function start() {
             env: appConfig.nodeEnv,
             baseUrl,
             swaggerUrl,
-            transport: appConfig.devHttps ? 'https' : 'http'
+            transport: transportNote
           },
           'backend server started'
         );
+      };
+
+      const displayHost =
+        appConfig.host === '0.0.0.0' || appConfig.host === '::' ? 'localhost' : appConfig.host;
+      const basePathSuffix = appConfig.basePath === '/' ? '' : appConfig.basePath;
+      const swaggerUrl = buildPublicUrl({
+        host: appConfig.host,
+        port: appConfig.port,
+        https: preferHttps,
+        basePath: appConfig.basePath,
+        swaggerPath: appConfig.swaggerPath
       });
+
+      if (appConfig.nodeEnv === 'production') {
+        // HTTP listener is dev-only; in production we either sit behind TLS
+        // termination (x-forwarded-proto=https) or we issue a strict redirect.
+        const redirectHandler: http.RequestListener = (req, res) => {
+          const forwardedProto = Array.isArray(req.headers['x-forwarded-proto'])
+            ? req.headers['x-forwarded-proto'][0]
+            : (req.headers['x-forwarded-proto'] as string | undefined);
+          if (forwardedProto && forwardedProto.toLowerCase().startsWith('https')) {
+            return (app as unknown as http.RequestListener)(req, res);
+          }
+          const host = req.headers.host ?? `${appConfig.host}:${appConfig.port}`;
+          const location = `https://${host}${req.url ?? ''}`;
+          res.writeHead(308, { Location: location, 'Strict-Transport-Security': 'max-age=63072000; includeSubDomains' });
+          res.end();
+        };
+        const redirectServer = http.createServer(redirectHandler);
+        return redirectServer.listen(appConfig.port, appConfig.host, () => {
+          const baseUrl = `https://${displayHost}:${appConfig.port}${basePathSuffix}`;
+          startCallback(baseUrl, swaggerUrl, 'HTTP redirect-only; production requires HTTPS');
+        });
+      }
+
+      const protocol = preferHttps ? 'https' : 'http';
+      const baseUrl = `${protocol}://${displayHost}:${appConfig.port}${basePathSuffix}`;
+      const transportNote = useLocalHttps
+        ? 'HTTPS (dev self-managed certificate)'
+        : 'HTTP listener (non-production only)';
+
+      return app.listen(appConfig.port, appConfig.host, () =>
+        startCallback(baseUrl, swaggerUrl, transportNote)
+      );
+    };
 
     if (useLocalHttps) {
       try {
-        const tlsOptions = loadLocalTlsCredentials();
+        const tlsDetails = loadLocalTlsCredentials();
+        const tlsOptions: https.ServerOptions = {
+          key: tlsDetails.key,
+          cert: tlsDetails.cert,
+          minVersion: 'TLSv1.2',
+          secureOptions:
+            tlsConstants.SSL_OP_NO_SSLv2 |
+            tlsConstants.SSL_OP_NO_SSLv3 |
+            tlsConstants.SSL_OP_NO_TLSv1 |
+            tlsConstants.SSL_OP_NO_TLSv1_1
+        };
         const server = https.createServer(tlsOptions, app);
         server.listen(appConfig.port, appConfig.host, () => {
           const swaggerUrl = buildPublicUrl({
@@ -89,8 +125,9 @@ async function start() {
               baseUrl,
               swaggerUrl,
               transport: 'https',
-              certPath: tlsOptions.certPath,
-              keyPath: tlsOptions.keyPath
+              certPath: tlsDetails.certPath,
+              keyPath: tlsDetails.keyPath,
+              minVersion: tlsOptions.minVersion
             },
             'backend server started with HTTPS'
           );

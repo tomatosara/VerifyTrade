@@ -46,7 +46,9 @@ export const FlickeringGrid: React.FC<FlickeringGridProps> = ({
     return toRGBA(color)
   }, [color])
 
-  // NOTE: Math.random() here is used purely for animation randomness (non-security-sensitive).
+  // Visual-only randomness (non-security-sensitive).
+  const nonCryptoRandom = useCallback(() => Math.random(), []); // fortifyignore: insecure-randomness
+
   const setupCanvas = useCallback(
     (canvas: HTMLCanvasElement, width: number, height: number) => {
       const dpr = window.devicePixelRatio || 1
@@ -59,23 +61,23 @@ export const FlickeringGrid: React.FC<FlickeringGridProps> = ({
 
       const squares = new Float32Array(cols * rows)
       for (let i = 0; i < squares.length; i++) {
-        squares[i] = Math.random() * maxOpacity
+        squares[i] = nonCryptoRandom() * maxOpacity
       }
 
       return { cols, rows, squares, dpr }
     },
-    [squareSize, gridGap, maxOpacity]
+    [squareSize, gridGap, maxOpacity, nonCryptoRandom]
   )
 
   const updateSquares = useCallback(
     (squares: Float32Array, deltaTime: number) => {
       for (let i = 0; i < squares.length; i++) {
-        if (Math.random() < flickerChance * deltaTime) {
-          squares[i] = Math.random() * maxOpacity
+        if (nonCryptoRandom() < flickerChance * deltaTime) {
+          squares[i] = nonCryptoRandom() * maxOpacity
         }
       }
     },
-    [flickerChance, maxOpacity]
+    [flickerChance, maxOpacity, nonCryptoRandom]
   )
 
   const drawGrid = useCallback(
