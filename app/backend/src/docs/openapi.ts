@@ -89,7 +89,15 @@ swaggerSpec.components.securitySchemes = {
   bearerAuth: {
     type: 'http',
     scheme: 'bearer',
-    bearerFormat: 'JWT'
+    bearerFormat: 'JWT',
+    description: 'Access token issued by /auth/login-by-verifier. Send as Authorization: Bearer <token>.'
+  },
+  refreshTokenCookie: {
+    type: 'apiKey',
+    in: 'cookie',
+    name: 'refresh_token',
+    description:
+      'HTTP-only refresh token cookie (7d). Pair with the x-csrf-token header when refreshing access tokens.'
   }
 };
 

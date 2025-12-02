@@ -16,8 +16,10 @@ import {
   clearCsrfCookie,
   generateCsrfToken,
   makeCsrfCookie,
-  parseRequestCookies
+  parseRequestCookies,
+  readCsrfHeaderToken
 } from '../csrf';
+import { getSecurityConfig } from '@config/security';
 
 export interface LoginByVerifierRequest { transactionId: string; }
 export interface LoginResponse { accessToken: string; expiresIn: string; }
@@ -50,6 +52,7 @@ export class AuthController extends Controller {
     // 直接用 claims 組 payload（sub 用穩定鍵：idn:<身分證字號>）
     const accessExp = '15m';
     const refreshExp = '7d';
+    const { jwtRefreshSecret } = getSecurityConfig();
 
     const accessPayload = {
       id: user.id,
@@ -73,7 +76,7 @@ export class AuthController extends Controller {
     };
     const refreshToken = signJwt(refreshPayload, {
       expiresIn: refreshExp,
-      secret: process.env.JWT_REFRESH_SECRET,
+      secret: jwtRefreshSecret
     });
 
     const csrfToken = generateCsrfToken();
@@ -86,6 +89,7 @@ export class AuthController extends Controller {
 
   @Post('refresh')
   @OperationId('refreshAccessToken')
+  @Security('refreshTokenCookie', [])
   public async refresh(@Request() req: ExpressRequest): Promise<RefreshResponse> {
     const cookies = parseRequestCookies(req);
     const refresh = cookies.refresh_token;
@@ -95,21 +99,19 @@ export class AuthController extends Controller {
       return { accessToken: '', expiresIn: '0' };
     }
 
-    const payload = verifyJwt<any>(refresh, process.env.JWT_REFRESH_SECRET!);
+    const { jwtRefreshSecret } = getSecurityConfig();
+    const payload = verifyJwt<any>(refresh, jwtRefreshSecret);
     if (!payload?.sub || payload?.typ !== 'refresh') {
       this.setStatus(401);
       return { accessToken: '', expiresIn: '0' };
     }
     const csrfCookie = cookies[CSRF_COOKIE_NAME];
-    const csrfHeader = typeof req.headers['x-csrf-token'] === 'string'
-      ? (req.headers['x-csrf-token'] as string)
-      : Array.isArray(req.headers['x-csrf-token'])
-        ? req.headers['x-csrf-token'][0]
-        : undefined;
+    const csrfHeader = readCsrfHeaderToken(req);
     if (csrfCookie && csrfCookie !== csrfHeader) {
       this.setStatus(403);
       return { accessToken: '', expiresIn: '0' };
     }
+    // TODO: rotate refresh tokens on use to further shorten session replay windows.
     let actorId: string | undefined = payload.id;
     console.log('Refresh token payload:', payload);
     if (!actorId && payload.idNumber) {
@@ -167,19 +169,18 @@ export class AuthController extends Controller {
   public async csrf(@Request() req: ExpressRequest): Promise<{ csrfToken: string }> {
     const cookies = parseRequestCookies(req);
     const refresh = cookies.refresh_token;
-    if (!refresh) {
-      this.setStatus(401);
-      return { csrfToken: '' };
-    }
 
-    const payload = verifyJwt<any>(refresh, process.env.JWT_REFRESH_SECRET!);
-    if (!payload?.sub || payload?.typ !== 'refresh') {
-      this.setStatus(401);
-      return { csrfToken: '' };
-    }
+    const { jwtRefreshSecret } = getSecurityConfig();
+    const payload = refresh && verifyJwt<any>(refresh, jwtRefreshSecret);
+    const hasValidSession = Boolean(payload?.sub && payload?.typ === 'refresh');
 
     const csrfToken = cookies[CSRF_COOKIE_NAME] ?? generateCsrfToken();
     this.setHeader('Set-Cookie', makeCsrfCookie(csrfToken, '/api/v1'));
+    if (!hasValidSession) {
+      // Issue a token for the double-submit header even before login;
+      // the middleware still requires a refresh_token cookie before enforcing CSRF.
+      return { csrfToken };
+    }
     return { csrfToken };
   }
 }

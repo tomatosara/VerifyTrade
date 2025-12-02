@@ -1,9 +1,10 @@
 // src/modules/auth/cookies.ts
 import { serialize } from 'cookie';
 
+// Refresh cookies stay HttpOnly/SameSite so session riding relies on the CSRF double-submit check.
 export function makeRefreshCookie(token: string, basePath = '/api/v1/auth') {
-  // dev 環境可先把 secure 設 false；正式請改 true
   const secure = process.env.NODE_ENV === 'production';
+  // secure ties refresh cookies to HTTPS-only transport in production.
   return serialize('refresh_token', token, {
     httpOnly: true,
     secure,

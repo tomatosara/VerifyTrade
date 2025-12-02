@@ -1,12 +1,5 @@
 // src/modules/issuer/service/issuer.service.ts
-import axios from 'axios';
-
-const axiosIssuer = axios.create({ baseURL: process.env.ISSUER_BASE });
-axiosIssuer.interceptors.request.use((cfg) => {
-  cfg.headers = cfg.headers ?? {};
-  cfg.headers['Access-Token'] = process.env.ISSUER_TOKEN;
-  return cfg;
-});
+import { axiosIssuer } from '@utils/http';
 
 export default class IssuerService {
   async qrcodeData(body: any) {

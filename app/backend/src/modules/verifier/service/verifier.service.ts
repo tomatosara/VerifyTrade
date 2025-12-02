@@ -1,9 +1,10 @@
 // src/modules/verifier/service/verifier.service.ts
-import axios, { AxiosError } from 'axios';
+import { AxiosError } from 'axios';
 import { v4 as uuidv4 } from 'uuid';
 import { AppDataSource } from '@database/data-source';
 import { VerificationTx } from '@modules/verifier/entity/verification-tx.entity';
 import { UserEntity } from '@modules/auth/entity/user.entity';
+import { axiosVerifier } from '@utils/http';
 
 type VerifierClaim = { ename?: string; cname?: string; value?: string };
 type VerifierVC = { credentialType?: string; claims?: VerifierClaim[] };
@@ -18,13 +19,6 @@ export type IdClaims = {
   name: string;
   birthday: string;
 };
-
-const axiosVerifier = axios.create({ baseURL: process.env.VERIFIER_BASE });
-axiosVerifier.interceptors.request.use((cfg) => {
-  cfg.headers = cfg.headers ?? {};
-  cfg.headers['Access-Token'] = process.env.VERIFIER_TOKEN;
-  return cfg;
-});
 
 export default class VerifierService {
   private txRepo = AppDataSource.getRepository(VerificationTx);

@@ -14,12 +14,9 @@ import { ChevronLeft } from "lucide-react";
 
 const GENERIC_VERIFY_ERROR = "驗證失敗，請稍後再試或聯絡客服。";
 const GENERIC_LOAD_ERROR = "無法載入交易資訊，請稍後再試。";
-const safeErrorMessage = (label: string, error: unknown, fallback: string) => {
-  if (process.env.NODE_ENV !== "production") {
-    console.error(label, error);
-  } else {
-    console.error(label);
-  }
+
+const safeErrorMessage = (label: string, _error: unknown, fallback: string): string => {
+  console.error(label);
   return fallback;
 };
 

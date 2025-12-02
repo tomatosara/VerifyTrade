@@ -21,7 +21,21 @@
     ],
     "name": "VerifyTrade API",
     "description": "Digital identity trading platform API",
-    "version": "1.0.0"
+    "version": "1.0.0",
+    "securityDefinitions": {
+      "bearerAuth": {
+        "type": "http",
+        "scheme": "bearer",
+        "bearerFormat": "JWT",
+        "description": "Access token issued by /auth/login-by-verifier; send as Authorization: Bearer <token>"
+      },
+      "refreshTokenCookie": {
+        "type": "apiKey",
+        "in": "cookie",
+        "name": "refresh_token",
+        "description": "HTTP-only refresh token cookie (7d) used to renew access tokens; pair with x-csrf-token header on state-changing requests."
+      }
+    }
   },
   "routes": {
     "routesDir": "src/http",
@@ -30,10 +44,17 @@
     "authenticationModule": "src/http/authentication.ts"
   },
   "security": {
-    "jwt": {
+    "bearerAuth": {
+      "type": "http",
+      "scheme": "bearer",
+      "bearerFormat": "JWT",
+      "description": "Access token issued by /auth/login-by-verifier; send as Authorization: Bearer <token>"
+    },
+    "refreshTokenCookie": {
       "type": "apiKey",
-      "name": "authorization",
-      "in": "header"
+      "in": "cookie",
+      "name": "refresh_token",
+      "description": "HTTP-only refresh token cookie (7d) used to renew access tokens; pair with x-csrf-token header on state-changing requests."
     }
   }
 }

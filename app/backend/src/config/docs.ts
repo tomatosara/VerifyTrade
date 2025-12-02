@@ -8,8 +8,16 @@ const docsConfigSchema = z.object({
   SWAGGER_VERSION: z.string().min(1)
 });
 
+const nodeEnv = process.env.NODE_ENV ?? 'development';
+const isProd = nodeEnv === 'production';
+const apiBaseUrl = process.env.API_BASE_URL ?? `http://localhost:${appConfig.port}`;
+
+if (isProd && !apiBaseUrl.startsWith('https://')) {
+  throw new Error('In production, API_BASE_URL must use HTTPS for Swagger/docs links');
+}
+
 const parsed = docsConfigSchema.parse({
-  API_BASE_URL: process.env.API_BASE_URL ?? `http://localhost:${appConfig.port}`,
+  API_BASE_URL: apiBaseUrl,
   SWAGGER_TITLE: process.env.SWAGGER_TITLE ?? 'Trading Platform API',
   SWAGGER_VERSION: process.env.SWAGGER_VERSION ?? '1.0.0'
 });

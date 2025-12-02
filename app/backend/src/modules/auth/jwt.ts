@@ -1,7 +1,6 @@
 // src/modules/auth/jwt.ts
 import jwt, { SignOptions } from 'jsonwebtoken';
-
-const DEFAULT_SECRET = process.env.JWT_SECRET || 'dev-secret';
+import { getSecurityConfig } from '@config/security';
 
 export function signJwt(
   payload: Record<string, any>,
@@ -11,7 +10,7 @@ export function signJwt(
   if (opts?.expiresIn !== undefined) {
     options.expiresIn = opts.expiresIn as SignOptions['expiresIn'];
   }
-  const secret = (opts?.secret ?? DEFAULT_SECRET) as string;
+  const secret = (opts?.secret ?? getSecurityConfig().jwtSecret) as string;
   return jwt.sign(payload, secret, options);
 }
 
@@ -19,8 +18,9 @@ export function verifyJwt<T extends object = any>(
   token: string,
   secret?: string
 ): T | null {
+  const resolvedSecret = secret ?? getSecurityConfig().jwtSecret;
   try {
-    return jwt.verify(token, secret ?? DEFAULT_SECRET) as T;
+    return jwt.verify(token, resolvedSecret) as T;
   } catch {
     return null;
   }

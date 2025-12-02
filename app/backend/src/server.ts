@@ -11,6 +11,33 @@ import { dbConfig } from '@config/db';
 import { logger } from '@utils/logger';
 import { buildPublicUrl } from '@utils/url';
 
+// Prevent header manipulation / response splitting by scrubbing values before
+// they are written into HTTP headers.
+const headerValueAllowList = /[A-Za-z0-9 .,:;=/@%&?_+~#\-\[\]]+/g;
+const sanitizeHeaderValue = (value: string): string => {
+  const withoutControls = value.replace(/[\r\n]/g, '');
+  const cleaned = withoutControls.match(headerValueAllowList)?.join('') ?? '';
+  return cleaned;
+};
+
+const sanitizePath = (path: string | undefined): string => {
+  if (!path) {
+    return '/';
+  }
+
+  if (/[\r\n]/.test(path)) {
+    return '/';
+  }
+
+  const ensuredLeadingSlash = path.startsWith('/') ? path : `/${path}`;
+  const sanitized = sanitizeHeaderValue(ensuredLeadingSlash);
+  if (!sanitized.startsWith('/')) {
+    return '/';
+  }
+
+  return sanitized || '/';
+};
+
 async function start() {
   try {
     await initializeDatabaseWithRetry();
@@ -58,33 +85,52 @@ async function start() {
       if (appConfig.nodeEnv === 'production') {
         // HTTP listener is dev-only; in production we either sit behind TLS
         // termination (x-forwarded-proto=https) or we issue a strict redirect.
+        // Production traffic must go through HTTPS/TLS termination; this HTTP handler only redirects and never serves app responses.
         const redirectHandler: http.RequestListener = (req, res) => {
           const forwardedProto = Array.isArray(req.headers['x-forwarded-proto'])
             ? req.headers['x-forwarded-proto'][0]
             : (req.headers['x-forwarded-proto'] as string | undefined);
-          if (forwardedProto && forwardedProto.toLowerCase().startsWith('https')) {
+          const isForwardedHttps =
+            typeof forwardedProto === 'string' && forwardedProto.trim().toLowerCase() === 'https';
+          if (isForwardedHttps) {
             return (app as unknown as http.RequestListener)(req, res);
           }
-          const host = req.headers.host ?? `${appConfig.host}:${appConfig.port}`;
-          const location = `https://${host}${req.url ?? ''}`;
-          res.writeHead(308, { Location: location, 'Strict-Transport-Security': 'max-age=63072000; includeSubDomains' });
+
+          const canonicalHost = `${appConfig.host}:${appConfig.port}`;
+          const requestHost = Array.isArray(req.headers.host)
+            ? req.headers.host[0]
+            : req.headers.host;
+          const trustedHost =
+            requestHost && requestHost.toLowerCase() === canonicalHost.toLowerCase()
+              ? requestHost
+              : canonicalHost;
+          const sanitizedHost = sanitizeHeaderValue(trustedHost) || canonicalHost;
+          const sanitizedPath = sanitizePath(req.url);
+          const redirectUrl = new URL(sanitizedPath, `https://${sanitizedHost}`);
+          const location =
+            sanitizeHeaderValue(redirectUrl.toString()) ||
+            sanitizeHeaderValue(`https://${canonicalHost}/`);
+
+          res.writeHead(308, {
+            Location: location,
+            'Strict-Transport-Security': 'max-age=63072000; includeSubDomains'
+          });
           res.end();
         };
-        const redirectServer = http.createServer(redirectHandler);
+        const redirectServer = http.createServer(
+          { insecureHTTPParser: false },
+          redirectHandler
+        ); // security report issue
         return redirectServer.listen(appConfig.port, appConfig.host, () => {
           const baseUrl = `https://${displayHost}:${appConfig.port}${basePathSuffix}`;
           startCallback(baseUrl, swaggerUrl, 'HTTP redirect-only; production requires HTTPS');
         });
       }
 
-      const protocol = preferHttps ? 'https' : 'http';
-      const baseUrl = `${protocol}://${displayHost}:${appConfig.port}${basePathSuffix}`;
-      const transportNote = useLocalHttps
-        ? 'HTTPS (dev self-managed certificate)'
-        : 'HTTP listener (non-production only)';
-
-      return app.listen(appConfig.port, appConfig.host, () =>
-        startCallback(baseUrl, swaggerUrl, transportNote)
+      // Non-production HTTP listener removed to comply with “use HTTPS” recommendation.
+      // Enable DEV_HTTPS with a local cert or run behind TLS termination for local development.
+      throw new Error(
+        'Plain HTTP listener is disabled in non-production. Set DEV_HTTPS=true with a valid cert or proxy via HTTPS.'
       );
     };
 

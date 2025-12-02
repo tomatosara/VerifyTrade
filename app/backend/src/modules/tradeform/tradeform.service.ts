@@ -1,4 +1,3 @@
-import { randomBytes } from 'crypto';
 import { DataSource, Repository } from 'typeorm';
 import { QueryFailedError } from 'typeorm/error/QueryFailedError';
 import { plainToInstance } from 'class-transformer';
@@ -22,13 +21,14 @@ import {
   NotFoundError,
 } from '@utils/errors';
 import { formatAmountForResponse, normalizeAmountString } from './utils/amount';
+import { secureRandomInt } from '@utils/crypto-random';
 
 const UID_ALPHABET = '23456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz';
 const UID_LENGTH = 24;
 const UID_ALPHABET_LENGTH = UID_ALPHABET.length;
 
-const secureRandomIndex = (max: number): number => randomBytes(1)[0] % max;
-const secureRandomChar = (): string => UID_ALPHABET[secureRandomIndex(UID_ALPHABET_LENGTH)];
+// Securely pick UID characters to avoid predictable trade identifiers.
+const secureRandomChar = (): string => UID_ALPHABET[secureRandomInt(UID_ALPHABET_LENGTH)];
 
 const mapEntityToResponse = (entity: TradeFormEntity): TradeFormResponse => ({
   id: entity.id,

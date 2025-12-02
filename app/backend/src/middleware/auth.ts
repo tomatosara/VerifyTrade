@@ -5,6 +5,7 @@ import jwt from 'jsonwebtoken';
 import { AppDataSource } from '@database/data-source';
 import { UserEntity } from '@modules/auth/entity/user.entity';
 import { validate as validateUuid } from 'uuid';
+import { getSecurityConfig } from '@config/security';
 
 export interface AuthenticatedRequest extends Request {
   user?: {
@@ -25,7 +26,8 @@ export const authMiddleware = async (req: AuthenticatedRequest, res: Response, n
   if (!token) return res.status(401).json({ message: 'Unauthorized' });
 
   try {
-    const payload = jwt.verify(token, process.env.JWT_SECRET!) as any;
+    const { jwtSecret } = getSecurityConfig();
+    const payload = jwt.verify(token, jwtSecret) as any;
     const userRepo = AppDataSource.getRepository(UserEntity);
 
     const isValidUuid = typeof payload.id === 'string' && validateUuid(payload.id);

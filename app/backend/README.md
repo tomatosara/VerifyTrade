@@ -64,6 +64,7 @@ The service loads envs from `.env` (or `.env.test` when `NODE_ENV=test`).
 | `NODE_ENV`, `PORT`, `HOST`, `BASE_PATH`, `DEV_HTTPS`, `TRUST_PROXY` | Server runtime and proxy settings. |
 | `JWT_SECRET`, `PLATFORM_JWT_SECRET`, `JWT_ISSUER`, `JWT_AUDIENCE` | JWT signing/validation. Production requires strong secrets. |
 | `SWAGGER_PATH`, `API_BASE_URL`, `SWAGGER_TITLE`, `SWAGGER_VERSION` | OpenAPI/Swagger exposure. |
+| `CSRF_ALLOWED_ORIGINS` | Comma-separated frontend origins allowed by CSRF Origin/Referer checks. |
 | `DATABASE_URL` or `DB_HOST`/`DB_PORT`/`DB_USER`/`DB_PASSWORD`/`DB_NAME` | PostgreSQL connectivity. |
 | `COMPOSE_DB_HOST`, `COMPOSE_DB_PORT` | Defaults used when running with Docker Compose. |
 | `RATE_LIMIT_WINDOW_MS`, `RATE_LIMIT_MAX` | Rate limiting knobs. |
@@ -71,6 +72,13 @@ The service loads envs from `.env` (or `.env.test` when `NODE_ENV=test`).
 | `VERIFIER_BASE`, `VERIFIER_TOKEN`, `ISSUER_BASE`, `ISSUER_TOKEN`, `VP_IDCARD`, `VP_TRADEFORM` | External VC sandbox integration; replace with your own credentials. |
 
 Never commit real secrets. Rotate any sample values before production.
+
+## Secret Management
+
+- JWT secrets (`JWT_SECRET`, `PLATFORM_JWT_SECRET`, `JWT_REFRESH_SECRET`) and TLS key paths must come from environment variables or your secret manager; no keys are hardcoded in the codebase.
+- Local HTTPS for dev reads cert/key files from `DEV_TLS_CERT_PATH` and `DEV_TLS_KEY_PATH`; keep those files in ignored locations such as `app/backend/certs/`.
+- Test-only self-signed certificates live at `app/backend/src/test/fixtures/certs/*.pem` and are never used in production.
+- `.env` files and key/cert material are intentionally git-ignored; provision real values per environment before starting the server.
 
 ## Run Locally
 
@@ -108,6 +116,21 @@ Migrations also run automatically on server startup (`src/server.ts`).
 - Live spec: `GET /openapi.json`
 - Regenerate routes/spec: `pnpm --filter @verifytrade/backend openapi`
 - Health: `GET /healthz` (liveness), `GET /ready` (DB readiness)
+
+## Authentication
+
+- Access token: JWT (~15m) issued by `POST /api/v1/auth/login-by-verifier`; send as `Authorization: Bearer <token>` on protected routes.
+- Refresh token: HttpOnly `refresh_token` cookie (~7d) scoped to `/api/v1/auth`, signed with `JWT_REFRESH_SECRET`; use `POST /api/v1/auth/refresh` to mint a new access token and keep the cookie fresh.
+- CSRF pairing: `GET /api/v1/auth/csrf` issues a `csrf_token` cookie; echo it in `x-csrf-token` alongside the refresh cookie for unsafe requests (enforced by middleware).
+- Protected APIs: trade/trades/auth `me`/`logout` require the bearer access token; login, verifier/issuer flows, health checks, docs, and CSRF issuance remain public.
+- Roles: `role` claim (e.g., `user`, `platform`) is embedded in both tokens; `requirePlatformRole` enforces platform-only access when used.
+
+## CSRF Protection
+
+- Express middleware `csrfProtectionMiddleware` enforces a double-submit pair (`csrf_token` cookie + `X-CSRF-Token` header) on unsafe HTTP methods when a `refresh_token` session cookie is present.
+- The middleware also validates `Origin`/`Referer` against `CSRF_ALLOWED_ORIGINS` (or the API host) and trusts proxy headers when `TRUST_PROXY` is configured.
+- CSRF tokens are issued by `GET /api/v1/auth/csrf` and stored in a non-HttpOnly cookie with `SameSite` and `Secure` flags; refresh/access lifetimes remain short (access ~15m, refresh ~7d).
+- XSS would bypass CSRF, so keep templates free of unsafe HTML and tighten CSP as needed.
 
 ## Testing & Quality
 

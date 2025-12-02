@@ -1,1853 +1,1752 @@
 {
-  "openapi": "3.0.0",
-  "components": {
-    "examples": {},
-    "headers": {},
-    "parameters": {},
-    "requestBodies": {},
-    "responses": {},
-    "schemas": {
-      "VerifierQrcodeResponse": {
-        "properties": {
-          "transactionId": {
-            "type": "string"
-          },
-          "qrcodeImage": {
-            "type": "string"
-          },
-          "authUri": {
-            "type": "string"
-          }
-        },
-        "required": [
-          "transactionId",
-          "qrcodeImage",
-          "authUri"
-        ],
-        "type": "object",
-        "additionalProperties": false
-      },
-      "VerifierResultRequest": {
-        "properties": {
-          "transactionId": {
-            "type": "string"
-          }
-        },
-        "required": [
-          "transactionId"
-        ],
-        "type": "object",
-        "additionalProperties": false
-      },
-      "TradeFormItemCondition": {
-        "enum": [
-          "new",
-          "used_like_new",
-          "used"
-        ],
-        "type": "string"
-      },
-      "TradeFormChannel": {
-        "enum": [
-          "p2p",
-          "escrow"
-        ],
-        "type": "string"
-      },
-      "TradeFormPaymentMethod": {
-        "enum": [
-          "bank_transfer",
-          "cash"
-        ],
-        "type": "string"
-      },
-      "TradeFormMatchmakingChannel": {
-        "enum": [
-          "in_app",
-          "line",
-          "telegram"
-        ],
-        "type": "string"
-      },
-      "TradeFormIdentityRequirement": {
-        "type": "string"
-      },
-      "TradeFormStatus": {
-        "enum": [
-          "draft",
-          "pending",
-          "verified",
-          "confirmed",
-          "cancelled",
-          "failed",
-          "done"
-        ],
-        "type": "string"
-      },
-      "TradeFormIdentityRequirementsMeta": {
-        "properties": {
-          "requiredClaims": {
-            "items": {
-              "type": "string"
-            },
-            "type": "array"
-          },
-          "allowedIssuers": {
-            "items": {
-              "type": "string"
-            },
-            "type": "array"
-          },
-          "credentialTypes": {
-            "items": {
-              "type": "string"
-            },
-            "type": "array"
-          },
-          "minLevel": {
-            "type": "number",
-            "format": "double"
-          }
-        },
-        "type": "object",
-        "additionalProperties": {}
-      },
-      "TradeFormVCUser2Meta": {
-        "properties": {
-          "valid": {
-            "type": "boolean"
-          },
-          "at": {
-            "type": "string"
-          },
-          "claimsMatched": {
-            "items": {
-              "type": "string"
-            },
-            "type": "array"
-          },
-          "issuer": {
-            "type": "string"
-          },
-          "credentialType": {
-            "type": "string"
-          },
-          "level": {
-            "type": "number",
-            "format": "double"
-          },
-          "reason": {
-            "type": "string"
-          },
-          "expiresAt": {
-            "type": "string"
-          },
-          "rawRef": {
-            "type": "string"
-          }
-        },
-        "required": [
-          "valid",
-          "at"
-        ],
-        "type": "object",
-        "additionalProperties": {}
-      },
-      "TradeFormMeta": {
-        "properties": {
-          "vc_user2": {
-            "$ref": "#/components/schemas/TradeFormVCUser2Meta"
-          },
-          "identity_requirements": {
-            "$ref": "#/components/schemas/TradeFormIdentityRequirementsMeta"
-          }
-        },
-        "additionalProperties": {},
-        "type": "object"
-      },
-      "TradeFormResponse": {
-        "properties": {
-          "id": {
-            "type": "number",
-            "format": "double"
-          },
-          "uid": {
-            "type": "string"
-          },
-          "creatorId": {
-            "type": "string"
-          },
-          "counterpartyId": {
-            "type": "string",
-            "nullable": true
-          },
-          "creatorVerifiedIdentities": {
-            "items": {
-              "type": "string"
-            },
-            "type": "array"
-          },
-          "itemName": {
-            "type": "string"
-          },
-          "itemDescription": {
-            "type": "string"
-          },
-          "itemCondition": {
-            "$ref": "#/components/schemas/TradeFormItemCondition"
-          },
-          "amount": {
-            "type": "string"
-          },
-          "tradeChannel": {
-            "$ref": "#/components/schemas/TradeFormChannel"
-          },
-          "paymentMethod": {
-            "$ref": "#/components/schemas/TradeFormPaymentMethod"
-          },
-          "matchmakingChannel": {
-            "$ref": "#/components/schemas/TradeFormMatchmakingChannel"
-          },
-          "identityRequirements": {
-            "items": {
-              "$ref": "#/components/schemas/TradeFormIdentityRequirement"
-            },
-            "type": "array"
-          },
-          "userRating": {
-            "type": "number",
-            "format": "double"
-          },
-          "status": {
-            "$ref": "#/components/schemas/TradeFormStatus"
-          },
-          "meta": {
-            "$ref": "#/components/schemas/TradeFormMeta"
-          },
-          "confirmedByUser1": {
-            "type": "boolean"
-          },
-          "confirmedByUser2": {
-            "type": "boolean"
-          },
-          "vcVerifiedAt": {
-            "type": "string",
-            "format": "date-time",
-            "nullable": true
-          },
-          "uidExpiresAt": {
-            "type": "string",
-            "format": "date-time",
-            "nullable": true
-          },
-          "finalizedAt": {
-            "type": "string",
-            "format": "date-time",
-            "nullable": true
-          },
-          "createdAt": {
-            "type": "string",
-            "format": "date-time"
-          },
-          "updatedAt": {
-            "type": "string",
-            "format": "date-time"
-          }
-        },
-        "required": [
-          "id",
-          "uid",
-          "creatorId",
-          "counterpartyId",
-          "creatorVerifiedIdentities",
-          "itemName",
-          "itemDescription",
-          "itemCondition",
-          "amount",
-          "tradeChannel",
-          "paymentMethod",
-          "matchmakingChannel",
-          "identityRequirements",
-          "userRating",
-          "status",
-          "meta",
-          "confirmedByUser1",
-          "confirmedByUser2",
-          "vcVerifiedAt",
-          "uidExpiresAt",
-          "finalizedAt",
-          "createdAt",
-          "updatedAt"
-        ],
-        "type": "object",
-        "additionalProperties": false
-      },
-      "ErrorResponse": {
-        "properties": {
-          "error": {
-            "type": "string"
-          },
-          "details": {},
-          "requestId": {
-            "type": "string"
-          }
-        },
-        "required": [
-          "error"
-        ],
-        "type": "object",
-        "additionalProperties": false
-      },
-      "CreateTradeFormDto": {
-        "properties": {
-          "uid": {
-            "type": "string",
-            "description": "\u524d\u7aef\u751f\u6210\u7684\u4ea4\u6613\u5e8f\u865f\uff0c\u5efa\u7acb\u96d9\u65b9\u5171\u7528\u3002",
-            "example": "P2P-7f4c8d90"
-          },
-          "creatorId": {
-            "type": "string",
-            "description": "\u5efa\u7acb\u8005\u7684\u4f7f\u7528\u8005\u8b58\u5225\uff08\u9700\u8207 JWT \u5167 idNumber \u4e00\u81f4\uff09\u3002",
-            "example": "A131095852"
-          },
-          "creatorVerifiedIdentities": {
-            "items": {
-              "type": "string"
-            },
-            "type": "array",
-            "description": "\u5df2\u9a57\u8b49\u8eab\u5206(\u5275\u5efa\u8005) / Creator verified identities",
-            "example": [
-              "tw_national_id",
-              "phone_verified"
-            ]
-          },
-          "itemName": {
-            "type": "string",
-            "description": "\u4ea4\u6613\u5546\u54c1 / Item name",
-            "example": "iPad Pro 11\""
-          },
-          "itemDescription": {
-            "type": "string",
-            "description": "\u5546\u54c1\u8aaa\u660e / Item description",
-            "example": "\u76d2\u88dd\u5b8c\u6574\uff0c\u542b\u539f\u5ee0\u9375\u76e4"
-          },
-          "itemCondition": {
-            "$ref": "#/components/schemas/TradeFormItemCondition",
-            "description": "\u5546\u54c1\u72c0\u614b",
-            "example": "used_like_new"
-          },
-          "amount": {
-            "type": "string",
-            "description": "\u4ea4\u6613\u91d1\u984d / Amount (string to keep currency format)",
-            "example": "22000.50"
-          },
-          "tradeChannel": {
-            "$ref": "#/components/schemas/TradeFormChannel",
-            "description": "\u4ea4\u6613\u7ba1\u9053",
-            "example": "p2p"
-          },
-          "paymentMethod": {
-            "$ref": "#/components/schemas/TradeFormPaymentMethod",
-            "description": "\u4ed8\u6b3e\u65b9\u5f0f",
-            "example": "bank_transfer"
-          },
-          "matchmakingChannel": {
-            "$ref": "#/components/schemas/TradeFormMatchmakingChannel",
-            "description": "\u5a92\u5408\u7ba1\u9053",
-            "example": "in_app"
-          },
-          "identityRequirements": {
-            "items": {
-              "$ref": "#/components/schemas/TradeFormIdentityRequirement"
-            },
-            "type": "array",
-            "description": "\u8eab\u4efd\u9a57\u8b49\u689d\u4ef6 (\u8907\u9078) / Identity requirements (multi-select)",
-            "example": [
-              "tw_national_id",
-              "phone_verified"
-            ]
-          }
-        },
-        "required": [
-          "uid",
-          "creatorId",
-          "itemName",
-          "itemDescription",
-          "itemCondition",
-          "amount",
-          "tradeChannel",
-          "paymentMethod",
-          "matchmakingChannel",
-          "identityRequirements"
-        ],
-        "type": "object",
-        "additionalProperties": false
-      },
-      "UpdateTradeFormDto": {
-        "properties": {
-          "counterpartyId": {
-            "type": "string"
-          }
-        },
-        "required": [
-          "counterpartyId"
-        ],
-        "type": "object",
-        "additionalProperties": false
-      },
-      "TradeFormViewMode": {
-        "type": "string",
-        "enum": [
-          "participant",
-          "limited"
-        ]
-      },
-      "TradeFormPublicResponse": {
-        "properties": {
-          "uid": {
-            "type": "string"
-          },
-          "creatorId": {
-            "type": "string"
-          },
-          "status": {
-            "$ref": "#/components/schemas/TradeFormStatus"
-          },
-          "createdAt": {
-            "type": "string",
-            "format": "date-time"
-          },
-          "updatedAt": {
-            "type": "string",
-            "format": "date-time"
-          }
-        },
-        "required": [
-          "uid",
-          "creatorId",
-          "status",
-          "createdAt",
-          "updatedAt"
-        ],
-        "type": "object",
-        "additionalProperties": false
-      },
-      "TradeFormViewResponse": {
-        "properties": {
-          "view": {
-            "$ref": "#/components/schemas/TradeFormViewMode"
-          },
-          "trade": {
-            "anyOf": [
-              {
-                "$ref": "#/components/schemas/TradeFormResponse"
-              },
-              {
-                "$ref": "#/components/schemas/TradeFormPublicResponse"
-              }
-            ]
-          }
-        },
-        "required": [
-          "view",
-          "trade"
-        ],
-        "type": "object",
-        "additionalProperties": false
-      },
-      "ConfirmTradeResponseDto": {
-        "properties": {
-          "trade": {
-            "$ref": "#/components/schemas/TradeFormResponse"
-          }
-        },
-        "required": [
-          "trade"
-        ],
-        "type": "object",
-        "additionalProperties": false
-      },
-      "TradeFormStatusDto": {
-        "type": "string",
-        "enum": [
-          "draft",
-          "pending",
-          "verified",
-          "confirmed",
-          "cancelled",
-          "failed",
-          "done"
-        ],
-        "description": "API \u5c08\u7528 enum / union types\n\uff08\u4e0d\u8981\u518d\u5f9e entity \u6216\u5176\u4ed6 enums import\uff0c\u907f\u514d tsoa \u89e3\u6790\u554f\u984c\uff09"
-      },
-      "TradeFormChannelDto": {
-        "type": "string",
-        "enum": [
-          "p2p",
-          "escrow"
-        ]
-      },
-      "TradeFormPaymentMethodDto": {
-        "type": "string",
-        "enum": [
-          "bank_transfer",
-          "cash"
-        ]
-      },
-      "TradeSummaryDto": {
-        "properties": {
-          "uid": {
-            "type": "string"
-          },
-          "itemName": {
-            "type": "string"
-          },
-          "amount": {
-            "type": "string"
-          },
-          "status": {
-            "$ref": "#/components/schemas/TradeFormStatusDto"
-          },
-          "tradeChannel": {
-            "$ref": "#/components/schemas/TradeFormChannelDto"
-          },
-          "paymentMethod": {
-            "$ref": "#/components/schemas/TradeFormPaymentMethodDto"
-          },
-          "updatedAt": {
-            "type": "string"
-          },
-          "finalizedAt": {
-            "type": "string",
-            "nullable": true
-          },
-          "creatorName": {
-            "type": "string",
-            "nullable": true
-          },
-          "counterpartyName": {
-            "type": "string",
-            "nullable": true
-          },
-          "stars": {
-            "type": "number",
-            "format": "double",
-            "nullable": true
-          }
-        },
-        "required": [
-          "uid",
-          "itemName",
-          "amount",
-          "status",
-          "tradeChannel",
-          "paymentMethod",
-          "updatedAt",
-          "finalizedAt",
-          "creatorName",
-          "counterpartyName"
-        ],
-        "type": "object",
-        "additionalProperties": false
-      },
-      "TradeFormItemConditionDto": {
-        "type": "string",
-        "enum": [
-          "new",
-          "used_like_new",
-          "used"
-        ]
-      },
-      "TradeFormMatchmakingChannelDto": {
-        "type": "string",
-        "enum": [
-          "in_app",
-          "line",
-          "telegram"
-        ]
-      },
-      "TradeFormIdentityRequirementDto": {
-        "type": "string"
-      },
-      "TradeAuditActionDto": {
-        "type": "string",
-        "enum": [
-          "create",
-          "verifyVC",
-          "confirm",
-          "cancel",
-          "finalize",
-          "fail",
-          "retry"
-        ]
-      },
-      "TradeAuditEventDto": {
-        "properties": {
-          "id": {
-            "type": "string"
-          },
-          "action": {
-            "$ref": "#/components/schemas/TradeAuditActionDto"
-          },
-          "at": {
-            "type": "string"
-          },
-          "actorId": {
-            "type": "string",
-            "nullable": true
-          },
-          "actorName": {
-            "type": "string",
-            "nullable": true
-          },
-          "details": {}
-        },
-        "required": [
-          "id",
-          "action",
-          "at",
-          "actorId",
-          "actorName",
-          "details"
-        ],
-        "type": "object",
-        "additionalProperties": false
-      },
-      "TradeDetailDto": {
-        "properties": {
-          "uid": {
-            "type": "string"
-          },
-          "itemName": {
-            "type": "string"
-          },
-          "itemDescription": {
-            "type": "string"
-          },
-          "amount": {
-            "type": "string"
-          },
-          "itemCondition": {
-            "$ref": "#/components/schemas/TradeFormItemConditionDto"
-          },
-          "status": {
-            "$ref": "#/components/schemas/TradeFormStatusDto"
-          },
-          "creatorId": {
-            "type": "string",
-            "nullable": true
-          },
-          "creatorName": {
-            "type": "string",
-            "nullable": true
-          },
-          "counterpartyId": {
-            "type": "string",
-            "nullable": true
-          },
-          "counterpartyName": {
-            "type": "string",
-            "nullable": true
-          },
-          "tradeChannel": {
-            "$ref": "#/components/schemas/TradeFormChannelDto"
-          },
-          "paymentMethod": {
-            "$ref": "#/components/schemas/TradeFormPaymentMethodDto"
-          },
-          "matchmakingChannel": {
-            "$ref": "#/components/schemas/TradeFormMatchmakingChannelDto"
-          },
-          "identityRequirements": {
-            "items": {
-              "$ref": "#/components/schemas/TradeFormIdentityRequirementDto"
-            },
-            "type": "array"
-          },
-          "creatorVerifiedIdentities": {
-            "items": {
-              "type": "string"
-            },
-            "type": "array"
-          },
-          "userRating": {
-            "type": "number",
-            "format": "double"
-          },
-          "meta": {},
-          "confirmedByUser1": {
-            "type": "boolean"
-          },
-          "confirmedByUser2": {
-            "type": "boolean"
-          },
-          "vcVerifiedAt": {
-            "type": "string",
-            "nullable": true
-          },
-          "uidExpiresAt": {
-            "type": "string",
-            "nullable": true
-          },
-          "finalizedAt": {
-            "type": "string",
-            "nullable": true
-          },
-          "createdAt": {
-            "type": "string"
-          },
-          "updatedAt": {
-            "type": "string"
-          },
-          "auditEvents": {
-            "items": {
-              "$ref": "#/components/schemas/TradeAuditEventDto"
-            },
-            "type": "array"
-          },
-          "otherPartyScore": {
-            "type": "number",
-            "format": "double",
-            "nullable": true
-          }
-        },
-        "required": [
-          "uid",
-          "itemName",
-          "itemDescription",
-          "amount",
-          "itemCondition",
-          "status",
-          "creatorId",
-          "creatorName",
-          "counterpartyId",
-          "counterpartyName",
-          "tradeChannel",
-          "paymentMethod",
-          "matchmakingChannel",
-          "identityRequirements",
-          "creatorVerifiedIdentities",
-          "userRating",
-          "meta",
-          "confirmedByUser1",
-          "confirmedByUser2",
-          "vcVerifiedAt",
-          "uidExpiresAt",
-          "finalizedAt",
-          "createdAt",
-          "updatedAt",
-          "auditEvents",
-          "otherPartyScore"
-        ],
-        "type": "object",
-        "additionalProperties": false
-      },
-      "TradeRatingResponse": {
-        "properties": {
-          "tradeUid": {
-            "type": "string"
-          },
-          "stars": {
-            "type": "number",
-            "format": "double"
-          }
-        },
-        "required": [
-          "tradeUid",
-          "stars"
-        ],
-        "type": "object",
-        "additionalProperties": false
-      },
-      "RateTradeRequest": {
-        "properties": {
-          "stars": {
-            "type": "number",
-            "format": "double"
-          }
-        },
-        "required": [
-          "stars"
-        ],
-        "type": "object",
-        "additionalProperties": false
-      },
-      "QrcodeDataBody": {
-        "properties": {},
-        "type": "object",
-        "additionalProperties": false
-      },
-      "QrcodeNoDataBody": {
-        "properties": {},
-        "type": "object",
-        "additionalProperties": false
-      },
-      "LoginResponse": {
-        "properties": {
-          "accessToken": {
-            "type": "string"
-          },
-          "expiresIn": {
-            "type": "string"
-          }
-        },
-        "required": [
-          "accessToken",
-          "expiresIn"
-        ],
-        "type": "object",
-        "additionalProperties": false
-      },
-      "LoginByVerifierRequest": {
-        "properties": {
-          "transactionId": {
-            "type": "string"
-          }
-        },
-        "required": [
-          "transactionId"
-        ],
-        "type": "object",
-        "additionalProperties": false
-      },
-      "RefreshResponse": {
-        "properties": {
-          "accessToken": {
-            "type": "string"
-          },
-          "expiresIn": {
-            "type": "string"
-          }
-        },
-        "required": [
-          "accessToken",
-          "expiresIn"
-        ],
-        "type": "object",
-        "additionalProperties": false
-      },
-      "LogoutResponse": {
-        "properties": {
-          "success": {
-            "type": "boolean",
-            "enum": [
-              true
-            ],
-            "nullable": false
-          }
-        },
-        "required": [
-          "success"
-        ],
-        "type": "object",
-        "additionalProperties": false
-      }
-    },
-    "securitySchemes": {
-      "bearerAuth": {
-        "type": "http",
-        "scheme": "bearer",
-        "bearerFormat": "JWT"
-      },
-      "cookieAuth": {
-        "type": "apiKey",
-        "in": "cookie",
-        "name": "refresh_token",
-        "description": "HttpOnly refresh token cookie used for session renewal; pair with CSRF token header on state-changing requests."
-      }
-    }
-  },
-  "info": {
-    "title": "VerifyTrade API",
-    "version": "1.0.0",
-    "description": "Digital identity trading platform API",
-    "contact": {}
-  },
-  "paths": {
-    "/verifier/qrcode": {
-      "post": {
-        "operationId": "CreateQrcode",
-        "responses": {
-          "200": {
-            "description": "Ok",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/VerifierQrcodeResponse"
-                }
-              }
-            }
-          },
-          "400": {
-            "description": "Invalid ref"
-          },
-          "401": {
-            "description": "Unauthorized"
-          },
-          "403": {
-            "description": "Forbidden"
-          }
-        },
-        "description": "\u5efa\u7acb\u9a57\u8b49 QR Code",
-        "tags": [
-          "Verifier"
-        ],
-        "security": [],
-        "parameters": [],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "properties": {
-                  "ref": {
-                    "type": "string"
-                  }
-                },
-                "required": [
-                  "ref"
-                ],
-                "type": "object"
-              }
-            }
-          }
-        }
-      }
-    },
-    "/verifier/id-card/result": {
-      "post": {
-        "operationId": "GetIdCardVerifyResult",
-        "responses": {
-          "200": {
-            "description": "Ok",
-            "content": {
-              "application/json": {
-                "schema": {}
-              }
-            }
-          },
-          "400": {
-            "description": "Invalid transactionId"
-          },
-          "401": {
-            "description": "Unauthorized"
-          },
-          "403": {
-            "description": "Forbidden"
-          }
-        },
-        "description": "\u67e5\u8a62\u8eab\u5206\u8b49\u9a57\u8b49\u7d50\u679c",
-        "tags": [
-          "Verifier"
-        ],
-        "security": [],
-        "parameters": [],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/VerifierResultRequest"
-              }
-            }
-          }
-        }
-      }
-    },
-    "/verifier/id-card/qrcode": {
-      "get": {
-        "operationId": "LoginIdCardQrcode",
-        "responses": {
-          "200": {
-            "description": "Ok",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/VerifierQrcodeResponse"
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "Unauthorized"
-          },
-          "403": {
-            "description": "Forbidden"
-          }
-        },
-        "description": "\u767b\u5165\u8eab\u5206\u8b49\u5c08\u7528 QRCode",
-        "tags": [
-          "Verifier"
-        ],
-        "security": [],
-        "parameters": []
-      }
-    },
-    "/verifier/trade-form/result": {
-      "post": {
-        "operationId": "GetTradeFormVerifyResult",
-        "responses": {
-          "200": {
-            "description": "Ok",
-            "content": {
-              "application/json": {
-                "schema": {}
-              }
-            }
-          },
-          "400": {
-            "description": "Invalid transactionId"
-          },
-          "401": {
-            "description": "Unauthorized"
-          },
-          "403": {
-            "description": "Forbidden"
-          }
-        },
-        "description": "\u67e5\u8a62\u8eab\u5206\u8b49\u9a57\u8b49\u7d50\u679c",
-        "tags": [
-          "Verifier"
-        ],
-        "security": [],
-        "parameters": [],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/VerifierResultRequest"
-              }
-            }
-          }
-        }
-      }
-    },
-    "/verifier/trade-form/qrcode": {
-      "get": {
-        "operationId": "VerifyTradeFormQrcode",
-        "responses": {
-          "200": {
-            "description": "Ok",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/VerifierQrcodeResponse"
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "Unauthorized"
-          },
-          "403": {
-            "description": "Forbidden"
-          }
-        },
-        "description": "\u4ea4\u6613\u8868\u55ae\u9a57\u8b49\u5c08\u7528 QRCode",
-        "tags": [
-          "Verifier"
-        ],
-        "security": [],
-        "parameters": []
-      }
-    },
-    "/tradeforms": {
-      "post": {
-        "operationId": "createTradeForm",
-        "responses": {
-          "201": {
-            "description": "Created",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/TradeFormResponse"
-                }
-              }
-            }
-          },
-          "409": {
-            "description": "Trade UID already exists",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
-                }
-              }
-            }
-          },
-          "422": {
-            "description": "Validation error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "Unauthorized"
-          },
-          "403": {
-            "description": "Forbidden"
-          }
-        },
-        "tags": [
-          "TradeForm"
-        ],
-        "security": [
-          {
-            "bearerAuth": []
-          }
-        ],
-        "parameters": [],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/CreateTradeFormDto"
-              }
-            }
-          }
-        }
-      }
-    },
-    "/tradeforms/{uid}": {
-      "put": {
-        "operationId": "updateTradeForm",
-        "responses": {
-          "200": {
-            "description": "Ok",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/TradeFormResponse"
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "Unauthorized"
-          },
-          "403": {
-            "description": "Forbidden"
-          }
-        },
-        "tags": [
-          "TradeForm"
-        ],
-        "security": [
-          {
-            "bearerAuth": []
-          }
-        ],
-        "parameters": [
-          {
-            "in": "path",
-            "name": "uid",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/UpdateTradeFormDto"
-              }
-            }
-          }
-        }
-      }
-    },
-    "/tradeforms/uid/{uid}": {
-      "get": {
-        "operationId": "viewTradeFormByUid",
-        "responses": {
-          "200": {
-            "description": "Ok",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/TradeFormViewResponse"
-                }
-              }
-            }
-          },
-          "404": {
-            "description": "Not Found",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "Unauthorized"
-          },
-          "403": {
-            "description": "Forbidden"
-          }
-        },
-        "tags": [
-          "TradeForm"
-        ],
-        "security": [
-          {
-            "bearerAuth": []
-          }
-        ],
-        "parameters": [
-          {
-            "in": "path",
-            "name": "uid",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          }
-        ]
-      }
-    },
-    "/tradeforms/{id}": {
-      "delete": {
-        "operationId": "deleteTradeForm",
-        "responses": {
-          "204": {
-            "description": "No content"
-          },
-          "401": {
-            "description": "Unauthorized"
-          },
-          "403": {
-            "description": "Forbidden"
-          }
-        },
-        "tags": [
-          "TradeForm"
-        ],
-        "security": [
-          {
-            "bearerAuth": []
-          }
-        ],
-        "parameters": [
-          {
-            "in": "path",
-            "name": "id",
-            "required": true,
-            "schema": {
-              "format": "double",
-              "type": "number"
-            }
-          }
-        ]
-      }
-    },
-    "/tradeforms/{uid}/confirm": {
-      "post": {
-        "operationId": "confirmTradeForm",
-        "responses": {
-          "200": {
-            "description": "Ok",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ConfirmTradeResponseDto"
-                }
-              }
-            }
-          },
-          "403": {
-            "description": "Forbidden \u2013 Only participants may confirm; User 2 must have a valid VC",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
-                }
-              }
-            }
-          },
-          "404": {
-            "description": "Not Found",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
-                }
-              }
-            }
-          },
-          "409": {
-            "description": "Conflict \u2013 Trade status or counterparty mismatch",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "Unauthorized"
-          }
-        },
-        "tags": [
-          "TradeForm"
-        ],
-        "security": [
-          {
-            "bearerAuth": []
-          }
-        ],
-        "parameters": [
-          {
-            "in": "path",
-            "name": "uid",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          }
-        ]
-      }
-    },
-    "/trades": {
-      "get": {
-        "operationId": "getUserTrades",
-        "responses": {
-          "200": {
-            "description": "Ok",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "properties": {
-                    "total": {
-                      "type": "number",
-                      "format": "double"
-                    },
-                    "items": {
-                      "items": {
-                        "$ref": "#/components/schemas/TradeSummaryDto"
-                      },
-                      "type": "array"
-                    }
-                  },
-                  "required": [
-                    "total",
-                    "items"
-                  ],
-                  "type": "object"
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "Unauthorized",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
-                }
-              }
-            }
-          },
-          "403": {
-            "description": "Forbidden"
-          }
-        },
-        "tags": [
-          "Trades"
-        ],
-        "security": [
-          {
-            "bearerAuth": []
-          }
-        ],
-        "parameters": [
-          {
-            "in": "query",
-            "name": "status",
-            "required": false,
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "in": "query",
-            "name": "page",
-            "required": false,
-            "schema": {
-              "default": 1,
-              "format": "double",
-              "type": "number"
-            }
-          },
-          {
-            "in": "query",
-            "name": "pageSize",
-            "required": false,
-            "schema": {
-              "default": 20,
-              "format": "double",
-              "type": "number"
-            }
-          },
-          {
-            "in": "query",
-            "name": "from",
-            "required": false,
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "in": "query",
-            "name": "to",
-            "required": false,
-            "schema": {
-              "type": "string"
-            }
-          }
-        ]
-      }
-    },
-    "/trades/{uid}": {
-      "get": {
-        "operationId": "getTradeDetail",
-        "responses": {
-          "200": {
-            "description": "Ok",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/TradeDetailDto"
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "Unauthorized",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
-                }
-              }
-            }
-          },
-          "403": {
-            "description": "Forbidden",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
-                }
-              }
-            }
-          },
-          "404": {
-            "description": "Not Found",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
-                }
-              }
-            }
-          }
-        },
-        "tags": [
-          "Trades"
-        ],
-        "security": [
-          {
-            "bearerAuth": []
-          }
-        ],
-        "parameters": [
-          {
-            "in": "path",
-            "name": "uid",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          }
-        ]
-      }
-    },
-    "/trades/{uid}/rating": {
-      "post": {
-        "operationId": "rateTrade",
-        "responses": {
-          "200": {
-            "description": "OK",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/TradeRatingResponse"
-                }
-              }
-            }
-          },
-          "400": {
-            "description": "Bad Request",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "Unauthorized",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
-                }
-              }
-            }
-          },
-          "403": {
-            "description": "Forbidden",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
-                }
-              }
-            }
-          },
-          "404": {
-            "description": "Not Found",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
-                }
-              }
-            }
-          }
-        },
-        "tags": [
-          "Trades"
-        ],
-        "security": [
-          {
-            "bearerAuth": []
-          }
-        ],
-        "parameters": [
-          {
-            "in": "path",
-            "name": "uid",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/RateTradeRequest"
-              }
-            }
-          }
-        }
-      }
-    },
-    "/Issuer/qrcode-data": {
-      "post": {
-        "operationId": "QrcodeData",
-        "responses": {
-          "201": {
-            "description": "Created",
-            "content": {
-              "application/json": {
-                "schema": {}
-              }
-            }
-          },
-          "401": {
-            "description": "Unauthorized"
-          },
-          "403": {
-            "description": "Forbidden"
-          }
-        },
-        "tags": [
-          "Issuer"
-        ],
-        "security": [],
-        "parameters": [],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/QrcodeDataBody"
-              }
-            }
-          }
-        }
-      }
-    },
-    "/Issuer/qrcode-nodata": {
-      "post": {
-        "operationId": "QrcodeNoData",
-        "responses": {
-          "201": {
-            "description": "Created",
-            "content": {
-              "application/json": {
-                "schema": {}
-              }
-            }
-          },
-          "401": {
-            "description": "Unauthorized"
-          },
-          "403": {
-            "description": "Forbidden"
-          }
-        },
-        "tags": [
-          "Issuer"
-        ],
-        "security": [],
-        "parameters": [],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/QrcodeNoDataBody"
-              }
-            }
-          }
-        }
-      }
-    },
-    "/Issuer/credential/nonce/{transactionId}": {
-      "get": {
-        "operationId": "GetCredentialNonce",
-        "responses": {
-          "200": {
-            "description": "Ok",
-            "content": {
-              "application/json": {
-                "schema": {}
-              }
-            }
-          },
-          "401": {
-            "description": "Unauthorized"
-          },
-          "403": {
-            "description": "Forbidden"
-          }
-        },
-        "tags": [
-          "Issuer"
-        ],
-        "security": [],
-        "parameters": [
-          {
-            "in": "path",
-            "name": "transactionId",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          }
-        ]
-      }
-    },
-    "/auth/login-by-verifier": {
-      "post": {
-        "operationId": "loginByVerifier",
-        "responses": {
-          "200": {
-            "description": "Logged in",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/LoginResponse"
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "Unauthorized"
-          },
-          "403": {
-            "description": "Forbidden"
-          }
-        },
-        "tags": [
-          "Auth"
-        ],
-        "security": [],
-        "parameters": [],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/LoginByVerifierRequest"
-              }
-            }
-          }
-        }
-      }
-    },
-    "/auth/refresh": {
-      "post": {
-        "operationId": "refreshAccessToken",
-        "responses": {
-          "200": {
-            "description": "Ok",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/RefreshResponse"
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "Unauthorized"
-          },
-          "403": {
-            "description": "Forbidden"
-          }
-        },
-        "tags": [
-          "Auth"
-        ],
-        "security": [
-          {
-            "cookieAuth": []
-          }
-        ],
-        "parameters": []
-      }
-    },
-    "/auth/logout": {
-      "post": {
-        "operationId": "logout",
-        "responses": {
-          "200": {
-            "description": "Ok",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/LogoutResponse"
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "Unauthorized"
-          },
-          "403": {
-            "description": "Forbidden"
-          }
-        },
-        "tags": [
-          "Auth"
-        ],
-        "security": [
-          {
-            "bearerAuth": []
-          }
-        ],
-        "parameters": []
-      }
-    },
-    "/auth/me": {
-      "get": {
-        "operationId": "whoAmI",
-        "responses": {
-          "200": {
-            "description": "OK",
-            "content": {
-              "application/json": {
-                "schema": {}
-              }
-            }
-          },
-          "401": {
-            "description": "Unauthorized"
-          },
-          "403": {
-            "description": "Forbidden"
-          }
-        },
-        "tags": [
-          "Auth"
-        ],
-        "security": [
-          {
-            "bearerAuth": []
-          }
-        ],
-        "parameters": []
-      }
-    },
-    "/auth/csrf": {
-      "get": {
-        "tags": [
-          "Auth"
-        ],
-        "operationId": "getCsrfToken",
-        "summary": "Return CSRF token for cookie-based authentication flows",
-        "responses": {
-          "200": {
-            "description": "CSRF token issued"
-          },
-          "401": {
-            "description": "Unauthorized"
-          },
-          "403": {
-            "description": "Forbidden"
-          }
-        },
-        "security": [
-          {
-            "cookieAuth": []
-          }
-        ]
-      }
-    }
-  },
-  "servers": [
-    {
-      "url": "/api/v1"
-    }
-  ],
-  "tags": [
-    {
-      "name": "TradeForm",
-      "description": "Trade form marketplace operations"
-    }
-  ],
-  "security": [
-    {
-      "bearerAuth": []
-    }
-  ]
+	"openapi": "3.0.0",
+	"components": {
+		"examples": {},
+		"headers": {},
+		"parameters": {},
+		"requestBodies": {},
+		"responses": {},
+		"schemas": {
+			"VerifierQrcodeResponse": {
+				"properties": {
+					"transactionId": {
+						"type": "string"
+					},
+					"qrcodeImage": {
+						"type": "string"
+					},
+					"authUri": {
+						"type": "string"
+					}
+				},
+				"required": [
+					"transactionId",
+					"qrcodeImage",
+					"authUri"
+				],
+				"type": "object",
+				"additionalProperties": false
+			},
+			"VerifierResultRequest": {
+				"properties": {
+					"transactionId": {
+						"type": "string"
+					}
+				},
+				"required": [
+					"transactionId"
+				],
+				"type": "object",
+				"additionalProperties": false
+			},
+			"TradeFormItemCondition": {
+				"enum": [
+					"new",
+					"used_like_new",
+					"used"
+				],
+				"type": "string"
+			},
+			"TradeFormChannel": {
+				"enum": [
+					"p2p",
+					"escrow"
+				],
+				"type": "string"
+			},
+			"TradeFormPaymentMethod": {
+				"enum": [
+					"bank_transfer",
+					"cash"
+				],
+				"type": "string"
+			},
+			"TradeFormMatchmakingChannel": {
+				"enum": [
+					"in_app",
+					"line",
+					"telegram"
+				],
+				"type": "string"
+			},
+			"TradeFormIdentityRequirement": {
+				"type": "string"
+			},
+			"TradeFormStatus": {
+				"enum": [
+					"draft",
+					"pending",
+					"verified",
+					"confirmed",
+					"cancelled",
+					"failed",
+					"done"
+				],
+				"type": "string"
+			},
+			"TradeFormIdentityRequirementsMeta": {
+				"properties": {
+					"requiredClaims": {
+						"items": {
+							"type": "string"
+						},
+						"type": "array"
+					},
+					"allowedIssuers": {
+						"items": {
+							"type": "string"
+						},
+						"type": "array"
+					},
+					"credentialTypes": {
+						"items": {
+							"type": "string"
+						},
+						"type": "array"
+					},
+					"minLevel": {
+						"type": "number",
+						"format": "double"
+					}
+				},
+				"type": "object",
+				"additionalProperties": {}
+			},
+			"TradeFormVCUser2Meta": {
+				"properties": {
+					"valid": {
+						"type": "boolean"
+					},
+					"at": {
+						"type": "string"
+					},
+					"claimsMatched": {
+						"items": {
+							"type": "string"
+						},
+						"type": "array"
+					},
+					"issuer": {
+						"type": "string"
+					},
+					"credentialType": {
+						"type": "string"
+					},
+					"level": {
+						"type": "number",
+						"format": "double"
+					},
+					"reason": {
+						"type": "string"
+					},
+					"expiresAt": {
+						"type": "string"
+					},
+					"rawRef": {
+						"type": "string"
+					}
+				},
+				"required": [
+					"valid",
+					"at"
+				],
+				"type": "object",
+				"additionalProperties": {}
+			},
+			"TradeFormMeta": {
+				"properties": {
+					"vc_user2": {
+						"$ref": "#/components/schemas/TradeFormVCUser2Meta"
+					},
+					"identity_requirements": {
+						"$ref": "#/components/schemas/TradeFormIdentityRequirementsMeta"
+					}
+				},
+				"additionalProperties": {},
+				"type": "object"
+			},
+			"TradeFormResponse": {
+				"properties": {
+					"id": {
+						"type": "number",
+						"format": "double"
+					},
+					"uid": {
+						"type": "string"
+					},
+					"creatorId": {
+						"type": "string"
+					},
+					"counterpartyId": {
+						"type": "string",
+						"nullable": true
+					},
+					"creatorVerifiedIdentities": {
+						"items": {
+							"type": "string"
+						},
+						"type": "array"
+					},
+					"itemName": {
+						"type": "string"
+					},
+					"itemDescription": {
+						"type": "string"
+					},
+					"itemCondition": {
+						"$ref": "#/components/schemas/TradeFormItemCondition"
+					},
+					"amount": {
+						"type": "string"
+					},
+					"tradeChannel": {
+						"$ref": "#/components/schemas/TradeFormChannel"
+					},
+					"paymentMethod": {
+						"$ref": "#/components/schemas/TradeFormPaymentMethod"
+					},
+					"matchmakingChannel": {
+						"$ref": "#/components/schemas/TradeFormMatchmakingChannel"
+					},
+					"identityRequirements": {
+						"items": {
+							"$ref": "#/components/schemas/TradeFormIdentityRequirement"
+						},
+						"type": "array"
+					},
+					"userRating": {
+						"type": "number",
+						"format": "double"
+					},
+					"status": {
+						"$ref": "#/components/schemas/TradeFormStatus"
+					},
+					"meta": {
+						"$ref": "#/components/schemas/TradeFormMeta"
+					},
+					"confirmedByUser1": {
+						"type": "boolean"
+					},
+					"confirmedByUser2": {
+						"type": "boolean"
+					},
+					"vcVerifiedAt": {
+						"type": "string",
+						"format": "date-time",
+						"nullable": true
+					},
+					"uidExpiresAt": {
+						"type": "string",
+						"format": "date-time",
+						"nullable": true
+					},
+					"finalizedAt": {
+						"type": "string",
+						"format": "date-time",
+						"nullable": true
+					},
+					"createdAt": {
+						"type": "string",
+						"format": "date-time"
+					},
+					"updatedAt": {
+						"type": "string",
+						"format": "date-time"
+					}
+				},
+				"required": [
+					"id",
+					"uid",
+					"creatorId",
+					"counterpartyId",
+					"creatorVerifiedIdentities",
+					"itemName",
+					"itemDescription",
+					"itemCondition",
+					"amount",
+					"tradeChannel",
+					"paymentMethod",
+					"matchmakingChannel",
+					"identityRequirements",
+					"userRating",
+					"status",
+					"meta",
+					"confirmedByUser1",
+					"confirmedByUser2",
+					"vcVerifiedAt",
+					"uidExpiresAt",
+					"finalizedAt",
+					"createdAt",
+					"updatedAt"
+				],
+				"type": "object",
+				"additionalProperties": false
+			},
+			"ErrorResponse": {
+				"properties": {
+					"error": {
+						"type": "string"
+					},
+					"details": {},
+					"requestId": {
+						"type": "string"
+					}
+				},
+				"required": [
+					"error"
+				],
+				"type": "object",
+				"additionalProperties": false
+			},
+			"CreateTradeFormDto": {
+				"properties": {
+					"uid": {
+						"type": "string",
+						"description": "前端生成的交易序號，建立雙方共用。",
+						"example": "P2P-7f4c8d90"
+					},
+					"creatorId": {
+						"type": "string",
+						"description": "建立者的使用者識別（需與 JWT 內 idNumber 一致）。",
+						"example": "A131095852"
+					},
+					"creatorVerifiedIdentities": {
+						"items": {
+							"type": "string"
+						},
+						"type": "array",
+						"description": "已驗證身分(創建者) / Creator verified identities",
+						"example": [
+							"tw_national_id",
+							"phone_verified"
+						]
+					},
+					"itemName": {
+						"type": "string",
+						"description": "交易商品 / Item name",
+						"example": "iPad Pro 11\""
+					},
+					"itemDescription": {
+						"type": "string",
+						"description": "商品說明 / Item description",
+						"example": "盒裝完整，含原廠鍵盤"
+					},
+					"itemCondition": {
+						"$ref": "#/components/schemas/TradeFormItemCondition",
+						"description": "商品狀態",
+						"example": "used_like_new"
+					},
+					"amount": {
+						"type": "string",
+						"description": "交易金額 / Amount (string to keep currency format)",
+						"example": "22000.50"
+					},
+					"tradeChannel": {
+						"$ref": "#/components/schemas/TradeFormChannel",
+						"description": "交易管道",
+						"example": "p2p"
+					},
+					"paymentMethod": {
+						"$ref": "#/components/schemas/TradeFormPaymentMethod",
+						"description": "付款方式",
+						"example": "bank_transfer"
+					},
+					"matchmakingChannel": {
+						"$ref": "#/components/schemas/TradeFormMatchmakingChannel",
+						"description": "媒合管道",
+						"example": "in_app"
+					},
+					"identityRequirements": {
+						"items": {
+							"$ref": "#/components/schemas/TradeFormIdentityRequirement"
+						},
+						"type": "array",
+						"description": "身份驗證條件 (複選) / Identity requirements (multi-select)",
+						"example": [
+							"tw_national_id",
+							"phone_verified"
+						]
+					}
+				},
+				"required": [
+					"uid",
+					"creatorId",
+					"itemName",
+					"itemDescription",
+					"itemCondition",
+					"amount",
+					"tradeChannel",
+					"paymentMethod",
+					"matchmakingChannel",
+					"identityRequirements"
+				],
+				"type": "object",
+				"additionalProperties": false
+			},
+			"UpdateTradeFormDto": {
+				"properties": {
+					"counterpartyId": {
+						"type": "string"
+					}
+				},
+				"required": [
+					"counterpartyId"
+				],
+				"type": "object",
+				"additionalProperties": false
+			},
+			"TradeFormViewMode": {
+				"type": "string",
+				"enum": [
+					"participant",
+					"limited"
+				]
+			},
+			"TradeFormPublicResponse": {
+				"properties": {
+					"uid": {
+						"type": "string"
+					},
+					"creatorId": {
+						"type": "string"
+					},
+					"status": {
+						"$ref": "#/components/schemas/TradeFormStatus"
+					},
+					"createdAt": {
+						"type": "string",
+						"format": "date-time"
+					},
+					"updatedAt": {
+						"type": "string",
+						"format": "date-time"
+					}
+				},
+				"required": [
+					"uid",
+					"creatorId",
+					"status",
+					"createdAt",
+					"updatedAt"
+				],
+				"type": "object",
+				"additionalProperties": false
+			},
+			"TradeFormViewResponse": {
+				"properties": {
+					"view": {
+						"$ref": "#/components/schemas/TradeFormViewMode"
+					},
+					"trade": {
+						"anyOf": [
+							{
+								"$ref": "#/components/schemas/TradeFormResponse"
+							},
+							{
+								"$ref": "#/components/schemas/TradeFormPublicResponse"
+							}
+						]
+					}
+				},
+				"required": [
+					"view",
+					"trade"
+				],
+				"type": "object",
+				"additionalProperties": false
+			},
+			"ConfirmTradeResponseDto": {
+				"properties": {
+					"trade": {
+						"$ref": "#/components/schemas/TradeFormResponse"
+					}
+				},
+				"required": [
+					"trade"
+				],
+				"type": "object",
+				"additionalProperties": false
+			},
+			"TradeFormStatusDto": {
+				"type": "string",
+				"enum": [
+					"draft",
+					"pending",
+					"verified",
+					"confirmed",
+					"cancelled",
+					"failed",
+					"done"
+				],
+				"description": "API 專用 enum / union types\n（不要再從 entity 或其他 enums import，避免 tsoa 解析問題）"
+			},
+			"TradeFormChannelDto": {
+				"type": "string",
+				"enum": [
+					"p2p",
+					"escrow"
+				]
+			},
+			"TradeFormPaymentMethodDto": {
+				"type": "string",
+				"enum": [
+					"bank_transfer",
+					"cash"
+				]
+			},
+			"TradeSummaryDto": {
+				"properties": {
+					"uid": {
+						"type": "string"
+					},
+					"itemName": {
+						"type": "string"
+					},
+					"amount": {
+						"type": "string"
+					},
+					"status": {
+						"$ref": "#/components/schemas/TradeFormStatusDto"
+					},
+					"tradeChannel": {
+						"$ref": "#/components/schemas/TradeFormChannelDto"
+					},
+					"paymentMethod": {
+						"$ref": "#/components/schemas/TradeFormPaymentMethodDto"
+					},
+					"updatedAt": {
+						"type": "string"
+					},
+					"finalizedAt": {
+						"type": "string",
+						"nullable": true
+					},
+					"creatorName": {
+						"type": "string",
+						"nullable": true
+					},
+					"counterpartyName": {
+						"type": "string",
+						"nullable": true
+					},
+					"stars": {
+						"type": "number",
+						"format": "double",
+						"nullable": true
+					}
+				},
+				"required": [
+					"uid",
+					"itemName",
+					"amount",
+					"status",
+					"tradeChannel",
+					"paymentMethod",
+					"updatedAt",
+					"finalizedAt",
+					"creatorName",
+					"counterpartyName"
+				],
+				"type": "object",
+				"additionalProperties": false
+			},
+			"TradeFormItemConditionDto": {
+				"type": "string",
+				"enum": [
+					"new",
+					"used_like_new",
+					"used"
+				]
+			},
+			"TradeFormMatchmakingChannelDto": {
+				"type": "string",
+				"enum": [
+					"in_app",
+					"line",
+					"telegram"
+				]
+			},
+			"TradeFormIdentityRequirementDto": {
+				"type": "string"
+			},
+			"TradeAuditActionDto": {
+				"type": "string",
+				"enum": [
+					"create",
+					"verifyVC",
+					"confirm",
+					"cancel",
+					"finalize",
+					"fail",
+					"retry"
+				]
+			},
+			"TradeAuditEventDto": {
+				"properties": {
+					"id": {
+						"type": "string"
+					},
+					"action": {
+						"$ref": "#/components/schemas/TradeAuditActionDto"
+					},
+					"at": {
+						"type": "string"
+					},
+					"actorId": {
+						"type": "string",
+						"nullable": true
+					},
+					"actorName": {
+						"type": "string",
+						"nullable": true
+					},
+					"details": {}
+				},
+				"required": [
+					"id",
+					"action",
+					"at",
+					"actorId",
+					"actorName",
+					"details"
+				],
+				"type": "object",
+				"additionalProperties": false
+			},
+			"TradeDetailDto": {
+				"properties": {
+					"uid": {
+						"type": "string"
+					},
+					"itemName": {
+						"type": "string"
+					},
+					"itemDescription": {
+						"type": "string"
+					},
+					"amount": {
+						"type": "string"
+					},
+					"itemCondition": {
+						"$ref": "#/components/schemas/TradeFormItemConditionDto"
+					},
+					"status": {
+						"$ref": "#/components/schemas/TradeFormStatusDto"
+					},
+					"creatorId": {
+						"type": "string",
+						"nullable": true
+					},
+					"creatorName": {
+						"type": "string",
+						"nullable": true
+					},
+					"counterpartyId": {
+						"type": "string",
+						"nullable": true
+					},
+					"counterpartyName": {
+						"type": "string",
+						"nullable": true
+					},
+					"tradeChannel": {
+						"$ref": "#/components/schemas/TradeFormChannelDto"
+					},
+					"paymentMethod": {
+						"$ref": "#/components/schemas/TradeFormPaymentMethodDto"
+					},
+					"matchmakingChannel": {
+						"$ref": "#/components/schemas/TradeFormMatchmakingChannelDto"
+					},
+					"identityRequirements": {
+						"items": {
+							"$ref": "#/components/schemas/TradeFormIdentityRequirementDto"
+						},
+						"type": "array"
+					},
+					"creatorVerifiedIdentities": {
+						"items": {
+							"type": "string"
+						},
+						"type": "array"
+					},
+					"userRating": {
+						"type": "number",
+						"format": "double"
+					},
+					"meta": {},
+					"confirmedByUser1": {
+						"type": "boolean"
+					},
+					"confirmedByUser2": {
+						"type": "boolean"
+					},
+					"vcVerifiedAt": {
+						"type": "string",
+						"nullable": true
+					},
+					"uidExpiresAt": {
+						"type": "string",
+						"nullable": true
+					},
+					"finalizedAt": {
+						"type": "string",
+						"nullable": true
+					},
+					"createdAt": {
+						"type": "string"
+					},
+					"updatedAt": {
+						"type": "string"
+					},
+					"auditEvents": {
+						"items": {
+							"$ref": "#/components/schemas/TradeAuditEventDto"
+						},
+						"type": "array"
+					},
+					"otherPartyScore": {
+						"type": "number",
+						"format": "double",
+						"nullable": true
+					}
+				},
+				"required": [
+					"uid",
+					"itemName",
+					"itemDescription",
+					"amount",
+					"itemCondition",
+					"status",
+					"creatorId",
+					"creatorName",
+					"counterpartyId",
+					"counterpartyName",
+					"tradeChannel",
+					"paymentMethod",
+					"matchmakingChannel",
+					"identityRequirements",
+					"creatorVerifiedIdentities",
+					"userRating",
+					"meta",
+					"confirmedByUser1",
+					"confirmedByUser2",
+					"vcVerifiedAt",
+					"uidExpiresAt",
+					"finalizedAt",
+					"createdAt",
+					"updatedAt",
+					"auditEvents",
+					"otherPartyScore"
+				],
+				"type": "object",
+				"additionalProperties": false
+			},
+			"TradeRatingResponse": {
+				"properties": {
+					"tradeUid": {
+						"type": "string"
+					},
+					"stars": {
+						"type": "number",
+						"format": "double"
+					}
+				},
+				"required": [
+					"tradeUid",
+					"stars"
+				],
+				"type": "object",
+				"additionalProperties": false
+			},
+			"RateTradeRequest": {
+				"properties": {
+					"stars": {
+						"type": "number",
+						"format": "double"
+					}
+				},
+				"required": [
+					"stars"
+				],
+				"type": "object",
+				"additionalProperties": false
+			},
+			"QrcodeDataBody": {
+				"properties": {},
+				"type": "object",
+				"additionalProperties": false
+			},
+			"QrcodeNoDataBody": {
+				"properties": {},
+				"type": "object",
+				"additionalProperties": false
+			},
+			"LoginResponse": {
+				"properties": {
+					"accessToken": {
+						"type": "string"
+					},
+					"expiresIn": {
+						"type": "string"
+					}
+				},
+				"required": [
+					"accessToken",
+					"expiresIn"
+				],
+				"type": "object",
+				"additionalProperties": false
+			},
+			"LoginByVerifierRequest": {
+				"properties": {
+					"transactionId": {
+						"type": "string"
+					}
+				},
+				"required": [
+					"transactionId"
+				],
+				"type": "object",
+				"additionalProperties": false
+			},
+			"RefreshResponse": {
+				"properties": {
+					"accessToken": {
+						"type": "string"
+					},
+					"expiresIn": {
+						"type": "string"
+					}
+				},
+				"required": [
+					"accessToken",
+					"expiresIn"
+				],
+				"type": "object",
+				"additionalProperties": false
+			},
+			"LogoutResponse": {
+				"properties": {
+					"success": {
+						"type": "boolean",
+						"enum": [
+							true
+						],
+						"nullable": false
+					}
+				},
+				"required": [
+					"success"
+				],
+				"type": "object",
+				"additionalProperties": false
+			}
+		},
+		"securitySchemes": {
+			"bearerAuth": {
+				"type": "http",
+				"scheme": "bearer",
+				"bearerFormat": "JWT",
+				"description": "Access token issued by /auth/login-by-verifier; send as Authorization: Bearer <token>"
+			},
+			"refreshTokenCookie": {
+				"type": "apiKey",
+				"in": "cookie",
+				"name": "refresh_token",
+				"description": "HTTP-only refresh token cookie (7d) used to renew access tokens; pair with x-csrf-token header on state-changing requests."
+			}
+		}
+	},
+	"info": {
+		"title": "VerifyTrade API",
+		"version": "1.0.0",
+		"description": "Digital identity trading platform API",
+		"contact": {}
+	},
+	"paths": {
+		"/verifier/qrcode": {
+			"post": {
+				"operationId": "CreateQrcode",
+				"responses": {
+					"200": {
+						"description": "Ok",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/VerifierQrcodeResponse"
+								}
+							}
+						}
+					},
+					"400": {
+						"description": "Invalid ref"
+					}
+				},
+				"description": "建立驗證 QR Code",
+				"tags": [
+					"Verifier"
+				],
+				"security": [],
+				"parameters": [],
+				"requestBody": {
+					"required": true,
+					"content": {
+						"application/json": {
+							"schema": {
+								"properties": {
+									"ref": {
+										"type": "string"
+									}
+								},
+								"required": [
+									"ref"
+								],
+								"type": "object"
+							}
+						}
+					}
+				}
+			}
+		},
+		"/verifier/id-card/result": {
+			"post": {
+				"operationId": "GetIdCardVerifyResult",
+				"responses": {
+					"200": {
+						"description": "Ok",
+						"content": {
+							"application/json": {
+								"schema": {}
+							}
+						}
+					},
+					"400": {
+						"description": "Invalid transactionId"
+					}
+				},
+				"description": "查詢身分證驗證結果",
+				"tags": [
+					"Verifier"
+				],
+				"security": [],
+				"parameters": [],
+				"requestBody": {
+					"required": true,
+					"content": {
+						"application/json": {
+							"schema": {
+								"$ref": "#/components/schemas/VerifierResultRequest"
+							}
+						}
+					}
+				}
+			}
+		},
+		"/verifier/id-card/qrcode": {
+			"get": {
+				"operationId": "LoginIdCardQrcode",
+				"responses": {
+					"200": {
+						"description": "Ok",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/VerifierQrcodeResponse"
+								}
+							}
+						}
+					}
+				},
+				"description": "登入身分證專用 QRCode",
+				"tags": [
+					"Verifier"
+				],
+				"security": [],
+				"parameters": []
+			}
+		},
+		"/verifier/trade-form/result": {
+			"post": {
+				"operationId": "GetTradeFormVerifyResult",
+				"responses": {
+					"200": {
+						"description": "Ok",
+						"content": {
+							"application/json": {
+								"schema": {}
+							}
+						}
+					},
+					"400": {
+						"description": "Invalid transactionId"
+					}
+				},
+				"description": "查詢身分證驗證結果",
+				"tags": [
+					"Verifier"
+				],
+				"security": [],
+				"parameters": [],
+				"requestBody": {
+					"required": true,
+					"content": {
+						"application/json": {
+							"schema": {
+								"$ref": "#/components/schemas/VerifierResultRequest"
+							}
+						}
+					}
+				}
+			}
+		},
+		"/verifier/trade-form/qrcode": {
+			"get": {
+				"operationId": "VerifyTradeFormQrcode",
+				"responses": {
+					"200": {
+						"description": "Ok",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/VerifierQrcodeResponse"
+								}
+							}
+						}
+					}
+				},
+				"description": "交易表單驗證專用 QRCode",
+				"tags": [
+					"Verifier"
+				],
+				"security": [],
+				"parameters": []
+			}
+		},
+		"/tradeforms": {
+			"post": {
+				"operationId": "createTradeForm",
+				"responses": {
+					"201": {
+						"description": "Created",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/TradeFormResponse"
+								}
+							}
+						}
+					},
+					"409": {
+						"description": "Trade UID already exists",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/ErrorResponse"
+								}
+							}
+						}
+					},
+					"422": {
+						"description": "Validation error",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/ErrorResponse"
+								}
+							}
+						}
+					}
+				},
+				"tags": [
+					"TradeForm"
+				],
+				"security": [
+					{
+						"bearerAuth": []
+					}
+				],
+				"parameters": [],
+				"requestBody": {
+					"required": true,
+					"content": {
+						"application/json": {
+							"schema": {
+								"$ref": "#/components/schemas/CreateTradeFormDto"
+							}
+						}
+					}
+				}
+			}
+		},
+		"/tradeforms/{uid}": {
+			"put": {
+				"operationId": "updateTradeForm",
+				"responses": {
+					"200": {
+						"description": "Ok",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/TradeFormResponse"
+								}
+							}
+						}
+					}
+				},
+				"tags": [
+					"TradeForm"
+				],
+				"security": [
+					{
+						"bearerAuth": []
+					}
+				],
+				"parameters": [
+					{
+						"in": "path",
+						"name": "uid",
+						"required": true,
+						"schema": {
+							"type": "string"
+						}
+					}
+				],
+				"requestBody": {
+					"required": true,
+					"content": {
+						"application/json": {
+							"schema": {
+								"$ref": "#/components/schemas/UpdateTradeFormDto"
+							}
+						}
+					}
+				}
+			}
+		},
+		"/tradeforms/uid/{uid}": {
+			"get": {
+				"operationId": "viewTradeFormByUid",
+				"responses": {
+					"200": {
+						"description": "Ok",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/TradeFormViewResponse"
+								}
+							}
+						}
+					},
+					"404": {
+						"description": "Not Found",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/ErrorResponse"
+								}
+							}
+						}
+					}
+				},
+				"tags": [
+					"TradeForm"
+				],
+				"security": [
+					{
+						"bearerAuth": []
+					}
+				],
+				"parameters": [
+					{
+						"in": "path",
+						"name": "uid",
+						"required": true,
+						"schema": {
+							"type": "string"
+						}
+					}
+				]
+			}
+		},
+		"/tradeforms/{id}": {
+			"delete": {
+				"operationId": "deleteTradeForm",
+				"responses": {
+					"204": {
+						"description": "No content"
+					}
+				},
+				"tags": [
+					"TradeForm"
+				],
+				"security": [
+					{
+						"bearerAuth": []
+					}
+				],
+				"parameters": [
+					{
+						"in": "path",
+						"name": "id",
+						"required": true,
+						"schema": {
+							"format": "double",
+							"type": "number"
+						}
+					}
+				]
+			}
+		},
+		"/tradeforms/{uid}/confirm": {
+			"post": {
+				"operationId": "confirmTradeForm",
+				"responses": {
+					"200": {
+						"description": "Ok",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/ConfirmTradeResponseDto"
+								}
+							}
+						}
+					},
+					"403": {
+						"description": "Forbidden – Only participants may confirm; User 2 must have a valid VC",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/ErrorResponse"
+								}
+							}
+						}
+					},
+					"404": {
+						"description": "Not Found",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/ErrorResponse"
+								}
+							}
+						}
+					},
+					"409": {
+						"description": "Conflict – Trade status or counterparty mismatch",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/ErrorResponse"
+								}
+							}
+						}
+					}
+				},
+				"tags": [
+					"TradeForm"
+				],
+				"security": [
+					{
+						"bearerAuth": []
+					}
+				],
+				"parameters": [
+					{
+						"in": "path",
+						"name": "uid",
+						"required": true,
+						"schema": {
+							"type": "string"
+						}
+					}
+				]
+			}
+		},
+		"/trades": {
+			"get": {
+				"operationId": "getUserTrades",
+				"responses": {
+					"200": {
+						"description": "Ok",
+						"content": {
+							"application/json": {
+								"schema": {
+									"properties": {
+										"total": {
+											"type": "number",
+											"format": "double"
+										},
+										"items": {
+											"items": {
+												"$ref": "#/components/schemas/TradeSummaryDto"
+											},
+											"type": "array"
+										}
+									},
+									"required": [
+										"total",
+										"items"
+									],
+									"type": "object"
+								}
+							}
+						}
+					},
+					"401": {
+						"description": "Unauthorized",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/ErrorResponse"
+								}
+							}
+						}
+					}
+				},
+				"tags": [
+					"Trades"
+				],
+				"security": [
+					{
+						"bearerAuth": []
+					}
+				],
+				"parameters": [
+					{
+						"in": "query",
+						"name": "status",
+						"required": false,
+						"schema": {
+							"type": "string"
+						}
+					},
+					{
+						"in": "query",
+						"name": "page",
+						"required": false,
+						"schema": {
+							"default": 1,
+							"format": "double",
+							"type": "number"
+						}
+					},
+					{
+						"in": "query",
+						"name": "pageSize",
+						"required": false,
+						"schema": {
+							"default": 20,
+							"format": "double",
+							"type": "number"
+						}
+					},
+					{
+						"in": "query",
+						"name": "from",
+						"required": false,
+						"schema": {
+							"type": "string"
+						}
+					},
+					{
+						"in": "query",
+						"name": "to",
+						"required": false,
+						"schema": {
+							"type": "string"
+						}
+					}
+				]
+			}
+		},
+		"/trades/{uid}": {
+			"get": {
+				"operationId": "getTradeDetail",
+				"responses": {
+					"200": {
+						"description": "Ok",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/TradeDetailDto"
+								}
+							}
+						}
+					},
+					"401": {
+						"description": "Unauthorized",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/ErrorResponse"
+								}
+							}
+						}
+					},
+					"403": {
+						"description": "Forbidden",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/ErrorResponse"
+								}
+							}
+						}
+					},
+					"404": {
+						"description": "Not Found",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/ErrorResponse"
+								}
+							}
+						}
+					}
+				},
+				"tags": [
+					"Trades"
+				],
+				"security": [
+					{
+						"bearerAuth": []
+					}
+				],
+				"parameters": [
+					{
+						"in": "path",
+						"name": "uid",
+						"required": true,
+						"schema": {
+							"type": "string"
+						}
+					}
+				]
+			}
+		},
+		"/trades/{uid}/rating": {
+			"post": {
+				"operationId": "rateTrade",
+				"responses": {
+					"200": {
+						"description": "OK",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/TradeRatingResponse"
+								}
+							}
+						}
+					},
+					"400": {
+						"description": "Bad Request",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/ErrorResponse"
+								}
+							}
+						}
+					},
+					"401": {
+						"description": "Unauthorized",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/ErrorResponse"
+								}
+							}
+						}
+					},
+					"403": {
+						"description": "Forbidden",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/ErrorResponse"
+								}
+							}
+						}
+					},
+					"404": {
+						"description": "Not Found",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/ErrorResponse"
+								}
+							}
+						}
+					}
+				},
+				"tags": [
+					"Trades"
+				],
+				"security": [
+					{
+						"bearerAuth": []
+					}
+				],
+				"parameters": [
+					{
+						"in": "path",
+						"name": "uid",
+						"required": true,
+						"schema": {
+							"type": "string"
+						}
+					}
+				],
+				"requestBody": {
+					"required": true,
+					"content": {
+						"application/json": {
+							"schema": {
+								"$ref": "#/components/schemas/RateTradeRequest"
+							}
+						}
+					}
+				}
+			}
+		},
+		"/Issuer/qrcode-data": {
+			"post": {
+				"operationId": "QrcodeData",
+				"responses": {
+					"201": {
+						"description": "Created",
+						"content": {
+							"application/json": {
+								"schema": {}
+							}
+						}
+					}
+				},
+				"tags": [
+					"Issuer"
+				],
+				"security": [],
+				"parameters": [],
+				"requestBody": {
+					"required": true,
+					"content": {
+						"application/json": {
+							"schema": {
+								"$ref": "#/components/schemas/QrcodeDataBody"
+							}
+						}
+					}
+				}
+			}
+		},
+		"/Issuer/qrcode-nodata": {
+			"post": {
+				"operationId": "QrcodeNoData",
+				"responses": {
+					"201": {
+						"description": "Created",
+						"content": {
+							"application/json": {
+								"schema": {}
+							}
+						}
+					}
+				},
+				"tags": [
+					"Issuer"
+				],
+				"security": [],
+				"parameters": [],
+				"requestBody": {
+					"required": true,
+					"content": {
+						"application/json": {
+							"schema": {
+								"$ref": "#/components/schemas/QrcodeNoDataBody"
+							}
+						}
+					}
+				}
+			}
+		},
+		"/Issuer/credential/nonce/{transactionId}": {
+			"get": {
+				"operationId": "GetCredentialNonce",
+				"responses": {
+					"200": {
+						"description": "Ok",
+						"content": {
+							"application/json": {
+								"schema": {}
+							}
+						}
+					}
+				},
+				"tags": [
+					"Issuer"
+				],
+				"security": [],
+				"parameters": [
+					{
+						"in": "path",
+						"name": "transactionId",
+						"required": true,
+						"schema": {
+							"type": "string"
+						}
+					}
+				]
+			}
+		},
+		"/auth/login-by-verifier": {
+			"post": {
+				"operationId": "loginByVerifier",
+				"responses": {
+					"200": {
+						"description": "Logged in",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/LoginResponse"
+								}
+							}
+						}
+					}
+				},
+				"tags": [
+					"Auth"
+				],
+				"security": [],
+				"parameters": [],
+				"requestBody": {
+					"required": true,
+					"content": {
+						"application/json": {
+							"schema": {
+								"$ref": "#/components/schemas/LoginByVerifierRequest"
+							}
+						}
+					}
+				}
+			}
+		},
+		"/auth/refresh": {
+			"post": {
+				"operationId": "refreshAccessToken",
+				"responses": {
+					"200": {
+						"description": "Ok",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/RefreshResponse"
+								}
+							}
+						}
+					}
+				},
+				"tags": [
+					"Auth"
+				],
+				"security": [
+					{
+						"refreshTokenCookie": []
+					}
+				],
+				"parameters": []
+			}
+		},
+		"/auth/logout": {
+			"post": {
+				"operationId": "logout",
+				"responses": {
+					"200": {
+						"description": "Ok",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/LogoutResponse"
+								}
+							}
+						}
+					}
+				},
+				"tags": [
+					"Auth"
+				],
+				"security": [
+					{
+						"bearerAuth": []
+					}
+				],
+				"parameters": []
+			}
+		},
+		"/auth/me": {
+			"get": {
+				"operationId": "whoAmI",
+				"responses": {
+					"200": {
+						"description": "OK",
+						"content": {
+							"application/json": {
+								"schema": {}
+							}
+						}
+					}
+				},
+				"tags": [
+					"Auth"
+				],
+				"security": [
+					{
+						"bearerAuth": []
+					}
+				],
+				"parameters": []
+			}
+		},
+		"/auth/csrf": {
+			"get": {
+				"operationId": "getCsrfToken",
+				"responses": {
+					"200": {
+						"description": "Ok",
+						"content": {
+							"application/json": {
+								"schema": {
+									"properties": {
+										"csrfToken": {
+											"type": "string"
+										}
+									},
+									"required": [
+										"csrfToken"
+									],
+									"type": "object"
+								}
+							}
+						}
+					}
+				},
+				"tags": [
+					"Auth"
+				],
+				"security": [],
+				"parameters": []
+			}
+		}
+	},
+	"servers": [
+		{
+			"url": "/api/v1"
+		}
+	],
+	"tags": [
+		{
+			"name": "TradeForm",
+			"description": "Trade form marketplace operations"
+		}
+	]
 }

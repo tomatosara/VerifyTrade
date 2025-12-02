@@ -10,6 +10,15 @@ import {
 import { TradeFormEntity } from '../entity/trade-form.entity';
 import { TradeFormRepository } from '../tradeform.repository';
 import { ValidationError, ConflictError } from '@utils/errors';
+import { secureRandomInt } from '@utils/crypto-random';
+
+jest.mock('@utils/crypto-random', () => {
+  const actual = jest.requireActual('@utils/crypto-random');
+  return {
+    ...actual,
+    secureRandomInt: jest.fn(actual.secureRandomInt)
+  };
+});
 
 class InMemoryTradeFormRepository implements Partial<TradeFormRepository> {
   private store = new Map<string, TradeFormEntity>();
@@ -80,6 +89,10 @@ const createService = () => {
   return { service, repository };
 };
 
+beforeEach(() => {
+  jest.clearAllMocks();
+});
+
 describe('TradeFormService.create', () => {
   const baseInput = {
     uid: 'trade-e2e-123',
@@ -143,5 +156,16 @@ describe('TradeFormService.create', () => {
     const { service } = createService();
     await service.create(baseInput, 'A131095852');
     await expect(service.create(baseInput, 'A131095852')).rejects.toBeInstanceOf(ConflictError);
+  });
+});
+
+describe('TradeFormService.resolveUid', () => {
+  it('uses secure randomness when generating a UID', async () => {
+    const { service } = createService();
+    // @ts-expect-error accessing private method for test verification
+    const generated = await service.resolveUid(null);
+    expect(typeof generated).toBe('string');
+    expect(generated).toHaveLength(24);
+    expect(secureRandomInt).toHaveBeenCalled();
   });
 });

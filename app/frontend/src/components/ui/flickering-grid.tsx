@@ -1,5 +1,6 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react"
 
+import { secureRandomFloat } from "@/lib/secureRandom"
 import { cn } from "@/lib/utils"
 
 interface FlickeringGridProps extends React.HTMLAttributes<HTMLDivElement> {
@@ -46,8 +47,8 @@ export const FlickeringGrid: React.FC<FlickeringGridProps> = ({
     return toRGBA(color)
   }, [color])
 
-  // Visual-only randomness (non-security-sensitive).
-  const nonCryptoRandom = useCallback(() => Math.random(), []); // fortifyignore: insecure-randomness
+  // Visual-only randomness backed by Web Crypto when available.
+  const visualRandom = useCallback(() => secureRandomFloat(), [])
 
   const setupCanvas = useCallback(
     (canvas: HTMLCanvasElement, width: number, height: number) => {
@@ -61,23 +62,23 @@ export const FlickeringGrid: React.FC<FlickeringGridProps> = ({
 
       const squares = new Float32Array(cols * rows)
       for (let i = 0; i < squares.length; i++) {
-        squares[i] = nonCryptoRandom() * maxOpacity
+        squares[i] = visualRandom() * maxOpacity
       }
 
       return { cols, rows, squares, dpr }
     },
-    [squareSize, gridGap, maxOpacity, nonCryptoRandom]
+    [squareSize, gridGap, maxOpacity, visualRandom]
   )
 
   const updateSquares = useCallback(
     (squares: Float32Array, deltaTime: number) => {
       for (let i = 0; i < squares.length; i++) {
-        if (nonCryptoRandom() < flickerChance * deltaTime) {
-          squares[i] = nonCryptoRandom() * maxOpacity
+        if (visualRandom() < flickerChance * deltaTime) {
+          squares[i] = visualRandom() * maxOpacity
         }
       }
     },
-    [flickerChance, maxOpacity, nonCryptoRandom]
+    [flickerChance, maxOpacity, visualRandom]
   )
 
   const drawGrid = useCallback(

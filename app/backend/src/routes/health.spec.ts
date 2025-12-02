@@ -78,7 +78,7 @@ describe('health endpoints', () => {
       ...ORIGINAL_ENV,
       JWT_SECRET: ORIGINAL_ENV.JWT_SECRET ?? 'test-secret-123',
       PLATFORM_JWT_SECRET: ORIGINAL_ENV.PLATFORM_JWT_SECRET ?? 'test-secret-123',
-      API_BASE_URL: ORIGINAL_ENV.API_BASE_URL ?? 'http://localhost:3000'
+      API_BASE_URL: ORIGINAL_ENV.API_BASE_URL ?? 'http://localhost:3000' // test/dev-only default
     };
     setIsInitialized(true);
   });

@@ -5,8 +5,6 @@ const appConfigSchema = z.object({
   NODE_ENV: z.enum(['development', 'test', 'production']).default('development'),
   PORT: z.coerce.number().int().positive().default(3000),
   HOST: z.string().default('0.0.0.0'),
-  JWT_SECRET: z.string().min(10, 'JWT_SECRET must be at least 10 characters long').optional(),
-  PLATFORM_JWT_SECRET: z.string().min(10).optional(),
   RATE_LIMIT_WINDOW_MS: z.coerce.number().int().positive().default(60_000),
   RATE_LIMIT_MAX: z.coerce.number().int().positive().default(20),
   SHARE_URL_BASE: z
@@ -23,35 +21,16 @@ const appConfigSchema = z.object({
   DEV_TLS_KEY_PATH: z.string().optional(),
   JWT_ISSUER: z.string().optional(),
   JWT_AUDIENCE: z.string().optional(),
-  TRUST_PROXY: z.string().optional()
+  TRUST_PROXY: z.string().optional(),
+  CSRF_ALLOWED_ORIGINS: z.string().optional()
 });
 
 const rawConfig = appConfigSchema.parse(process.env);
 
-const DEV_JWT_FALLBACK = 'dev-only-insecure-secret-change-me';
-const isProduction = rawConfig.NODE_ENV === 'production';
-
-if (isProduction && !rawConfig.JWT_SECRET) {
-  throw new Error('Missing required env var JWT_SECRET in production.');
-}
-
-const resolvedJwtSecret =
-  !isProduction && rawConfig.JWT_SECRET === undefined
-    ? DEV_JWT_FALLBACK
-    : (rawConfig.JWT_SECRET as string);
-
-const resolvedPlatformJwtSecret = rawConfig.PLATFORM_JWT_SECRET ?? resolvedJwtSecret;
-
-if (!process.env.JWT_SECRET && resolvedJwtSecret) {
-  process.env.JWT_SECRET = resolvedJwtSecret;
-}
-
 export const env = {
   NODE_ENV: rawConfig.NODE_ENV,
   PORT: rawConfig.PORT,
-  HOST: rawConfig.HOST,
-  JWT_SECRET: resolvedJwtSecret,
-  PLATFORM_JWT_SECRET: resolvedPlatformJwtSecret
+  HOST: rawConfig.HOST
 } as const;
 
 const parseTrustProxy = (value?: string): boolean | number | string => {
@@ -95,12 +74,32 @@ const parseBooleanLike = (value: string): boolean => {
   return ['1', 'true', 'yes', 'on'].includes(normalized);
 };
 
+const parseOrigins = (value?: string): Set<string> => {
+  if (!value) {
+    return new Set();
+  }
+
+  return new Set(
+    value
+      .split(',')
+      .map((item) => item.trim())
+      .filter(Boolean)
+      .map((origin) => {
+        try {
+          const parsed = new URL(origin);
+          return `${parsed.protocol}//${parsed.host}`;
+        } catch {
+          return null;
+        }
+      })
+      .filter((origin): origin is string => origin !== null)
+  );
+};
+
 export const appConfig = {
   nodeEnv: rawConfig.NODE_ENV,
   port: rawConfig.PORT,
   host: rawConfig.HOST,
-  jwtSecret: resolvedJwtSecret,
-  platformJwtSecret: resolvedPlatformJwtSecret,
   rateLimitWindowMs: rawConfig.RATE_LIMIT_WINDOW_MS,
   rateLimitMax: rawConfig.RATE_LIMIT_MAX,
   shareUrlBase: rawConfig.SHARE_URL_BASE,
@@ -114,7 +113,15 @@ export const appConfig = {
   basePath: normalizeBasePath(rawConfig.BASE_PATH),
   devHttps: parseBooleanLike(rawConfig.DEV_HTTPS),
   devTlsCertPath: rawConfig.DEV_TLS_CERT_PATH,
-  devTlsKeyPath: rawConfig.DEV_TLS_KEY_PATH
+  devTlsKeyPath: rawConfig.DEV_TLS_KEY_PATH,
+  csrfAllowedOrigins: (() => {
+    const configured = parseOrigins(rawConfig.CSRF_ALLOWED_ORIGINS);
+    if (configured.size > 0) {
+      return configured;
+    }
+    // Dev-only defaults; production should configure HTTPS origins explicitly.
+    return parseOrigins(`http://localhost:${rawConfig.PORT},http://localhost:5173`);
+  })()
 } as const;
 
 export type AppConfig = typeof appConfig;

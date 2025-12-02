@@ -1,6 +1,5 @@
 // src/api/client.ts
-const API_BASE_URL =
-  import.meta.env.VITE_API_BASE_URL || "http://localhost:3000/api/v1";
+import { API_BASE_URL } from '@/config/api';
 
 // ---- Access Token 只放在記憶體（最安全，關頁即失） ----
 let ACCESS_TOKEN: string | null = null;
@@ -19,10 +18,29 @@ export function getAccessToken() {
 const USE_COOKIE_ACCESS = false;
 
 let CSRF_TOKEN: string | null = null;
+const CSRF_COOKIE_NAME = "csrf_token";
+
+const readCookie = (name: string): string | null => {
+  if (typeof document === "undefined") return null;
+  const cookies = document.cookie ? document.cookie.split("; ") : [];
+  for (const cookie of cookies) {
+    const [k, ...rest] = cookie.split("=");
+    if (k === name) {
+      return decodeURIComponent(rest.join("="));
+    }
+  }
+  return null;
+};
+
 // CSRF: We pair the anti-forgery cookie with an explicit header on every
 // state-changing request so the backend middleware can validate both pieces.
 async function ensureCsrfToken(): Promise<string | null> {
   if (CSRF_TOKEN) return CSRF_TOKEN;
+  const fromCookie = readCookie(CSRF_COOKIE_NAME);
+  if (fromCookie) {
+    CSRF_TOKEN = fromCookie;
+    return CSRF_TOKEN;
+  }
   try {
     const res = await fetch(`${API_BASE_URL}/auth/csrf`, {
       method: "GET",
@@ -76,7 +94,7 @@ async function request<T>(
   const headers: Record<string, string> = {
     "Content-Type": "application/json",
   };
-  // 對應後端 csrfProtectionMiddleware：所有改變狀態的請求都帶上 CSRF header。
+  // 對應後端 csrfProtectionMiddleware：所有改變狀態的請求都帶上 CSRF header（double-submit cookie + Origin/Referer 檢查）。
   const needsCsrf = isStateChangingMethod(method);
   // 需要驗證 + 有 token + 未採用 cookie-access 時，加 Bearer
   if (auth && !USE_COOKIE_ACCESS && ACCESS_TOKEN) {
@@ -84,6 +102,9 @@ async function request<T>(
   }
   if (needsCsrf) {
     const token = await ensureCsrfToken();
+    if (!token) {
+      throw new Error("Missing CSRF token; please refresh and try again.");
+    }
     applyCsrf(headers, token);
   }
 
@@ -146,6 +167,7 @@ async function tryRefresh(): Promise<boolean> {
   try {
     const headers: Record<string, string> = { "Content-Type": "application/json" };
     const csrfToken = await ensureCsrfToken();
+    if (!csrfToken) return false;
     applyCsrf(headers, csrfToken);
     const res = await fetch(`${API_BASE_URL}/auth/refresh`, {
       method: "POST",
