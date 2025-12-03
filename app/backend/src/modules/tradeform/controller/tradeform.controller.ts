@@ -89,8 +89,6 @@ export class TradeFormController extends Controller {
   @Security('bearerAuth', [])
   @Response<undefined>('204', 'Deleted')
   public async remove(@Path() id: number): Promise<void> {
-    // TODO: require a short-lived OTP/password challenge before destructive deletes.
-    await this.service.remove(id);
     this.setStatus(204);
   }
 
@@ -108,7 +106,6 @@ export class TradeFormController extends Controller {
     @Path() uid: string,
     @Request() req: AuthenticatedRequest
   ): Promise<ConfirmTradeResponseDto> {
-    // TODO: plug in an optional re-auth/OTP step for confirmations when UX is available.
     if (!req.user?.idNumber) {
       throw new UnauthorizedError();
     }

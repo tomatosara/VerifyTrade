@@ -111,7 +111,6 @@ export class AuthController extends Controller {
       this.setStatus(403);
       return { accessToken: '', expiresIn: '0' };
     }
-    // TODO: rotate refresh tokens on use to further shorten session replay windows.
     let actorId: string | undefined = payload.id;
     console.log('Refresh token payload:', payload);
     if (!actorId && payload.idNumber) {

@@ -5,8 +5,48 @@
 		"headers": {},
 		"parameters": {},
 		"requestBodies": {},
-		"responses": {},
+		"responses": {
+			"UnauthorizedError": {
+				"description": "Authentication required or invalid credentials.",
+				"content": {
+					"application/json": {
+						"schema": {
+							"$ref": "#/components/schemas/ErrorResponse"
+						}
+					}
+				}
+			},
+			"ForbiddenError": {
+				"description": "Authenticated but not allowed to access this resource.",
+				"content": {
+					"application/json": {
+						"schema": {
+							"$ref": "#/components/schemas/ErrorResponse"
+						}
+					}
+				}
+			}
+		},
 		"schemas": {
+			"ErrorResponse": {
+				"type": "object",
+				"properties": {
+					"statusCode": {
+						"type": "integer"
+					},
+					"error": {
+						"type": "string"
+					},
+					"message": {
+						"type": "string"
+					}
+				},
+				"required": [
+					"statusCode",
+					"error",
+					"message"
+				]
+			},
 			"VerifierQrcodeResponse": {
 				"properties": {
 					"transactionId": {
@@ -849,12 +889,6 @@
 				"scheme": "bearer",
 				"bearerFormat": "JWT",
 				"description": "Access token issued by /auth/login-by-verifier; send as Authorization: Bearer <token>"
-			},
-			"refreshTokenCookie": {
-				"type": "apiKey",
-				"in": "cookie",
-				"name": "refresh_token",
-				"description": "HTTP-only refresh token cookie (7d) used to renew access tokens; pair with x-csrf-token header on state-changing requests."
 			}
 		}
 	},
@@ -864,6 +898,11 @@
 		"description": "Digital identity trading platform API",
 		"contact": {}
 	},
+	"security": [
+		{
+			"bearerAuth": []
+		}
+	],
 	"paths": {
 		"/verifier/qrcode": {
 			"post": {
@@ -881,13 +920,18 @@
 					},
 					"400": {
 						"description": "Invalid ref"
+					},
+					"401": {
+						"$ref": "#/components/responses/UnauthorizedError"
+					},
+					"403": {
+						"$ref": "#/components/responses/ForbiddenError"
 					}
 				},
 				"description": "建立驗證 QR Code",
 				"tags": [
 					"Verifier"
 				],
-				"security": [],
 				"parameters": [],
 				"requestBody": {
 					"required": true,
@@ -923,13 +967,18 @@
 					},
 					"400": {
 						"description": "Invalid transactionId"
+					},
+					"401": {
+						"$ref": "#/components/responses/UnauthorizedError"
+					},
+					"403": {
+						"$ref": "#/components/responses/ForbiddenError"
 					}
 				},
 				"description": "查詢身分證驗證結果",
 				"tags": [
 					"Verifier"
 				],
-				"security": [],
 				"parameters": [],
 				"requestBody": {
 					"required": true,
@@ -956,13 +1005,18 @@
 								}
 							}
 						}
+					},
+					"401": {
+						"$ref": "#/components/responses/UnauthorizedError"
+					},
+					"403": {
+						"$ref": "#/components/responses/ForbiddenError"
 					}
 				},
 				"description": "登入身分證專用 QRCode",
 				"tags": [
 					"Verifier"
 				],
-				"security": [],
 				"parameters": []
 			}
 		},
@@ -980,13 +1034,18 @@
 					},
 					"400": {
 						"description": "Invalid transactionId"
+					},
+					"401": {
+						"$ref": "#/components/responses/UnauthorizedError"
+					},
+					"403": {
+						"$ref": "#/components/responses/ForbiddenError"
 					}
 				},
 				"description": "查詢身分證驗證結果",
 				"tags": [
 					"Verifier"
 				],
-				"security": [],
 				"parameters": [],
 				"requestBody": {
 					"required": true,
@@ -1013,13 +1072,18 @@
 								}
 							}
 						}
+					},
+					"401": {
+						"$ref": "#/components/responses/UnauthorizedError"
+					},
+					"403": {
+						"$ref": "#/components/responses/ForbiddenError"
 					}
 				},
 				"description": "交易表單驗證專用 QRCode",
 				"tags": [
 					"Verifier"
 				],
-				"security": [],
 				"parameters": []
 			}
 		},
@@ -1056,6 +1120,12 @@
 								}
 							}
 						}
+					},
+					"401": {
+						"$ref": "#/components/responses/UnauthorizedError"
+					},
+					"403": {
+						"$ref": "#/components/responses/ForbiddenError"
 					}
 				},
 				"tags": [
@@ -1092,6 +1162,12 @@
 								}
 							}
 						}
+					},
+					"401": {
+						"$ref": "#/components/responses/UnauthorizedError"
+					},
+					"403": {
+						"$ref": "#/components/responses/ForbiddenError"
 					}
 				},
 				"tags": [
@@ -1147,6 +1223,12 @@
 								}
 							}
 						}
+					},
+					"401": {
+						"$ref": "#/components/responses/UnauthorizedError"
+					},
+					"403": {
+						"$ref": "#/components/responses/ForbiddenError"
 					}
 				},
 				"tags": [
@@ -1175,6 +1257,12 @@
 				"responses": {
 					"204": {
 						"description": "No content"
+					},
+					"401": {
+						"$ref": "#/components/responses/UnauthorizedError"
+					},
+					"403": {
+						"$ref": "#/components/responses/ForbiddenError"
 					}
 				},
 				"tags": [
@@ -1213,14 +1301,7 @@
 						}
 					},
 					"403": {
-						"description": "Forbidden – Only participants may confirm; User 2 must have a valid VC",
-						"content": {
-							"application/json": {
-								"schema": {
-									"$ref": "#/components/schemas/ErrorResponse"
-								}
-							}
-						}
+						"$ref": "#/components/responses/ForbiddenError"
 					},
 					"404": {
 						"description": "Not Found",
@@ -1241,6 +1322,9 @@
 								}
 							}
 						}
+					},
+					"401": {
+						"$ref": "#/components/responses/UnauthorizedError"
 					}
 				},
 				"tags": [
@@ -1294,14 +1378,10 @@
 						}
 					},
 					"401": {
-						"description": "Unauthorized",
-						"content": {
-							"application/json": {
-								"schema": {
-									"$ref": "#/components/schemas/ErrorResponse"
-								}
-							}
-						}
+						"$ref": "#/components/responses/UnauthorizedError"
+					},
+					"403": {
+						"$ref": "#/components/responses/ForbiddenError"
 					}
 				},
 				"tags": [
@@ -1375,24 +1455,10 @@
 						}
 					},
 					"401": {
-						"description": "Unauthorized",
-						"content": {
-							"application/json": {
-								"schema": {
-									"$ref": "#/components/schemas/ErrorResponse"
-								}
-							}
-						}
+						"$ref": "#/components/responses/UnauthorizedError"
 					},
 					"403": {
-						"description": "Forbidden",
-						"content": {
-							"application/json": {
-								"schema": {
-									"$ref": "#/components/schemas/ErrorResponse"
-								}
-							}
-						}
+						"$ref": "#/components/responses/ForbiddenError"
 					},
 					"404": {
 						"description": "Not Found",
@@ -1403,6 +1469,12 @@
 								}
 							}
 						}
+					},
+					"401": {
+						"$ref": "#/components/responses/UnauthorizedError"
+					},
+					"403": {
+						"$ref": "#/components/responses/ForbiddenError"
 					}
 				},
 				"tags": [
@@ -1450,24 +1522,10 @@
 						}
 					},
 					"401": {
-						"description": "Unauthorized",
-						"content": {
-							"application/json": {
-								"schema": {
-									"$ref": "#/components/schemas/ErrorResponse"
-								}
-							}
-						}
+						"$ref": "#/components/responses/UnauthorizedError"
 					},
 					"403": {
-						"description": "Forbidden",
-						"content": {
-							"application/json": {
-								"schema": {
-									"$ref": "#/components/schemas/ErrorResponse"
-								}
-							}
-						}
+						"$ref": "#/components/responses/ForbiddenError"
 					},
 					"404": {
 						"description": "Not Found",
@@ -1478,6 +1536,12 @@
 								}
 							}
 						}
+					},
+					"401": {
+						"$ref": "#/components/responses/UnauthorizedError"
+					},
+					"403": {
+						"$ref": "#/components/responses/ForbiddenError"
 					}
 				},
 				"tags": [
@@ -1521,12 +1585,17 @@
 								"schema": {}
 							}
 						}
+					},
+					"401": {
+						"$ref": "#/components/responses/UnauthorizedError"
+					},
+					"403": {
+						"$ref": "#/components/responses/ForbiddenError"
 					}
 				},
 				"tags": [
 					"Issuer"
 				],
-				"security": [],
 				"parameters": [],
 				"requestBody": {
 					"required": true,
@@ -1551,12 +1620,17 @@
 								"schema": {}
 							}
 						}
+					},
+					"401": {
+						"$ref": "#/components/responses/UnauthorizedError"
+					},
+					"403": {
+						"$ref": "#/components/responses/ForbiddenError"
 					}
 				},
 				"tags": [
 					"Issuer"
 				],
-				"security": [],
 				"parameters": [],
 				"requestBody": {
 					"required": true,
@@ -1581,12 +1655,17 @@
 								"schema": {}
 							}
 						}
+					},
+					"401": {
+						"$ref": "#/components/responses/UnauthorizedError"
+					},
+					"403": {
+						"$ref": "#/components/responses/ForbiddenError"
 					}
 				},
 				"tags": [
 					"Issuer"
 				],
-				"security": [],
 				"parameters": [
 					{
 						"in": "path",
@@ -1612,12 +1691,17 @@
 								}
 							}
 						}
+					},
+					"401": {
+						"$ref": "#/components/responses/UnauthorizedError"
+					},
+					"403": {
+						"$ref": "#/components/responses/ForbiddenError"
 					}
 				},
 				"tags": [
 					"Auth"
 				],
-				"security": [],
 				"parameters": [],
 				"requestBody": {
 					"required": true,
@@ -1694,6 +1778,12 @@
 								"schema": {}
 							}
 						}
+					},
+					"401": {
+						"$ref": "#/components/responses/UnauthorizedError"
+					},
+					"403": {
+						"$ref": "#/components/responses/ForbiddenError"
 					}
 				},
 				"tags": [
@@ -1728,12 +1818,17 @@
 								}
 							}
 						}
+					},
+					"401": {
+						"$ref": "#/components/responses/UnauthorizedError"
+					},
+					"403": {
+						"$ref": "#/components/responses/ForbiddenError"
 					}
 				},
 				"tags": [
 					"Auth"
 				],
-				"security": [],
 				"parameters": []
 			}
 		}
