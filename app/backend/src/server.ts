@@ -3,6 +3,7 @@ import '@config/env';
 import fs from 'fs';
 import https from 'https';
 import { constants as tlsConstants } from 'crypto';
+import path from 'path';
 import { createApp } from './app';
 import { AppDataSource } from '@database/data-source';
 import { appConfig } from '@config/app';
@@ -186,18 +187,37 @@ function delay(ms: number) {
   });
 }
 
+function validateTlsPath(tlsPath: string | undefined, envName: string): string {
+  const trimmed = tlsPath?.trim();
+  if (!trimmed) {
+    throw new Error(`${envName} is required to start HTTPS.`);
+  }
+
+  const allowedPattern = /^[A-Za-z0-9._/-]+$/;
+  if (!allowedPattern.test(trimmed)) {
+    throw new Error(`${envName} contains invalid characters.`);
+  }
+
+  const normalized = path.normalize(trimmed);
+  if (normalized.split(path.sep).includes('..')) {
+    throw new Error(`${envName} contains invalid path traversal segments.`);
+  }
+
+  if (!path.isAbsolute(normalized)) {
+    throw new Error(`${envName} must be an absolute path.`);
+  }
+
+  return normalized;
+}
+
 function loadProductionTlsCredentials(): {
   key: Buffer;
   cert: Buffer;
   keyPath: string;
   certPath: string;
 } {
-  const keyPath = process.env.TLS_KEY_PATH;
-  const certPath = process.env.TLS_CERT_PATH;
-
-  if (!keyPath || !certPath) {
-    throw new Error('TLS_KEY_PATH and TLS_CERT_PATH are required to start HTTPS in production.');
-  }
+  const keyPath = validateTlsPath(process.env.TLS_KEY_PATH, 'TLS_KEY_PATH');
+  const certPath = validateTlsPath(process.env.TLS_CERT_PATH, 'TLS_CERT_PATH');
 
   if (!fs.existsSync(keyPath) || !fs.existsSync(certPath)) {
     throw new Error(

@@ -55,30 +55,51 @@ async function ensureCsrfToken(): Promise<string | null> {
   }
 }
 
-function applyCsrf(headers: Record<string, string>, token: string | null) {
+function generateRequestId(): string {
+  if (typeof crypto !== "undefined" && "randomUUID" in crypto) {
+    return crypto.randomUUID();
+  }
+  return Math.random().toString(36).slice(2) + Date.now().toString(36);
+}
+
+function applyCsrf(
+  headers: Record<string, string>,
+  token: string | null,
+  requestId?: string
+) {
   if (token) {
     headers["X-CSRF-Token"] = token;
   }
+  if (requestId) {
+    headers["X-CSRF-Request-Id"] = requestId;
+  }
 }
 
-function attachCsrfToBody(body?: any) {
+function attachCsrfToBody(body?: any, requestId?: string) {
   if (!CSRF_TOKEN) return body;
+
+  const csrfFields: Record<string, any> = { csrfToken: CSRF_TOKEN };
+  if (requestId) {
+    csrfFields.requestId = requestId;
+  }
 
   const isPlainObject =
     typeof body === "object" && body !== null && !Array.isArray(body);
 
-  // No body: just send csrfToken
+  // No body: only send csrfToken + requestId
   if (body === undefined || body === null) {
-    return { csrfToken: CSRF_TOKEN };
+    return csrfFields;
   }
 
-  // Merge field into plain objects, avoid overriding
+  // Merge into plain objects without clobbering other fields
   if (isPlainObject) {
-    if ("csrfToken" in body) return body;
-    return { ...body, csrfToken: CSRF_TOKEN };
+    return {
+      ...csrfFields,
+      ...body,
+    };
   }
 
-  // For non-object bodies, keep original
+  // For non-object bodies, keep the original as-is
   return body;
 }
 
@@ -121,19 +142,23 @@ async function request<T>(
   if (auth && !USE_COOKIE_ACCESS && ACCESS_TOKEN) {
     headers.Authorization = `Bearer ${ACCESS_TOKEN}`;
   }
+  let finalBody = body;
+  let requestId: string | undefined;
   if (needsCsrf) {
     const token = await ensureCsrfToken();
     if (!token) {
       throw new Error("Missing CSRF token; please refresh and try again.");
     }
-    applyCsrf(headers, token);
+    requestId = generateRequestId();
+    applyCsrf(headers, token, requestId);
+    finalBody = attachCsrfToBody(body, requestId);
   }
 
   // 第一次請求
   const res = await fetch(url, {
     method,
     headers,
-    body: body ? JSON.stringify(body) : undefined,
+    body: finalBody ? JSON.stringify(finalBody) : undefined,
     // ✅ 讓瀏覽器自動帶上 HttpOnly refresh_token
     credentials: auth ? "include" : "same-origin",
   });
@@ -157,7 +182,7 @@ async function request<T>(
       const retryRes = await fetch(url, {
         method,
         headers: retryHeaders,
-        body: body ? JSON.stringify(body) : undefined,
+        body: finalBody ? JSON.stringify(finalBody) : undefined,
         credentials: "include",
       });
       if (retryRes.ok) {
@@ -192,12 +217,13 @@ async function tryRefresh(): Promise<boolean> {
     const headers: Record<string, string> = {
       "Content-Type": "application/json",
     };
-    applyCsrf(headers, csrfToken);
+    const requestId = generateRequestId();
+    applyCsrf(headers, csrfToken, requestId);
     const res = await fetch(`${API_BASE_URL}/auth/refresh`, {
       method: "POST",
       headers,
       credentials: "include", // 帶 refresh_token cookie
-      body: JSON.stringify({ csrfToken }),
+      body: JSON.stringify({ csrfToken, requestId }),
     });
     if (!res.ok) return false;
     const data = await res.json();
@@ -218,19 +244,15 @@ export const api = {
     return request<T>(endpoint, { method: "GET", params, auth });
   },
   async post<T>(endpoint: string, body?: any, auth = true) {
-    const safeBody = auth ? attachCsrfToBody(body) : body;
-    return request<T>(endpoint, { method: "POST", body: safeBody, auth });
+    return request<T>(endpoint, { method: "POST", body, auth });
   },
   async put<T>(endpoint: string, body?: any, auth = true) {
-    const safeBody = auth ? attachCsrfToBody(body) : body;
-    return request<T>(endpoint, { method: "PUT", body: safeBody, auth });
+    return request<T>(endpoint, { method: "PUT", body, auth });
   },
   async patch<T>(endpoint: string, body?: any, auth = true) {
-    const safeBody = auth ? attachCsrfToBody(body) : body;
-    return request<T>(endpoint, { method: "PATCH", body: safeBody, auth });
+    return request<T>(endpoint, { method: "PATCH", body, auth });
   },
   async delete<T>(endpoint: string, auth = true) {
-    const safeBody = auth ? attachCsrfToBody(undefined) : undefined;
-    return request<T>(endpoint, { method: "DELETE", body: safeBody, auth });
+    return request<T>(endpoint, { method: "DELETE", body: undefined, auth });
   },
 };
