@@ -13,8 +13,6 @@ export function getAccessToken() {
   return ACCESS_TOKEN;
 }
 
-// 可選：如果你的後端把「access token 也放 HttpOnly Cookie」
-// 你可以把這個旗標設為 true，就不會加 Authorization header。
 const USE_COOKIE_ACCESS = false;
 
 let CSRF_TOKEN: string | null = null;
@@ -59,9 +57,8 @@ function generateRequestId(): string {
   if (typeof crypto !== "undefined" && "randomUUID" in crypto) {
     return crypto.randomUUID();
   }
-  return Math.random().toString(36).slice(2) + Date.now().toString(36);
+  return `fallback-${Date.now().toString(36)}-${Math.random().toString(16).slice(2)}`;
 }
-
 function applyCsrf(
   headers: Record<string, string>,
   token: string | null,
@@ -122,12 +119,12 @@ async function request<T>(
   // 組 querystring
   const query = params
     ? "?" +
-      new URLSearchParams(
-        Object.entries(params).reduce((acc, [k, v]) => {
-          acc[k] = String(v);
-          return acc;
-        }, {} as Record<string, string>)
-      ).toString()
+    new URLSearchParams(
+      Object.entries(params).reduce((acc, [k, v]) => {
+        acc[k] = String(v);
+        return acc;
+      }, {} as Record<string, string>)
+    ).toString()
     : "";
 
   const url = `${API_BASE_URL}${endpoint}${query}`;

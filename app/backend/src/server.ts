@@ -193,21 +193,27 @@ function validateTlsPath(tlsPath: string | undefined, envName: string): string {
     throw new Error(`${envName} is required to start HTTPS.`);
   }
 
+  // 只允許有限制的字元，避免奇怪的注入
   const allowedPattern = /^[A-Za-z0-9._/-]+$/;
   if (!allowedPattern.test(trimmed)) {
     throw new Error(`${envName} contains invalid characters.`);
   }
 
   const normalized = path.normalize(trimmed);
+
+  // 禁止任何形式的目錄跳脫
   if (normalized.split(path.sep).includes('..')) {
     throw new Error(`${envName} contains invalid path traversal segments.`);
   }
 
-  if (!path.isAbsolute(normalized)) {
-    throw new Error(`${envName} must be an absolute path.`);
-  }
+  // 統一轉成絕對路徑：
+  // - 若原本是絕對路徑，直接 normalize 後使用
+  // - 若是相對路徑（例：certs/dev.crt），就以 process.cwd() 當 base 轉成絕對路徑
+  const absolutePath = path.isAbsolute(normalized)
+    ? normalized
+    : path.resolve(process.cwd(), normalized);
 
-  return normalized;
+  return absolutePath;
 }
 
 function loadProductionTlsCredentials(): {
@@ -239,8 +245,12 @@ function loadLocalTlsCredentials(): {
   keyPath: string;
   certPath: string;
 } {
-  const keyPath = appConfig.devTlsKeyPath ?? 'certs/dev.key';
-  const certPath = appConfig.devTlsCertPath ?? 'certs/dev.crt';
+  const rawKeyPath = appConfig.devTlsKeyPath ?? 'certs/dev.key';
+  const rawCertPath = appConfig.devTlsCertPath ?? 'certs/dev.crt';
+
+  const keyPath = validateTlsPath(rawKeyPath, 'DEV_TLS_KEY_PATH or default certs/dev.key');
+  const certPath = validateTlsPath(rawCertPath, 'DEV_TLS_CERT_PATH or default certs/dev.crt');
+
   if (!fs.existsSync(keyPath) || !fs.existsSync(certPath)) {
     throw new Error(
       `Missing TLS key/cert for dev HTTPS. Expected key at ${keyPath} and cert at ${certPath}.`
