@@ -30,7 +30,7 @@ const readCookie = (name: string): string | null => {
   return null;
 };
 
-// CSRF: We pair the anti-forgery cookie with an explicit header on every
+// CSRF fix: added per-request nonce. We pair the anti-forgery cookie with an explicit header on every
 // state-changing request so the backend middleware can validate both pieces.
 async function ensureCsrfToken(): Promise<string | null> {
   if (CSRF_TOKEN) return CSRF_TOKEN;
@@ -54,10 +54,23 @@ async function ensureCsrfToken(): Promise<string | null> {
 }
 
 function generateRequestId(): string {
-  if (typeof crypto !== "undefined" && "randomUUID" in crypto) {
-    return crypto.randomUUID();
+  // CSRF fix: added per-request nonce using a CSPRNG for every attempt.
+  const cryptoObj = typeof globalThis !== "undefined"
+    ? ((globalThis as typeof globalThis & { crypto?: Crypto }).crypto ?? undefined)
+    : undefined;
+
+  if (cryptoObj?.randomUUID) {
+    return cryptoObj.randomUUID();
   }
-  return `fallback-${Date.now().toString(36)}-${Math.random().toString(16).slice(2)}`;
+
+  if (cryptoObj?.getRandomValues) {
+    const bytes = new Uint8Array(16);
+    cryptoObj.getRandomValues(bytes);
+    const hex = Array.from(bytes, (b) => b.toString(16).padStart(2, "0")).join("");
+    return `req-${hex.slice(0, 8)}-${hex.slice(8, 12)}-${hex.slice(12, 16)}-${hex.slice(16, 20)}-${hex.slice(20)}`;
+  }
+
+  throw new Error("Secure random generator (crypto) is not available; cannot generate request id.");
 }
 function applyCsrf(
   headers: Record<string, string>,
@@ -130,35 +143,51 @@ async function request<T>(
   const url = `${API_BASE_URL}${endpoint}${query}`;
 
   // 基本 headers
-  const headers: Record<string, string> = {
+  const baseHeaders: Record<string, string> = {
     "Content-Type": "application/json",
   };
+  // CSRF fix: added per-request nonce to every state-changing attempt with CSRF headers.
   // 對應後端 csrfProtectionMiddleware：所有改變狀態的請求都帶上 CSRF header（double-submit cookie + Origin/Referer 檢查）。
   const needsCsrf = isStateChangingMethod(method);
   // 需要驗證 + 有 token + 未採用 cookie-access 時，加 Bearer
-  if (auth && !USE_COOKIE_ACCESS && ACCESS_TOKEN) {
-    headers.Authorization = `Bearer ${ACCESS_TOKEN}`;
-  }
-  let finalBody = body;
-  let requestId: string | undefined;
+  const withAuthHeader = (headers: Record<string, string>) => {
+    if (auth && !USE_COOKIE_ACCESS && ACCESS_TOKEN) {
+      headers.Authorization = `Bearer ${ACCESS_TOKEN}`;
+    }
+  };
+  withAuthHeader(baseHeaders);
+
+  let csrfToken: string | null = null;
   if (needsCsrf) {
-    const token = await ensureCsrfToken();
-    if (!token) {
+    csrfToken = await ensureCsrfToken();
+    if (!csrfToken) {
       throw new Error("Missing CSRF token; please refresh and try again.");
     }
-    requestId = generateRequestId();
-    applyCsrf(headers, token, requestId);
-    finalBody = attachCsrfToBody(body, requestId);
   }
 
+  const sendWithFreshNonce = async (): Promise<Response> => {
+    // CSRF fix: added per-request nonce to each fetch attempt (including retries).
+    const headers: Record<string, string> = { ...baseHeaders };
+    withAuthHeader(headers);
+
+    let finalBody = body;
+    if (needsCsrf) {
+      const requestId = generateRequestId();
+      applyCsrf(headers, csrfToken, requestId);
+      finalBody = attachCsrfToBody(body, requestId);
+    }
+
+    return fetch(url, {
+      method,
+      headers,
+      body: finalBody ? JSON.stringify(finalBody) : undefined,
+      // ✅ 讓瀏覽器自動帶上 HttpOnly refresh_token
+      credentials: auth ? "include" : "same-origin",
+    });
+  };
+
   // 第一次請求
-  const res = await fetch(url, {
-    method,
-    headers,
-    body: finalBody ? JSON.stringify(finalBody) : undefined,
-    // ✅ 讓瀏覽器自動帶上 HttpOnly refresh_token
-    credentials: auth ? "include" : "same-origin",
-  });
+  const res = await sendWithFreshNonce();
 
   // 如果 OK 直接回
   if (res.ok) {
@@ -172,16 +201,7 @@ async function request<T>(
     const refreshed = await tryRefresh();
     if (refreshed) {
       // 更新 header 的 Authorization
-      const retryHeaders = { ...headers };
-      if (!USE_COOKIE_ACCESS && ACCESS_TOKEN) {
-        retryHeaders.Authorization = `Bearer ${ACCESS_TOKEN}`;
-      }
-      const retryRes = await fetch(url, {
-        method,
-        headers: retryHeaders,
-        body: finalBody ? JSON.stringify(finalBody) : undefined,
-        credentials: "include",
-      });
+      const retryRes = await sendWithFreshNonce();
       if (retryRes.ok) {
         if (retryRes.status === 204) return undefined as unknown as T;
         return retryRes.json();
@@ -214,6 +234,7 @@ async function tryRefresh(): Promise<boolean> {
     const headers: Record<string, string> = {
       "Content-Type": "application/json",
     };
+    // CSRF fix: added per-request nonce for refresh token path.
     const requestId = generateRequestId();
     applyCsrf(headers, csrfToken, requestId);
     const res = await fetch(`${API_BASE_URL}/auth/refresh`, {

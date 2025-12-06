@@ -11,6 +11,13 @@ import { dbConfig } from '@config/db';
 import { logger } from '@utils/logger';
 import { buildPublicUrl } from '@utils/url';
 
+const TLS_BASE_DIR = process.env.TLS_BASE_DIR ?? path.join(__dirname, '..', 'certs');
+const TLS_PATH_SAFE_CHARS = /^[A-Za-z0-9._\-/:\\]+$/;
+const TLS_KNOWN_PATHS: Record<string, string> = {
+  defaultKey: path.join(TLS_BASE_DIR, 'server.key'),
+  defaultCert: path.join(TLS_BASE_DIR, 'server.crt')
+};
+
 async function start() {
   try {
     await initializeDatabaseWithRetry();
@@ -193,27 +200,30 @@ function validateTlsPath(tlsPath: string | undefined, envName: string): string {
     throw new Error(`${envName} is required to start HTTPS.`);
   }
 
-  // 只允許有限制的字元，避免奇怪的注入
-  const allowedPattern = /^[A-Za-z0-9._/-]+$/;
-  if (!allowedPattern.test(trimmed)) {
-    throw new Error(`${envName} contains invalid characters.`);
+  const base = path.resolve(TLS_BASE_DIR);
+  const candidate = Object.prototype.hasOwnProperty.call(TLS_KNOWN_PATHS, trimmed)
+    ? TLS_KNOWN_PATHS[trimmed]
+    : trimmed;
+
+  if (!TLS_PATH_SAFE_CHARS.test(candidate)) {
+    throw new Error(
+      `${envName} contains invalid characters. Only letters, numbers, dot, dash, underscore, slash, colon, and backslash are allowed.`
+    );
   }
 
-  const normalized = path.normalize(trimmed);
-
-  // 禁止任何形式的目錄跳脫
-  if (normalized.split(path.sep).includes('..')) {
-    throw new Error(`${envName} contains invalid path traversal segments.`);
-  }
-
-  // 統一轉成絕對路徑：
-  // - 若原本是絕對路徑，直接 normalize 後使用
-  // - 若是相對路徑（例：certs/dev.crt），就以 process.cwd() 當 base 轉成絕對路徑
-  const absolutePath = path.isAbsolute(normalized)
+  const normalized = path.normalize(candidate);
+  const resolved = path.isAbsolute(normalized)
     ? normalized
-    : path.resolve(process.cwd(), normalized);
+    : path.resolve(base, normalized);
 
-  return absolutePath;
+  const baseWithSep = base.endsWith(path.sep) ? base : `${base}${path.sep}`;
+  if (resolved !== base && !resolved.startsWith(baseWithSep)) {
+    throw new Error(
+      `Refusing TLS path outside base directory for ${envName}. Set TLS_BASE_DIR to the directory containing your certificates.`
+    );
+  }
+
+  return resolved;
 }
 
 function loadProductionTlsCredentials(): {

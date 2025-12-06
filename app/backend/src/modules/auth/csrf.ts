@@ -5,6 +5,12 @@ import { secureRandomBytes } from '@utils/crypto-random';
 
 export const CSRF_COOKIE_NAME = 'csrf_token';
 export const CSRF_HEADER_NAME = 'x-csrf-token';
+export const CSRF_REQUEST_ID_HEADER_NAME = 'x-csrf-request-id';
+
+// CSRF fix: added per-request nonce replay tracking in-memory.
+const REQUEST_ID_PATTERN = /^[A-Za-z0-9][A-Za-z0-9-]{19,127}$/;
+const REQUEST_ID_TTL_MS = 15 * 60 * 1000; // 15 minutes
+const requestIdReplayCache: Map<string, number> = new Map();
 
 const isStateChangingMethod = (method: string): boolean =>
   !['GET', 'HEAD', 'OPTIONS', 'TRACE'].includes(method.toUpperCase());
@@ -35,6 +41,24 @@ export const clearCsrfCookie = (basePath = '/api/v1'): string =>
 
 export const parseRequestCookies = (req: Request): Record<string, string | undefined> =>
   parseCookie(req.headers.cookie ?? '') as Record<string, string | undefined>;
+
+// CSRF fix: added per-request nonce parsing helpers to mirror frontend headers/body.
+export const readRequestIdHeader = (req: Request): string | null => {
+  const raw = req.headers[CSRF_REQUEST_ID_HEADER_NAME];
+  if (Array.isArray(raw)) {
+    return raw[0] ?? null;
+  }
+  return typeof raw === 'string' ? raw : null;
+};
+
+const readRequestIdFromBody = (req: Request): string | null => {
+  const body = req.body;
+  if (body && typeof body === 'object' && !Array.isArray(body)) {
+    const candidate = (body as Record<string, unknown>).requestId;
+    return typeof candidate === 'string' ? candidate : null;
+  }
+  return null;
+};
 
 export const readCsrfHeaderToken = (req: Request): string | null => {
   const raw = req.headers[CSRF_HEADER_NAME];
@@ -115,6 +139,61 @@ const validateOriginHeaders = (
   return true;
 };
 
+// CSRF fix: added per-request nonce validation plus replay prevention with short TTL.
+const cleanupExpiredRequestNonces = (now = Date.now()): void => {
+  for (const [id, expiresAt] of requestIdReplayCache.entries()) {
+    if (expiresAt <= now) {
+      requestIdReplayCache.delete(id);
+    }
+  }
+};
+
+const reserveRequestNonce = (requestId: string, now = Date.now()): boolean => {
+  cleanupExpiredRequestNonces(now);
+  const existingExpiry = requestIdReplayCache.get(requestId);
+  if (existingExpiry && existingExpiry > now) {
+    return false;
+  }
+  requestIdReplayCache.set(requestId, now + REQUEST_ID_TTL_MS);
+  return true;
+};
+
+// CSRF fix: added per-request nonce validation that must happen before mutating routes.
+const validateRequestNonce = (
+  req: Request
+): { ok: true; requestId: string } | { ok: false; status: number; message: string } => {
+  const headerIdRaw = readRequestIdHeader(req);
+  const bodyIdRaw = readRequestIdFromBody(req);
+  const headerId = headerIdRaw?.trim();
+  const bodyId = bodyIdRaw?.trim();
+
+  if (!headerId && !bodyId) {
+    return { ok: false, status: 400, message: 'Missing requestId' };
+  }
+
+  const invalidHeader = headerId !== undefined && headerId !== null && !REQUEST_ID_PATTERN.test(headerId);
+  const invalidBody = bodyId !== undefined && bodyId !== null && !REQUEST_ID_PATTERN.test(bodyId);
+
+  if (invalidHeader || invalidBody) {
+    return { ok: false, status: 400, message: 'Malformed requestId' };
+  }
+
+  if (headerId && bodyId && headerId !== bodyId) {
+    return { ok: false, status: 400, message: 'Mismatched requestId' };
+  }
+
+  const requestId = headerId || bodyId;
+  if (!requestId) {
+    return { ok: false, status: 400, message: 'Missing requestId' };
+  }
+
+  if (!reserveRequestNonce(requestId)) {
+    return { ok: false, status: 409, message: 'Replayed requestId' };
+  }
+
+  return { ok: true, requestId };
+};
+
 export const csrfProtectionMiddleware = (
   req: Request,
   res: Response,
@@ -126,9 +205,20 @@ export const csrfProtectionMiddleware = (
     return next();
   }
 
+  // CSRF fix: added per-request nonce validation before CSRF cookie checks.
+  const nonceCheck = validateRequestNonce(req);
+  if (!nonceCheck.ok) {
+    res.status(nonceCheck.status).json({ error: nonceCheck.message });
+    return;
+  }
+  req.requestId = nonceCheck.requestId;
+
   const cookies = parseRequestCookies(req);
-  // Only enforce CSRF when a session cookie is present (cookie-based auth flows).
-  if (!cookies.refresh_token) {
+  const csrfCookie = cookies[CSRF_COOKIE_NAME];
+  const hasSessionCookie = Boolean(cookies.refresh_token);
+  const enforceCsrf = hasSessionCookie || Boolean(csrfCookie);
+  // CSRF fix: added per-request nonce + token enforcement whenever the CSRF cookie participates.
+  if (!enforceCsrf) {
     return next();
   }
 
@@ -137,7 +227,6 @@ export const csrfProtectionMiddleware = (
     return;
   }
 
-  const csrfCookie = cookies[CSRF_COOKIE_NAME];
   const headerToken = readCsrfHeaderToken(req);
   if (!csrfCookie || !headerToken || csrfCookie !== headerToken) {
     res.status(403).json({ error: 'Invalid CSRF token' });
