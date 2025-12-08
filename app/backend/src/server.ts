@@ -11,11 +11,12 @@ import { dbConfig } from '@config/db';
 import { logger } from '@utils/logger';
 import { buildPublicUrl } from '@utils/url';
 
-const TLS_BASE_DIR = process.env.TLS_BASE_DIR ?? path.join(__dirname, '..', 'certs');
-const TLS_PATH_SAFE_CHARS = /^[A-Za-z0-9._\-/:\\]+$/;
+const TLS_BASE_DIR = path.join(__dirname, '..', 'certs');
 const TLS_KNOWN_PATHS: Record<string, string> = {
   defaultKey: path.join(TLS_BASE_DIR, 'server.key'),
-  defaultCert: path.join(TLS_BASE_DIR, 'server.crt')
+  defaultCert: path.join(TLS_BASE_DIR, 'server.crt'),
+  devKey: path.join(TLS_BASE_DIR, 'dev.key'),
+  devCert: path.join(TLS_BASE_DIR, 'dev.crt')
 };
 
 async function start() {
@@ -194,36 +195,16 @@ function delay(ms: number) {
   });
 }
 
-function validateTlsPath(tlsPath: string | undefined, envName: string): string {
-  const trimmed = tlsPath?.trim();
-  if (!trimmed) {
-    throw new Error(`${envName} is required to start HTTPS.`);
+function resolveTlsFromId(
+  envValue: string | undefined,
+  envName: string,
+  defaultId: string
+): string {
+  const id = (envValue ?? defaultId).trim();
+  if (!Object.prototype.hasOwnProperty.call(TLS_KNOWN_PATHS, id)) {
+    throw new Error(`${envName} must be one of: ${Object.keys(TLS_KNOWN_PATHS).join(', ')}`);
   }
-
-  const base = path.resolve(TLS_BASE_DIR);
-  const candidate = Object.prototype.hasOwnProperty.call(TLS_KNOWN_PATHS, trimmed)
-    ? TLS_KNOWN_PATHS[trimmed]
-    : trimmed;
-
-  if (!TLS_PATH_SAFE_CHARS.test(candidate)) {
-    throw new Error(
-      `${envName} contains invalid characters. Only letters, numbers, dot, dash, underscore, slash, colon, and backslash are allowed.`
-    );
-  }
-
-  const normalized = path.normalize(candidate);
-  const resolved = path.isAbsolute(normalized)
-    ? normalized
-    : path.resolve(base, normalized);
-
-  const baseWithSep = base.endsWith(path.sep) ? base : `${base}${path.sep}`;
-  if (resolved !== base && !resolved.startsWith(baseWithSep)) {
-    throw new Error(
-      `Refusing TLS path outside base directory for ${envName}. Set TLS_BASE_DIR to the directory containing your certificates.`
-    );
-  }
-
-  return resolved;
+  return TLS_KNOWN_PATHS[id];
 }
 
 function loadProductionTlsCredentials(): {
@@ -232,8 +213,8 @@ function loadProductionTlsCredentials(): {
   keyPath: string;
   certPath: string;
 } {
-  const keyPath = validateTlsPath(process.env.TLS_KEY_PATH, 'TLS_KEY_PATH');
-  const certPath = validateTlsPath(process.env.TLS_CERT_PATH, 'TLS_CERT_PATH');
+  const keyPath = resolveTlsFromId(process.env.TLS_KEY_PATH, 'TLS_KEY_PATH', 'defaultKey');
+  const certPath = resolveTlsFromId(process.env.TLS_CERT_PATH, 'TLS_CERT_PATH', 'defaultCert');
 
   if (!fs.existsSync(keyPath) || !fs.existsSync(certPath)) {
     throw new Error(
@@ -255,11 +236,8 @@ function loadLocalTlsCredentials(): {
   keyPath: string;
   certPath: string;
 } {
-  const rawKeyPath = appConfig.devTlsKeyPath ?? 'certs/dev.key';
-  const rawCertPath = appConfig.devTlsCertPath ?? 'certs/dev.crt';
-
-  const keyPath = validateTlsPath(rawKeyPath, 'DEV_TLS_KEY_PATH or default certs/dev.key');
-  const certPath = validateTlsPath(rawCertPath, 'DEV_TLS_CERT_PATH or default certs/dev.crt');
+  const keyPath = resolveTlsFromId(appConfig.devTlsKeyPath, 'DEV_TLS_KEY_PATH', 'devKey');
+  const certPath = resolveTlsFromId(appConfig.devTlsCertPath, 'DEV_TLS_CERT_PATH', 'devCert');
 
   if (!fs.existsSync(keyPath) || !fs.existsSync(certPath)) {
     throw new Error(
